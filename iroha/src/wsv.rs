@@ -26,6 +26,7 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct World(iroha_data_model::world::World);
 
+// SATO Deref
 impl Deref for World {
     type Target = iroha_data_model::world::World;
     fn deref(&self) -> &Self::Target {

@@ -114,7 +114,7 @@ where
         Self::with_broker(args, instruction_validator, query_validator, broker).await
     }
 
-    /// Creates Iroha with specified broker
+    /// Creates Iroha with specified broker // SATO what is broker?
     /// # Errors
     /// Can fail if fails:
     /// - Reading genesis from disk
@@ -296,8 +296,10 @@ where
 }
 
 /// Allow to check if an item is included in a blockchain.
+// SATO Belongable<T>
 pub trait IsInBlockchain {
     /// Checks if this item has already been committed or rejected.
+    // SATO fn belongs(&self, t: T) -> bool;
     fn is_in_blockchain<W: WorldTrait>(&self, wsv: &WorldStateView<W>) -> bool;
 }
 

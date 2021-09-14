@@ -20,3 +20,19 @@ async fn main() -> Result<(), Report> {
     .await?;
     Ok(())
 }
+
+/* SATO
+mod refactor {
+    use super::*;
+    async fn main() -> Result<(), Reporter> {
+        Iroha::new()
+        .wsv()
+        .queue()
+        .sumeragi()
+        .kura()
+        .block_sync()
+        .torii()
+        .start()
+    }
+}
+*/

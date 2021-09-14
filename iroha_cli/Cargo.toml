@@ -11,7 +11,7 @@ license = "Apache-2.0"
 keywords = ["crypto", "blockchain", "ledger"]
 categories = ["cryptography::cryptocurrencies"]
 
-[features]
+[features] # SATO what is features
 bridge = ["iroha/bridge"]
 dex = ["iroha/dex"]
 roles = ["iroha/roles"]
@@ -19,7 +19,7 @@ telemetry = ["iroha/telemetry"]
 dev-telemetry = ["iroha/dev-telemetry"]
 default = ["bridge"]
 
-[badges]
+[badges] # SATO what is badges
 is-it-maintained-issue-resolution = { repository = "https://github.com/hyperledger/iroha" }
 is-it-maintained-open-issues = { repository = "https://github.com/hyperledger/iroha" }
 maintenance = { status = "actively-developed" }

@@ -231,7 +231,7 @@ impl<G: GenesisNetworkTrait, W: WorldTrait> Actor for Sumeragi<G, W> {
         self.broker.subscribe::<NetworkMessage, _>(ctx);
     }
 }
-
+// SATO enum Msg or Cmd
 #[async_trait::async_trait]
 impl<G: GenesisNetworkTrait, W: WorldTrait> Handler<UpdateNetworkTopology> for Sumeragi<G, W> {
     type Result = ();
@@ -800,7 +800,7 @@ impl<G: GenesisNetworkTrait, W: WorldTrait> Sumeragi<G, W> {
         let peers_online = self
             .network
             .send(iroha_p2p::network::GetConnectedPeers)
-            .await
+            .await // SATO spoil merit of actor model?
             .expect("Could not get connected peers from Network!")
             .peers;
 

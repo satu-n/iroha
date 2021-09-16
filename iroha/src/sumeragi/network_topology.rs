@@ -243,7 +243,7 @@ pub struct Topology {
     /// Maximum faulty peers in a network.
     max_faults: u32,
 
-    reshuffle_after_n_view_changes: u64,
+    reshuffle_after_n_view_changes: u64, // SATO renewal_period
 
     at_block: Hash,
 

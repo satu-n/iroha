@@ -4,6 +4,11 @@ use std::collections::VecDeque;
 
 use crate::prelude::*;
 
+// SATO
+/*
+use merkletree;
+use merkle;
+*/
 /// [Merkle Tree](https://en.wikipedia.org/wiki/Merkle_tree) used to validate and prove data at
 /// each block height.
 /// Our implementation uses binary hash tree.
@@ -55,6 +60,13 @@ impl Default for MerkleTree {
 }
 
 /// Binary Tree's node with possible variants: Subtree, Leaf (with data or links to data) and Empty.
+/* SATO
+pub struct Node {
+    hash: Hash
+    left: Option<Box<Node>>,
+    right: Option<Box<Node>>,
+}
+*/
 #[derive(Debug)]
 pub enum Node {
     Subtree {

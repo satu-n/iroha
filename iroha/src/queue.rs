@@ -1,4 +1,4 @@
-//! Module with queue actor
+//! Module with queue actor // SATO no longer actor?
 
 use std::time::Duration;
 
@@ -47,6 +47,7 @@ pub enum Error {
     ),
 }
 
+// SATO Queue<W: WorldTrait>
 impl Queue {
     /// Makes queue from configuration
     pub fn from_configuration(cfg: &QueueConfiguration) -> Self {

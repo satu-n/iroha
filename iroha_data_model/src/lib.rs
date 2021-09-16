@@ -628,7 +628,7 @@ pub mod permissions {
     pub struct PermissionToken {
         /// Name of the permission rule given to account.
         pub name: Name,
-        /// Params identifying how this rule applies.
+        /// Params identifying how this rule applies. // SATO ?
         pub params: BTreeMap<Name, Value>,
     }
 

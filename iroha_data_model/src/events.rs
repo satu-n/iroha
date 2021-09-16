@@ -429,6 +429,17 @@ pub mod pipeline {
 
     /// Entity type to filter events.
     #[derive(Debug, Decode, Encode, Deserialize, Serialize, Eq, PartialEq, Clone, IntoSchema)]
+    // SATO
+    /*
+    pub struct Entity {
+        /// Type of entity that caused this event.
+        pub type_: Type,
+        /// The status of this entity.
+        pub status: Status,
+        /// The hash of this entity.
+        pub hash: Hash,
+    }    
+    */
     pub struct Event {
         /// Type of entity that caused this event.
         pub entity_type: EntityType,

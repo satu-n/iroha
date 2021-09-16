@@ -182,6 +182,7 @@ pub struct BlockHeader {
     pub transactions_merkle_root_hash: Hash,
     /// Hash of merkle tree root of the tree of rejected transactions' hashes.
     pub rejected_transactions_merkle_root_hash: Hash,
+    // SATO Number of view changes?
     /// Number of view changes after the previous block was committed and before this block was committed.
     pub view_change_proofs: ViewChangeProofs,
     /// Hashes of the blocks that were rejected by consensus.

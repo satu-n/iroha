@@ -13,7 +13,7 @@ use super::Evaluate;
 use crate::prelude::*;
 
 /// Operation for which the permission should be checked.
-pub trait NeedsPermission {}
+pub trait NeedsPermission {} // SATO This seems to do nothing. Instead, how about expressing permissions by trait generics?
 
 impl NeedsPermission for Instruction {}
 
@@ -41,7 +41,7 @@ pub trait IsAllowed<W: WorldTrait, O: NeedsPermission> {
 }
 
 /// Box with permissions validator.
-pub type IsAllowedBoxed<W, O> = Box<dyn IsAllowed<W, O> + Send + Sync>;
+pub type IsAllowedBoxed<W, O> = Box<dyn IsAllowed<W, O> + Send + Sync>; //SATO dyn
 
 /// Box with permissions validator for `Instruction`.
 pub type IsInstructionAllowedBoxed<W> = IsAllowedBoxed<W, Instruction>;
@@ -511,7 +511,7 @@ impl<W: WorldTrait, O: NeedsPermission> From<DenyAll> for IsAllowedBoxed<W, O> {
 }
 
 /// Boxed validator implementing [`HasToken`] validator trait.
-pub type HasTokenBoxed<W> = Box<dyn HasToken<W> + Send + Sync>;
+pub type HasTokenBoxed<W> = Box<dyn HasToken<W> + Send + Sync>; // SATO dyn
 
 /// Trait that should be implemented by validator that checks the need to have permission token for a certain action.
 pub trait HasToken<W: WorldTrait> {
@@ -561,7 +561,7 @@ impl<W: WorldTrait> IsAllowed<W, Instruction> for HasTokenBoxed<W> {
 // when we have
 // impl <T: HasToken> PermissionsValidator for T {}
 /// Boxed validator implementing [`IsGrantAllowed`] trait.
-pub type IsGrantAllowedBoxed<W> = Box<dyn IsGrantAllowed<W> + Send + Sync>;
+pub type IsGrantAllowedBoxed<W> = Box<dyn IsGrantAllowed<W> + Send + Sync>; // SATO dyn
 
 /// Checks the [`GrantBox`] instruction.
 pub trait IsGrantAllowed<W: WorldTrait> {

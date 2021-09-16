@@ -22,7 +22,7 @@ use crate::{
     },
     wsv::WorldTrait,
 };
-
+// SATO cannot read macro
 declare_versioned_with_scale!(VersionedAcceptedTransaction 1..2, Debug, Clone, iroha_derive::FromVariant);
 
 impl VersionedAcceptedTransaction {

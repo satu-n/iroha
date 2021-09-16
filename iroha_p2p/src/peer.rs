@@ -154,6 +154,7 @@ where
                 tokio::select! {
                     readable = read.as_ref().readable() => {
                         if let Err(e) = readable {
+                            // SATO no resume and why use unstable yield? just break return
                             yield MessageResult::new_error(Error::Io(e));
                             break;
                         }

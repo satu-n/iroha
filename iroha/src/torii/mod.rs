@@ -234,7 +234,7 @@ impl<W: WorldTrait> Torii<W> {
 
 struct InnerToriiState<W: WorldTrait> {
     config: ToriiConfiguration,
-    wsv: Arc<WorldStateView<W>>,
+    wsv: Arc<WorldStateView<W>>, // SATO WSViewer<W>
     queue: Arc<Queue>,
     query_validator: Arc<IsQueryAllowedBoxed<W>>,
 }

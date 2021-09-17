@@ -239,6 +239,7 @@ pub mod message {
     }
 
     /// Message variant to send our current latest block
+    // SATO why not enum but struct?
     #[derive(Io, Decode, Encode, Debug, Clone)]
     pub struct LatestBlock {
         /// Block hash

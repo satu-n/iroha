@@ -183,7 +183,9 @@ impl AcceptedTransaction {
 
         current_time.saturating_sub(Duration::from_millis(self.payload.creation_time))
             > min(
+                // SATO default 
                 Duration::from_millis(self.payload.time_to_live_ms),
+                // SATO default 24h
                 transaction_time_to_live,
             )
     }
@@ -197,7 +199,7 @@ impl AcceptedTransaction {
         is_query_allowed: &IsQueryAllowedBoxed<W>,
         is_genesis: bool,
     ) -> Result<(), TransactionRejectionReason> {
-        let wsv_temp = wsv.clone();
+        let wsv_temp = wsv.clone(); // SATO heavy cost?
         let account_id = self.payload.account_id.clone();
         if !is_genesis && account_id == <Account as Identifiable>::Id::genesis_account() {
             return Err(TransactionRejectionReason::UnexpectedGenesisAccountSignature);
@@ -318,6 +320,7 @@ impl AcceptedTransaction {
     }
 
     /// Rejects transaction with the `rejection_reason`.
+    // SATO why not use Err but reject as method
     pub fn reject(self, rejection_reason: TransactionRejectionReason) -> RejectedTransaction {
         RejectedTransaction {
             payload: self.payload,

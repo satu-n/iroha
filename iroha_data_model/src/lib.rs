@@ -163,6 +163,7 @@ pub type ValueBox = Box<Value>;
     IntoSchema,
 )]
 #[allow(clippy::enum_variant_names)]
+// SATO can be better separated
 pub enum Value {
     /// `u32` integer.
     U32(u32),
@@ -627,6 +628,7 @@ pub mod permissions {
     )]
     pub struct PermissionToken {
         /// Name of the permission rule given to account.
+        // SATO token name as string is not a good way in Rust
         pub name: Name,
         /// Params identifying how this rule applies. // SATO ?
         pub params: BTreeMap<Name, Value>,

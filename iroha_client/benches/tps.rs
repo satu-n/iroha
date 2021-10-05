@@ -8,10 +8,7 @@ use iroha::{
     genesis::{GenesisNetwork, GenesisNetworkTrait},
     prelude::*,
 };
-use iroha_client::{
-    client::Client,
-    config::Configuration as ClientConfiguration,
-};
+use iroha_client::{client::Client, config::Configuration as ClientConfiguration};
 use iroha_data_model::{events::pipeline, prelude::*};
 use test_network::{Network, Peer as TestPeer, TestRuntime};
 use tokio::runtime::Runtime;

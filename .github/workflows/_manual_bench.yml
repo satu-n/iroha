@@ -1,0 +1,33 @@
+name: Manual Benchmark
+
+on: workflow_dispatch
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    if: ${{ true }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+              ${{ env.CARGO_HOME }}
+              target/
+          key: iroha2-rust-bench-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+              iroha2-rust-bench-
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends \
+            build-essential \
+            ca-certificates \
+            clang \
+            llvm-dev
+      - name: Run benchmarks
+        run: RUST_BACKTRACE=1 cargo bench --workspace --verbose
+      - name: upload benchmark report
+        uses: actions/upload-artifact@v1
+        with:
+          name: Benchmark report
+          path: target/criterion/

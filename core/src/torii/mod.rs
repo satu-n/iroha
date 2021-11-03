@@ -219,6 +219,12 @@ impl<W: WorldTrait> Torii<W> {
             .with(warp::trace::request())
             .recover(Torii::<W>::recover_arg_parse);
 
+        tokio::spawn(async move {
+            start_metrics(state)
+                .await
+                .wrap_err("Failed to start metrics")
+        });
+
         match self.iroha_cfg.torii.api_url.to_socket_addrs() {
             Ok(mut i) => {
                 #[allow(clippy::expect_used)]
@@ -230,6 +236,31 @@ impl<W: WorldTrait> Torii<W> {
                 iroha_logger::error!(%error, "Failed to get socket addr");
                 Err(eyre::Error::new(error))
             }
+        }
+    }
+}
+
+/// Start internal metrics endpoint.
+///
+/// # Errors
+/// Can fail due to listening to network or if http server fails
+async fn start_metrics<W: WorldTrait>(state: ToriiState<W>) -> eyre::Result<()> {
+    let get_router = endpoint1(
+        handle_metrics,
+        warp::path(uri::METRICS).and(add_state(Arc::clone(&state))),
+    );
+    let router = warp::get().and(get_router);
+
+    match state.iroha_cfg.torii.metrics_url.to_socket_addrs() {
+        Ok(mut i) => {
+            #[allow(clippy::expect_used)]
+            let addr = i.next().expect("Failed to get socket addr");
+            warp::serve(router).run(addr).await;
+            Ok(())
+        }
+        Err(e) => {
+            iroha_logger::error!("Failed to get socket addr");
+            Err(eyre::Error::new(e))
         }
     }
 }
@@ -364,6 +395,24 @@ async fn handle_subscription(events: EventsSender, stream: WebSocket) -> eyre::R
     Ok(())
 }
 
+/// Response body for get metrics request
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+pub struct Metrics {
+    /// Number of connected peers
+    peers: u64,
+    /// Number of committed blocks
+    blocks: u64,
+}
+
+#[allow(clippy::unused_async)]
+async fn handle_metrics<W: WorldTrait>(state: ToriiState<W>) -> Result<Json> {
+    let metrics: Metrics = Metrics {
+        peers: state.wsv.peers().len() as u64,
+        blocks: state.wsv.height(),
+    };
+    Ok(reply::json(&metrics))
+}
+
 /// URI that `Torii` uses to route incoming requests.
 pub mod uri {
     /// Query URI is used to handle incoming Query requests.
@@ -382,6 +431,8 @@ pub mod uri {
     pub const PENDING_TRANSACTIONS: &str = "pending_transactions";
     /// The URI for local config changing inspecting
     pub const CONFIGURATION: &str = "configuration";
+    /// URI to report internal metrics for administration
+    pub const METRICS: &str = "metrics";
 }
 
 /// This module contains all configuration related logic.
@@ -391,6 +442,7 @@ pub mod config {
 
     const DEFAULT_TORII_P2P_ADDR: &str = "127.0.0.1:1337";
     const DEFAULT_TORII_API_URL: &str = "127.0.0.1:8080";
+    const DEFAULT_TORII_METRICS_URL: &str = "127.0.0.1:8180";
     const DEFAULT_TORII_MAX_TRANSACTION_SIZE: usize = 2_usize.pow(15);
     const DEFAULT_TORII_MAX_INSTRUCTION_NUMBER: u64 = 2_u64.pow(12);
     const DEFAULT_TORII_MAX_SUMERAGI_MESSAGE_SIZE: usize = 2_usize.pow(12) * 4000;
@@ -405,6 +457,8 @@ pub mod config {
         pub p2p_addr: String,
         /// Torii URL for client API.
         pub api_url: String,
+        /// Torii URL for reporting internal metrics for administration.
+        pub metrics_url: String,
         /// Maximum number of bytes in raw transaction. Used to prevent from DOS attacks.
         pub max_transaction_size: usize,
         /// Maximum number of bytes in raw message. Used to prevent from DOS attacks.
@@ -416,8 +470,9 @@ pub mod config {
     impl Default for ToriiConfiguration {
         fn default() -> Self {
             Self {
-                api_url: DEFAULT_TORII_API_URL.to_owned(),
                 p2p_addr: DEFAULT_TORII_P2P_ADDR.to_owned(),
+                api_url: DEFAULT_TORII_API_URL.to_owned(),
+                metrics_url: DEFAULT_TORII_METRICS_URL.to_owned(),
                 max_transaction_size: DEFAULT_TORII_MAX_TRANSACTION_SIZE,
                 max_sumeragi_message_size: DEFAULT_TORII_MAX_SUMERAGI_MESSAGE_SIZE,
                 max_instruction_number: DEFAULT_TORII_MAX_INSTRUCTION_NUMBER,
@@ -892,5 +947,63 @@ mod tests {
             .status(StatusCode::NOT_FOUND)
             .assert()
             .await
+    }
+    #[tokio::test]
+    async fn metrics() {
+        use iroha_crypto::HashOf;
+
+        use crate::{smartcontracts::Execute, sumeragi::view_change};
+
+        const PEERS: u64 = 10;
+        const BLOCKS: u64 = 20;
+
+        let (torii, keys) = create_torii();
+        let state = torii.create_state();
+
+        let get_router = endpoint1(
+            handle_metrics,
+            warp::path(uri::METRICS).and(add_state(Arc::clone(&state))),
+        );
+        let router = warp::get().and(get_router);
+
+        // Modify number of connected peers
+        let authority = AccountId::new("alice", "wonderland");
+        for i in 0..PEERS {
+            Instruction::Register(RegisterBox::new(Peer::new(PeerId::new(
+                &i.to_string(),
+                &KeyPair::generate().unwrap().public_key,
+            ))))
+            .execute(authority.clone(), &state.wsv)
+            .expect("Failed to register peer");
+        }
+
+        // Modify number of committed blocks
+        let mut hash = HashOf::new(&()).transmute::<VersionedCommittedBlock>();
+
+        for height in 0..BLOCKS {
+            let block = PendingBlock::new(Vec::new());
+            let block = match height {
+                0 => block.chain_first(),
+                _ => block.chain(height, hash, view_change::ProofChain::empty(), Vec::new()),
+            };
+            let block = block
+                .validate(&state.wsv, &AllowAll.into(), &AllowAll.into())
+                .sign(keys.clone())
+                .expect("Failed to sign blocks")
+                .commit();
+            hash = block.hash();
+            state.wsv.apply(block).await;
+        }
+
+        // GET Request
+        let response = warp::test::request()
+            .method("GET")
+            .path("/metrics")
+            .reply(&router)
+            .await;
+        let response_body: Metrics = serde_json::from_slice(response.body()).unwrap();
+
+        assert_eq!(response_body.peers, PEERS);
+        assert_eq!(response_body.blocks, BLOCKS);
     }
 }

@@ -31,6 +31,7 @@ Configuration of iroha is done via options in the following document. Here is de
   "TORII": {
     "P2P_ADDR": "127.0.0.1:1337",
     "API_URL": "127.0.0.1:8080",
+    "METRICS_URL": "127.0.0.1:8180",
     "MAX_TRANSACTION_SIZE": 32768,
     "MAX_SUMERAGI_MESSAGE_SIZE": 16384000,
     "MAX_INSTRUCTION_NUMBER": 4096
@@ -601,6 +602,7 @@ Has type `ToriiConfiguration`. Can be configured via environment variable `IROHA
   "MAX_INSTRUCTION_NUMBER": 4096,
   "MAX_SUMERAGI_MESSAGE_SIZE": 16384000,
   "MAX_TRANSACTION_SIZE": 32768,
+  "METRICS_URL": "127.0.0.1:8180",
   "P2P_ADDR": "127.0.0.1:1337"
 }
 ```
@@ -643,6 +645,16 @@ Has type `usize`. Can be configured via environment variable `TORII_MAX_TRANSACT
 
 ```json
 32768
+```
+
+### `torii.metrics_url`
+
+Torii URL for reporting internal metrics for administration.
+
+Has type `String`. Can be configured via environment variable `TORII_METRICS_URL`
+
+```json
+"127.0.0.1:8180"
 ```
 
 ### `torii.p2p_addr`

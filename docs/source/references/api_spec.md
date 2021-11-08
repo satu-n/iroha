@@ -9,6 +9,7 @@
     - [Listen to Events](#listen-to-events)
     - [Configuration](#configuration)
     - [Health](#health)
+  - [Internal Metrics Endpoint](#internal-metrics-endpoint)
   - [Parity Scale Codec](#parity-scale-codec)
   - [Reference Iroha Client Implementation](#reference-iroha-client-implementation)
   - [Iroha Structures](#iroha-structures)
@@ -138,6 +139,29 @@ Also returns current status of peer in json string:
 ```
 "Healthy"
 ```
+
+## Internal Metrics Endpoint
+
+**Protocol**: HTTP
+
+**Encoding**: Json
+
+**Endpoint**: `/metrics`
+
+**Method**: `GET`
+
+**Expects**: -
+
+**Responses**:
+- 200 OK - reports internal metrics:
+  + Number of connected peers
+  + Number of committed blocks
+  ```json
+  {
+      "peers": 4,
+      "blocks": 1
+  }
+  ```
 
 ## Parity Scale Codec
 

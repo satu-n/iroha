@@ -220,9 +220,9 @@ impl<W: WorldTrait> Torii<W> {
             .recover(Torii::<W>::recover_arg_parse);
 
         tokio::spawn(async move {
-            start_metrics(state)
+            start_status(state)
                 .await
-                .wrap_err("Failed to start metrics")
+                .wrap_err("Failed to start status service")
         });
 
         match self.iroha_cfg.torii.api_url.to_socket_addrs() {
@@ -240,18 +240,18 @@ impl<W: WorldTrait> Torii<W> {
     }
 }
 
-/// Start internal metrics endpoint.
+/// Start status endpoint.
 ///
 /// # Errors
 /// Can fail due to listening to network or if http server fails
-async fn start_metrics<W: WorldTrait>(state: ToriiState<W>) -> eyre::Result<()> {
+async fn start_status<W: WorldTrait>(state: ToriiState<W>) -> eyre::Result<()> {
     let get_router = endpoint1(
-        handle_metrics,
-        warp::path(uri::METRICS).and(add_state(Arc::clone(&state))),
+        handle_status,
+        warp::path(uri::STATUS).and(add_state(Arc::clone(&state))),
     );
     let router = warp::get().and(get_router);
 
-    match state.iroha_cfg.torii.metrics_url.to_socket_addrs() {
+    match state.iroha_cfg.torii.status_url.to_socket_addrs() {
         Ok(mut i) => {
             #[allow(clippy::expect_used)]
             let addr = i.next().expect("Failed to get socket addr");
@@ -395,9 +395,9 @@ async fn handle_subscription(events: EventsSender, stream: WebSocket) -> eyre::R
     Ok(())
 }
 
-/// Response body for get metrics request
+/// Response body for get status request
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
-pub struct Metrics {
+pub struct Status {
     /// Number of connected peers
     peers: u64,
     /// Number of committed blocks
@@ -405,12 +405,12 @@ pub struct Metrics {
 }
 
 #[allow(clippy::unused_async)]
-async fn handle_metrics<W: WorldTrait>(state: ToriiState<W>) -> Result<Json> {
-    let metrics: Metrics = Metrics {
+async fn handle_status<W: WorldTrait>(state: ToriiState<W>) -> Result<Json> {
+    let status: Status = Status {
         peers: state.wsv.peers().len() as u64,
         blocks: state.wsv.height(),
     };
-    Ok(reply::json(&metrics))
+    Ok(reply::json(&status))
 }
 
 /// URI that `Torii` uses to route incoming requests.
@@ -431,8 +431,8 @@ pub mod uri {
     pub const PENDING_TRANSACTIONS: &str = "pending_transactions";
     /// The URI for local config changing inspecting
     pub const CONFIGURATION: &str = "configuration";
-    /// URI to report internal metrics for administration
-    pub const METRICS: &str = "metrics";
+    /// URI to report status for administration
+    pub const STATUS: &str = "status";
 }
 
 /// This module contains all configuration related logic.
@@ -442,7 +442,7 @@ pub mod config {
 
     const DEFAULT_TORII_P2P_ADDR: &str = "127.0.0.1:1337";
     const DEFAULT_TORII_API_URL: &str = "127.0.0.1:8080";
-    const DEFAULT_TORII_METRICS_URL: &str = "127.0.0.1:8180";
+    const DEFAULT_TORII_STATUS_URL: &str = "127.0.0.1:8180";
     const DEFAULT_TORII_MAX_TRANSACTION_SIZE: usize = 2_usize.pow(15);
     const DEFAULT_TORII_MAX_INSTRUCTION_NUMBER: u64 = 2_u64.pow(12);
     const DEFAULT_TORII_MAX_SUMERAGI_MESSAGE_SIZE: usize = 2_usize.pow(12) * 4000;
@@ -457,8 +457,8 @@ pub mod config {
         pub p2p_addr: String,
         /// Torii URL for client API.
         pub api_url: String,
-        /// Torii URL for reporting internal metrics for administration.
-        pub metrics_url: String,
+        /// Torii URL for reporting status for administration.
+        pub status_url: String,
         /// Maximum number of bytes in raw transaction. Used to prevent from DOS attacks.
         pub max_transaction_size: usize,
         /// Maximum number of bytes in raw message. Used to prevent from DOS attacks.
@@ -472,7 +472,7 @@ pub mod config {
             Self {
                 p2p_addr: DEFAULT_TORII_P2P_ADDR.to_owned(),
                 api_url: DEFAULT_TORII_API_URL.to_owned(),
-                metrics_url: DEFAULT_TORII_METRICS_URL.to_owned(),
+                status_url: DEFAULT_TORII_STATUS_URL.to_owned(),
                 max_transaction_size: DEFAULT_TORII_MAX_TRANSACTION_SIZE,
                 max_sumeragi_message_size: DEFAULT_TORII_MAX_SUMERAGI_MESSAGE_SIZE,
                 max_instruction_number: DEFAULT_TORII_MAX_INSTRUCTION_NUMBER,
@@ -948,8 +948,9 @@ mod tests {
             .assert()
             .await
     }
+
     #[tokio::test]
-    async fn metrics() {
+    async fn status() {
         use iroha_crypto::HashOf;
 
         use crate::{smartcontracts::Execute, sumeragi::view_change};
@@ -961,8 +962,8 @@ mod tests {
         let state = torii.create_state();
 
         let get_router = endpoint1(
-            handle_metrics,
-            warp::path(uri::METRICS).and(add_state(Arc::clone(&state))),
+            handle_status,
+            warp::path(uri::STATUS).and(add_state(Arc::clone(&state))),
         );
         let router = warp::get().and(get_router);
 
@@ -998,10 +999,10 @@ mod tests {
         // GET Request
         let response = warp::test::request()
             .method("GET")
-            .path("/metrics")
+            .path("/status")
             .reply(&router)
             .await;
-        let response_body: Metrics = serde_json::from_slice(response.body()).unwrap();
+        let response_body: Status = serde_json::from_slice(response.body()).unwrap();
 
         assert_eq!(response_body.peers, PEERS);
         assert_eq!(response_body.blocks, BLOCKS);

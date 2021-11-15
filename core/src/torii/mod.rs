@@ -29,7 +29,7 @@ use crate::{
         permissions::IsQueryAllowedBoxed,
     },
     wsv::WorldTrait,
-    Configuration,
+    Addr, Configuration, IrohaNetwork,
 };
 
 /// Main network handler and the only entrypoint of the Iroha.
@@ -39,6 +39,7 @@ pub struct Torii<W: WorldTrait> {
     events: EventsSender,
     query_validator: Arc<IsQueryAllowedBoxed<W>>,
     queue: Arc<Queue>,
+    network: Addr<IrohaNetwork>,
 }
 
 /// Torii errors.
@@ -71,6 +72,9 @@ pub enum Error {
     /// Failed to push into queue.
     #[error("Failed to push into queue")]
     PushIntoQueue(#[source] Box<queue::Error>),
+    /// Error while getting or setting configuration
+    #[error("Failed to get network status")]
+    Status(#[source] iroha_actor::Error),
 }
 
 impl Reply for Error {
@@ -92,6 +96,7 @@ impl Reply for Error {
                     queue::Error::SignatureCondition(_) => StatusCode::UNAUTHORIZED,
                     _ => StatusCode::BAD_REQUEST,
                 },
+                Status(_) => StatusCode::INTERNAL_SERVER_ERROR,
             }
         }
 
@@ -124,6 +129,7 @@ impl<W: WorldTrait> Torii<W> {
         queue: Arc<Queue>,
         query_validator: Arc<IsQueryAllowedBoxed<W>>,
         events: EventsSender,
+        network: Addr<IrohaNetwork>,
     ) -> Self {
         Self {
             iroha_cfg,
@@ -131,6 +137,7 @@ impl<W: WorldTrait> Torii<W> {
             events,
             query_validator,
             queue,
+            network,
         }
     }
 
@@ -140,12 +147,14 @@ impl<W: WorldTrait> Torii<W> {
         let queue = Arc::clone(&self.queue);
         let iroha_cfg = self.iroha_cfg.clone();
         let query_validator = Arc::clone(&self.query_validator);
+        let network = self.network.clone();
 
         Arc::new(InnerToriiState {
             iroha_cfg,
             wsv,
             queue,
             query_validator,
+            network,
         })
     }
 
@@ -220,7 +229,7 @@ impl<W: WorldTrait> Torii<W> {
             .recover(Torii::<W>::recover_arg_parse);
 
         tokio::spawn(async move {
-            start_status(state)
+            start_status(Arc::clone(&state))
                 .await
                 .wrap_err("Failed to start status service")
         });
@@ -270,6 +279,7 @@ struct InnerToriiState<W: WorldTrait> {
     wsv: Arc<WorldStateView<W>>,
     queue: Arc<Queue>,
     query_validator: Arc<IsQueryAllowedBoxed<W>>,
+    network: Addr<IrohaNetwork>,
 }
 
 type ToriiState<W> = Arc<InnerToriiState<W>>;
@@ -396,18 +406,24 @@ async fn handle_subscription(events: EventsSender, stream: WebSocket) -> eyre::R
 }
 
 /// Response body for get status request
-#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
 pub struct Status {
-    /// Number of connected peers
-    peers: u64,
+    /// Number of connected peers, except for the reporting peer itself
+    pub peers: u64,
     /// Number of committed blocks
-    blocks: u64,
+    pub blocks: u64,
 }
 
-#[allow(clippy::unused_async)]
 async fn handle_status<W: WorldTrait>(state: ToriiState<W>) -> Result<Json> {
-    let status: Status = Status {
-        peers: state.wsv.peers().len() as u64,
+    let peers = state
+        .network
+        .send(iroha_p2p::network::GetConnectedPeers)
+        .await
+        .map_err(Error::Status)?
+        .peers
+        .len() as u64;
+    let status = Status {
+        peers,
         blocks: state.wsv.height(),
     };
     Ok(reply::json(&status))
@@ -433,6 +449,9 @@ pub mod uri {
     pub const CONFIGURATION: &str = "configuration";
     /// URI to report status for administration
     pub const STATUS: &str = "status";
+    // TODO /// Metrics URI is used to export metrics according to [Prometheus
+    // /// Guidance](https://prometheus.io/docs/instrumenting/writing_exporters/).
+    // pub const METRICS: &str = "/metrics";
 }
 
 /// This module contains all configuration related logic.
@@ -488,6 +507,7 @@ mod tests {
     use std::{convert::TryInto, iter, time::Duration};
 
     use futures::future::FutureExt;
+    use iroha_actor::{broker::Broker, Actor};
     use tokio::time;
 
     use super::*;
@@ -502,7 +522,7 @@ mod tests {
         Configuration::from_path(CONFIGURATION_PATH).expect("Failed to load configuration.")
     }
 
-    fn create_torii() -> (Torii<World>, KeyPair) {
+    async fn create_torii() -> (Torii<World>, KeyPair) {
         let mut config = get_config();
         config
             .load_trusted_peers_from_path(TRUSTED_PEERS_PATH)
@@ -526,16 +546,33 @@ mod tests {
             ),
         );
         let queue = Arc::new(Queue::from_configuration(&config.queue));
+        let network = IrohaNetwork::new(
+            Broker::new(),
+            config.torii.p2p_addr.clone(),
+            config.public_key.clone(),
+            config.network.mailbox,
+        )
+        .await
+        .expect("Failed to create network")
+        .start()
+        .await;
 
         (
-            Torii::from_configuration(config, wsv, queue, Arc::new(AllowAll.into()), events),
+            Torii::from_configuration(
+                config,
+                wsv,
+                queue,
+                Arc::new(AllowAll.into()),
+                events,
+                network,
+            ),
             keys,
         )
     }
 
     #[tokio::test(flavor = "multi_thread")]
     async fn create_and_start_torii() {
-        let (torii, _) = create_torii();
+        let (torii, _) = create_torii().await;
 
         let result = time::timeout(Duration::from_millis(50), torii.start()).await;
 
@@ -544,7 +581,7 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread")]
     async fn torii_pagination() {
-        let (torii, keys) = create_torii();
+        let (torii, keys) = create_torii().await;
         let state = torii.create_state();
 
         let get_domains = |start, limit| {
@@ -646,7 +683,7 @@ mod tests {
 
             use crate::smartcontracts::Execute;
 
-            let (mut torii, keys) = create_torii();
+            let (mut torii, keys) = create_torii().await;
             if self.deny_all {
                 torii.query_validator = Arc::new(DenyAll.into());
             }
@@ -949,16 +986,16 @@ mod tests {
             .await
     }
 
+    // FIXME ? move to client integration tests
     #[tokio::test]
-    async fn status() {
+    async fn status_committed_block() {
         use iroha_crypto::HashOf;
 
-        use crate::{smartcontracts::Execute, sumeragi::view_change};
+        use crate::sumeragi::view_change;
 
-        const PEERS: u64 = 10;
         const BLOCKS: u64 = 20;
 
-        let (torii, keys) = create_torii();
+        let (torii, keys) = create_torii().await;
         let state = torii.create_state();
 
         let get_router = endpoint1(
@@ -967,20 +1004,8 @@ mod tests {
         );
         let router = warp::get().and(get_router);
 
-        // Modify number of connected peers
-        let authority = AccountId::new("alice", "wonderland");
-        for i in 0..PEERS {
-            Instruction::Register(RegisterBox::new(Peer::new(PeerId::new(
-                &i.to_string(),
-                &KeyPair::generate().unwrap().public_key,
-            ))))
-            .execute(authority.clone(), &state.wsv)
-            .expect("Failed to register peer");
-        }
-
         // Modify number of committed blocks
         let mut hash = HashOf::new(&()).transmute::<VersionedCommittedBlock>();
-
         for height in 0..BLOCKS {
             let block = PendingBlock::new(Vec::new());
             let block = match height {
@@ -1004,7 +1029,6 @@ mod tests {
             .await;
         let response_body: Status = serde_json::from_slice(response.body()).unwrap();
 
-        assert_eq!(response_body.peers, PEERS);
         assert_eq!(response_body.blocks, BLOCKS);
     }
 }

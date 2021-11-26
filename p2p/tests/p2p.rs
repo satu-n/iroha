@@ -78,7 +78,7 @@ async fn network_create() {
     broker
         .issue_send(Post {
             data: TestMessage("Some data to send to peer".to_owned()),
-            id: peer1,
+            peer: peer1,
         })
         .await;
 
@@ -164,7 +164,7 @@ async fn two_networks() {
     broker1
         .issue_send(Post {
             data: TestMessage("Some data to send to peer".to_owned()),
-            id: peer2.clone(),
+            peer: peer2.clone(),
         })
         .await;
 
@@ -234,7 +234,7 @@ async fn multiple_networks() {
         for id in &peer_ids {
             let post = Post {
                 data: TestMessage(String::from("Some data to send to peer")),
-                id: id.clone(),
+                peer: id.clone(),
             };
             b.issue_send(post).await;
         }

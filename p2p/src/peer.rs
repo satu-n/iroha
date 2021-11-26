@@ -28,7 +28,7 @@ use tokio::{
 };
 
 use crate::{
-    network::{ConnectionId, PeerMessage, Post, Start, StopSelf},
+    network::{PeerMessage, Post, Start, StopSelf},
     Error, Message, MessageResult,
 };
 
@@ -39,10 +39,8 @@ const MAX_HANDSHAKE_LENGTH: usize = 255;
 pub const DEFAULT_AAD: &[u8; 10] = b"Iroha2 AAD";
 
 #[derive(Debug)]
-/// Peer's connection data. Not to be confused with [`crate::network::Connection`]
+/// P2P connection
 pub struct Connection {
-    /// A unique connection id
-    id: ConnectionId,
     /// Reading half of `TcpStream`
     read: Option<OwnedReadHalf>,
     /// Writing half of `TcpStream`
@@ -53,11 +51,10 @@ pub struct Connection {
 
 impl Connection {
     /// Instantiate new connection from `connection_id` and `stream`.
-    pub fn new(connection_id: ConnectionId, stream: TcpStream) -> Self {
+    pub fn new(stream: TcpStream) -> Self {
         let (read, write) = stream.into_split();
         // let outgoing = read.is_none() && write.is_none();
         Connection {
-            id: connection_id,
             read: Some(read),
             write: Some(write),
             // outgoing,
@@ -69,7 +66,6 @@ impl Connection {
 impl Default for Connection {
     fn default() -> Self {
         Self {
-            id: rand::random(),
             read: None,
             write: None,
             finish_sender: None,
@@ -202,23 +198,6 @@ where
             | Peer::Ready(id, _, _, _)
             | Peer::Disconnected(id)
             | Peer::Error(id, _) => id,
-        }
-    }
-
-    /// [`Peer`]'s [`crate::peer::Connection`]'s `id`.
-    ///
-    /// # Errors
-    /// If peer is either `Connecting`, `Disconnected`, or `Error`-ed
-    pub fn connection_id(&self) -> Result<ConnectionId, Error> {
-        match self {
-            Peer::Connecting(_, _) => Err(Error::Handshake(std::line!())),
-            Peer::ConnectedTo(_, _, connection)
-            | Peer::ConnectedFrom(_, _, connection)
-            | Peer::SendKey(_, _, connection, _)
-            | Peer::GetKey(_, _, connection, _)
-            | Peer::Ready(_, _, connection, _) => Ok(connection.id),
-            Peer::Disconnected(_) => Err(Error::Handshake(std::line!())),
-            Peer::Error(_, _) => Err(Error::Handshake(std::line!())),
         }
     }
 
@@ -399,7 +378,7 @@ where
         }
     }
 
-    /// Establish a [`crate::Peer::Connection`] with external
+    /// Establish a [`Connection`] with external
     /// peer. The external peer's address is encoded in
     /// `self.id.address`.
     /// # Errors
@@ -412,7 +391,7 @@ where
             debug!(peer_addr = ?addr, "Connecting");
             let stream = TcpStream::connect(addr.clone()).await?;
             debug!(peer_addr = ?addr, "Connected to");
-            let connection = Connection::new(rand::random(), stream);
+            let connection = Connection::new(stream);
             Ok(Self::ConnectedTo(id, broker, connection))
         } else {
             Err(Error::Handshake(std::line!()))
@@ -438,7 +417,6 @@ where
             Peer::Error(_, _) => f.debug_struct("Error"),
         }
         .field("id.address", &self.id().address)
-        .field("connection.id", &self.connection_id())
         .finish_non_exhaustive()
     }
 }
@@ -489,7 +467,7 @@ where
         }
         if let Self::Ready(id, broker, mut connection, crypto) = dummy {
             debug!(peer_addr = %id.address, "Handshake finished");
-            let message = PeerMessage::<T>::Connected(id.clone(), connection.id);
+            let message = PeerMessage::<T>::Connected(id.clone());
             broker.issue_send(message).await;
 
             #[allow(clippy::unwrap_used)]
@@ -518,13 +496,13 @@ where
     type Result = ();
 
     async fn handle(&mut self, MessageResult(msg): MessageResult) {
-        if let Self::Ready(id, broker, connection, crypto) = self {
+        if let Self::Ready(id, broker, _, crypto) = self {
             let message = match msg {
                 Ok(message) => message,
                 Err(error) => {
                     warn!(%error, "Error reading message");
                     // TODO implement some recovery
-                    let message = PeerMessage::<T>::Disconnected(id.clone(), connection.id);
+                    let message = PeerMessage::<T>::Disconnected(id.clone());
                     broker.issue_send(message).await;
                     return;
                 }
@@ -609,33 +587,29 @@ where
 {
     type Result = ();
 
-    async fn handle(&mut self, ctx: &mut Context<Self>, message: StopSelf) {
+    async fn handle(&mut self, ctx: &mut Context<Self>, msg: StopSelf) {
         trace!(peer = ?self, "Stop request");
-        let stop_self = match message {
-            StopSelf::Peer(id) => match self.connection_id() {
-                Ok(my_id) => id == my_id,
-                Err(_) => false,
-            },
-            StopSelf::Network => true,
-        };
-        if stop_self {
-            match self {
-                Peer::ConnectedTo(_, _, connection)
-                | Peer::ConnectedFrom(_, _, connection)
-                | Peer::SendKey(_, _, connection, _)
-                | Peer::GetKey(_, _, connection, _)
-                | Peer::Ready(_, _, connection, _) => {
-                    if let Some(sender) = connection.finish_sender.take() {
-                        let _ = sender.send(());
-                    }
-                }
-                _ => (),
-            };
-            info!(peer = ?self, "Stopping.");
-            let mut disconnected = Self::Disconnected(self.id().clone());
-            std::mem::swap(&mut disconnected, self);
-            ctx.stop_now();
+        if let StopSelf::Peer(id) = msg {
+            if id != *self.id() {
+                return;
+            }
         }
+        match self {
+            Peer::ConnectedTo(_, _, connection)
+            | Peer::ConnectedFrom(_, _, connection)
+            | Peer::SendKey(_, _, connection, _)
+            | Peer::GetKey(_, _, connection, _)
+            | Peer::Ready(_, _, connection, _) => {
+                if let Some(sender) = connection.finish_sender.take() {
+                    let _ = sender.send(());
+                }
+            }
+            _ => (),
+        };
+        info!(peer = ?self, "Stopping.");
+        let mut disconnected = Self::Disconnected(self.id().clone());
+        std::mem::swap(&mut disconnected, self);
+        ctx.stop_now();
     }
 }
 

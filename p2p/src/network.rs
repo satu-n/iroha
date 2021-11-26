@@ -2,6 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::{Debug, Formatter},
     io,
+    net::SocketAddr,
 };
 
 use async_stream::stream;
@@ -29,13 +30,20 @@ use crate::{
     Error,
 };
 
-/// Peer actor and its connection ID
-#[derive(Clone, Debug)]
-pub struct Connection<T, K, E>(Addr<Peer<T, K, E>>, ConnectionId)
-where
-    T: Debug + Encode + Decode + BrokerMessage + Send + Sync + Clone + 'static,
-    K: KeyExchangeScheme + Send + 'static,
-    E: Encryptor + Send + 'static;
+type Peers<T, K, E> = HashMap<PeerId, Addr<Peer<T, K, E>>>;
+
+// SATO
+// /// Reference as a means of communication with a [`Peer`]
+// #[derive(Clone, Debug)]
+// pub struct RefPeer<T, K, E>
+// where
+//     T: Debug + Encode + Decode + BrokerMessage + Send + Sync + Clone + 'static,
+//     K: KeyExchangeScheme + Send + 'static,
+//     E: Encryptor + Send + 'static,
+// {
+//     id: PeerId,
+//     addr: Addr<Peer<T, K, E>>,
+// }
 
 /// Base network layer structure, holding connections, called
 /// [`Peer`]s.
@@ -45,12 +53,12 @@ where
     K: KeyExchangeScheme + Send + 'static,
     E: Encryptor + Send + 'static,
 {
-    /// Listenting address for incoming connections. Must parse into [`std::net::SocketAddr`].
+    /// Listening address for incoming connections. Must parse into [`std::net::SocketAddr`].
     listen_addr: String,
     /// [`Peer`]s performing [`Peer::handshake`]
-    pub new_peers: HashMap<ConnectionId, Addr<Peer<T, K, E>>>,
+    pub new_peers: Peers<T, K, E>,
     /// Current [`Peer`]s in `Ready` state.
-    pub peers: HashMap<PublicKey, Vec<Connection<T, K, E>>>,
+    pub peers: HashMap<PublicKey, Peers<T, K, E>>,
     /// [`TcpListener`] that is accepting [`Peer`]s' connections
     pub listener: Option<TcpListener>,
     /// Our app-level public key
@@ -69,7 +77,7 @@ where
     K: KeyExchangeScheme + Send + 'static,
     E: Encryptor + Send + 'static,
 {
-    /// Create a network structure, holding [`Connection`]s to other nodes.
+    /// Create a network structure, holding channels to other peers in [`Peers`]
     ///
     /// # Errors
     /// If unable to start listening on specified `listen_addr` in
@@ -97,7 +105,6 @@ where
     /// Yield a stream of accepted peer connections.
     fn listener_stream(
         listener: TcpListener,
-        public_key: PublicKey,
         mut finish: Receiver<()>,
     ) -> impl Stream<Item = NewPeer> + Send + 'static {
         #[allow(clippy::unwrap_used)]
@@ -109,8 +116,7 @@ where
                         match accept {
                             Ok((stream, addr)) => {
                                 debug!(%listen_addr, from_addr = %addr, "Accepted connection");
-                                let id = PeerId { address: addr.to_string(), public_key: public_key.clone() };
-                                let new_peer: NewPeer = NewPeer(Ok((stream, id)));
+                                let new_peer = NewPeer(Ok((stream, addr)));
                                 yield new_peer;
                             },
                             Err(error) => {
@@ -128,6 +134,14 @@ where
             }
         }
     }
+
+    fn count_new_peers(&self) -> usize {
+        self.new_peers.len()
+    }
+
+    fn count_peers(&self) -> usize {
+        self.peers.values().map(|peers| peers.len()).sum()
+    }
 }
 
 impl<T, K, E> Debug for NetworkBase<T, K, E>
@@ -138,7 +152,7 @@ where
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Network")
-            .field("peers", &self.peers.len())
+            .field("peers", &self.count_peers())
             .finish()
     }
 }
@@ -175,7 +189,6 @@ where
             .expect("Unreachable, as it is supposed to have listener on the start");
         ctx.notify_with_context(Self::listener_stream(
             listener,
-            self.public_key.clone(),
             receiver,
         ));
     }
@@ -190,28 +203,28 @@ where
 {
     type Result = ();
 
-    async fn handle(&mut self, ConnectPeer { mut id }: ConnectPeer) {
+    async fn handle(&mut self, msg: ConnectPeer) {
         debug!(
-            %self.listen_addr, peer.id = ?id,
-            "Creating new peer actor",
+            %self.listen_addr, ?msg
         );
-        id.public_key = self.public_key.clone();
-        let peer = match Peer::new_to(id, self.broker.clone()).await {
+
+        // SATO
+        // Preparation for key exchange in handshake
+        // id.public_key = self.public_key.clone();
+
+        let key_exchange_ready_peer = PeerId::new(&msg.id.address, &self.public_key);
+
+        let peer = match Peer::new_to(key_exchange_ready_peer, self.broker.clone()).await {
             Ok(peer) => peer,
             Err(error) => {
                 warn!(%error, "Unable to create peer");
                 return;
             }
         };
-
-        #[allow(clippy::expect_used)]
-        let conn_id = peer
-            .connection_id()
-            .expect("has connection by construction.");
-        let peer = peer.start().await;
-        debug!(?peer, %conn_id, "Inserting into new_peers");
-        self.new_peers.insert(conn_id, peer.clone());
-        peer.do_send(Start).await;
+        let addr = peer.start().await;
+        self.new_peers.insert(msg.id.clone(), addr.clone());
+        addr.do_send(Start).await;
+        debug!(peer.id = ?msg.id, "Starting new peer");
     }
 }
 
@@ -225,13 +238,21 @@ where
     type Result = ();
 
     async fn handle(&mut self, msg: Post<T>) {
-        match self.peers.get(&msg.id.public_key) {
-            Some(peers) if !peers.is_empty() => peers[0].0.do_send(msg).await,
-            None if msg.id.public_key == self.public_key => debug!("Not sending message to myself"),
-            Some(_) | None => warn!(
-                peer.id=?msg.id,
-                "Didn't find peer to send message",
-            ),
+        match self
+            .peers
+            .get(&msg.peer.public_key)
+            .and_then(|peers| peers.get(&msg.peer))
+        {
+            Some(addr) => addr.do_send(msg).await,
+            _ => {
+                if msg.peer == PeerId::new(&self.listen_addr, &self.public_key) {
+                    return debug!("Not sending message to myself");
+                }
+                warn!(
+                    peer.id = ?msg.peer,
+                    "Didn't find peer to send message",
+                );
+            }
         }
     }
 }
@@ -248,40 +269,36 @@ where
     async fn handle(&mut self, msg: PeerMessage<T>) {
         use PeerMessage::*;
 
+        debug!(?msg);
         match msg {
-            Connected(id, conn_id) => {
-                debug!(%conn_id, "Connected");
-                let peers = self.peers.entry(id.public_key).or_default();
-                if let Some(peer) = self.new_peers.remove(&conn_id) {
-                    let connection = Connection(peer, conn_id);
-                    peers.push(connection);
+            Connected(id) => {
+                let peers = self.peers.entry(id.public_key.clone()).or_default();
+                if let Some(addr) = self.new_peers.remove(&id) {
+                    peers.insert(id, addr);
                 }
-                let count = self.peers.values().filter(|conn| !conn.is_empty()).count();
-                let addr: &str = &self.listen_addr;
                 info!(
-                    listen_addr = addr,
-                    prev_peer_count = count,
-                    new_peer_count = self.new_peers.len(),
-                    "Connected new peer."
+                    %self.listen_addr,
+                    count_new_peers = self.count_new_peers(),
+                    count_peers = self.count_peers(),
+                    "Peer connected"
                 );
             }
-            Disconnected(id, conn_id) => {
-                info!(peer.id = ?id, conn_id = %conn_id, "Peer disconnected");
-                let connections = self.peers.entry(id.public_key).or_default();
-                connections.retain(|connection| connection.1 != conn_id);
-                // If this connection didn't have the luck to connect
-                self.new_peers.remove(&conn_id);
-                self.broker.issue_send(StopSelf::Peer(conn_id)).await;
-                let count = self.peers.values().filter(|conn| !conn.is_empty()).count();
+            Disconnected(id) => {
+                let peers = self.peers.entry(id.public_key.clone()).or_default();
+                peers.remove(&id);
+
+                // In case the peer is new and has failed to connect
+                self.new_peers.remove(&id);
+
+                self.broker.issue_send(StopSelf::Peer(id)).await;
                 info!(
-                    listen_addr = %self.listen_addr,
-                    peer_addr = %id.address,
-                    peer.count = %count,
-                    "Disconnected peer",
+                    %self.listen_addr,
+                    count_new_peers = self.count_new_peers(),
+                    count_peers = self.count_peers(),
+                    "Peer disconnected"
                 );
             }
             Message(_id, msg) => {
-                //info!(msg = %message, "PeerMessage::Message");
                 self.broker.issue_send(*msg).await;
             }
         };
@@ -297,8 +314,8 @@ where
 {
     type Result = ();
 
-    async fn handle(&mut self, ctx: &mut Context<Self>, message: StopSelf) {
-        match message {
+    async fn handle(&mut self, ctx: &mut Context<Self>, msg: StopSelf) {
+        match msg {
             StopSelf::Peer(_) => {}
             StopSelf::Network => {
                 debug!("Stopping Network");
@@ -310,8 +327,8 @@ where
                     .values()
                     .map(|peers| {
                         let futures = peers
-                            .iter()
-                            .map(|peer| peer.0.do_send(message))
+                            .values()
+                            .map(|addr| addr.do_send(msg.clone()))
                             .collect::<Vec<_>>();
                         futures::future::join_all(futures)
                     })
@@ -332,12 +349,12 @@ where
 {
     type Result = ConnectedPeers;
 
-    async fn handle(&mut self, GetConnectedPeers: GetConnectedPeers) -> Self::Result {
+    async fn handle(&mut self, _msg: GetConnectedPeers) -> Self::Result {
         let peers = self
             .peers
-            .iter()
-            .filter(|(_, conn)| !conn.is_empty())
-            .map(|(key, _)| key.clone())
+            .values()
+            .flat_map(|peers| peers.keys())
+            .map(|id| id.to_owned())
             .collect();
 
         ConnectedPeers { peers }
@@ -353,24 +370,24 @@ where
 {
     type Result = ();
 
-    async fn handle(&mut self, NewPeer(peer): NewPeer) {
-        let (stream, id) = match peer {
-            Ok(peer) => peer,
+    async fn handle(&mut self, NewPeer(conn_result): NewPeer) {
+        let (stream, soc_addr) = match conn_result {
+            Ok(conn) => conn,
             Err(error) => {
                 warn!(%error, "Error in listener!");
                 return;
             }
         };
-        let peer = Peer::ConnectedFrom(
-            id.clone(),
+        let key_exchange_ready_peer = Peer::ConnectedFrom(
+            PeerId::new(&soc_addr.to_string(), &self.public_key),
             self.broker.clone(),
             crate::peer::Connection::from(stream),
         );
-        #[allow(clippy::expect_used)]
-        let connection_id = peer.connection_id().expect("Succeeds by construction");
-        let peer = peer.start().await;
-        self.new_peers.insert(connection_id, peer.clone());
-        peer.do_send(Start).await;
+        let addr = key_exchange_ready_peer.start().await;
+        // SATO incoming peer's key is unknown yet!
+        let new_peer = PeerId::new(&soc_addr.to_string(), &unknown.public_key);
+        self.new_peers.insert(new_peer, addr.clone());
+        addr.do_send(Start).await;
     }
 }
 
@@ -394,19 +411,16 @@ pub struct GetConnectedPeers;
 #[derive(Clone, Debug, iroha_actor::Message)]
 pub struct ConnectedPeers {
     /// Connected peers' ids
-    pub peers: HashSet<PublicKey>,
+    pub peers: HashSet<PeerId>,
 }
-
-/// The [`Connection`]'s `id`.
-pub type ConnectionId = u64;
 
 /// Variants of messages from [`Peer`] - connection state changes and data messages
 #[derive(Clone, Debug, iroha_actor::Message, Decode)]
 pub enum PeerMessage<T: Encode + Decode + Debug> {
     /// [`Peer`] finished handshake and `Ready`
-    Connected(PeerId, ConnectionId),
+    Connected(PeerId),
     /// [`Peer`] `Disconnected`
-    Disconnected(PeerId, ConnectionId),
+    Disconnected(PeerId),
     /// [`Peer`] sent a message
     Message(PeerId, Box<T>),
 }
@@ -414,21 +428,21 @@ pub enum PeerMessage<T: Encode + Decode + Debug> {
 /// The message to be sent to the other [`Peer`].
 #[derive(Clone, Debug, iroha_actor::Message, Encode)]
 pub struct Post<T: Encode + Debug> {
-    /// Data to send to another peer
+    /// Data to be sent
     pub data: T,
-    /// Peer identification
-    pub id: PeerId,
+    /// Destination peer
+    pub peer: PeerId,
 }
 
-/// The message to stop the [`Peer`] with included [`ConnectionId`].
-#[derive(Clone, Copy, Debug, iroha_actor::Message, Encode)]
+/// The message sent to [`Peer`] or [`NetworkBase`] to stop it.
+#[derive(Clone, Debug, iroha_actor::Message, Encode)]
 pub enum StopSelf {
     /// Stop selected peer
-    Peer(ConnectionId),
+    Peer(PeerId),
     /// Stop whole network
     Network,
 }
 
 /// The result of an incoming [`Peer`] connection.
 #[derive(Debug, iroha_actor::Message)]
-pub struct NewPeer(pub io::Result<(TcpStream, PeerId)>);
+pub struct NewPeer(pub io::Result<(TcpStream, SocketAddr)>);

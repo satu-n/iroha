@@ -358,7 +358,7 @@ pub mod message {
             let data = NetworkMessage::BlockSync(Box::new(VersionedMessage::from(self)));
             let message = Post {
                 data,
-                id: peer.clone(),
+                peer: peer.clone(),
             };
             broker.issue_send(message).await;
         }

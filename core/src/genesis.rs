@@ -143,7 +143,7 @@ async fn check_peers_status(
         .sorted_peers()
         .iter()
         .cloned()
-        .partition(|id| peers.contains(&id.public_key) || this_peer_id.public_key == id.public_key);
+        .partition(|id| peers.contains(&id) || this_peer_id == id);
 
     (online, offline)
 }

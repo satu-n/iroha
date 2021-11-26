@@ -50,19 +50,19 @@ fn connected_peers() {
 
     // Confirm all peers connected
     n_peers = client.get_status().unwrap().peers;
-    assert_eq!(n_peers, N_PEERS - 1);
+    assert_eq!(n_peers, N_PEERS);
 
     // Add a peer then #peers should be incremented
     let (mut peer, _) = rt.block_on(network.add_peer());
     n_peers = client.get_status().unwrap().peers;
-    assert_eq!(n_peers, N_PEERS);
+    assert_eq!(n_peers, N_PEERS + 1);
 
     // Drop the peer then #peers should be decremented
     peer.stop();
     thread::sleep(pipeline_time * 5);
     n_peers = client.get_status().unwrap().peers;
-    // FIXME 'assertion failed: `(left == right)` left: `4`, right: `3`'
-    assert_eq!(n_peers, N_PEERS - 1);
+    // FIXME 'assertion failed: `(left == right)` left: `5`, right: `4`'
+    assert_eq!(n_peers, N_PEERS);
 }
 
 #[test]

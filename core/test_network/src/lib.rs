@@ -227,7 +227,7 @@ where
 
     /// Removes peer from network
     pub async fn remove_peer(&self, peer: Peer, client: &mut Client) {
-        let remove_peer = UnregisterBox::new(IdentifiableBox::Peer(peer.into()));
+        let remove_peer = UnregisterBox::new(IdBox::PeerId(peer.id.clone()));
         client.submit(remove_peer).expect("Failed to remove peer.");
     }
 

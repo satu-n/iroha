@@ -17,7 +17,7 @@ use iroha_crypto::{HashOf, KeyPair};
 use iroha_data_model::{
     current_time, events::Event, peer::Id as PeerId, transaction::VersionedTransaction,
 };
-use iroha_logger::Instrument;
+use iroha_logger::{Instrument, info};
 use iroha_p2p::{ConnectPeer, DisconnectPeer};
 use network_topology::{Role, Topology};
 use rand::prelude::SliceRandom;
@@ -461,6 +461,10 @@ impl<G: GenesisNetworkTrait, K: KuraTrait, W: WorldTrait> Sumeragi<G, K, W> {
     #[allow(clippy::expect_used)]
     pub async fn update_network_topology(&mut self) {
         let wsv_peers: HashSet<_> = self.wsv.trusted_peers_ids().clone().into_iter().collect();
+        
+        // SATO
+        let expected = wsv_peers.len();
+
         let topology_peers: HashSet<_> = self.topology.sorted_peers().iter().cloned().collect();
         if topology_peers != wsv_peers {
             self.topology = self.topology
@@ -471,6 +475,10 @@ impl<G: GenesisNetworkTrait, K: KuraTrait, W: WorldTrait> Sumeragi<G, K, W> {
                 // TODO: Check it during instruction execution.
                 .expect("The safety of changing the number of peers should have been checked at Instruction execution stage.");
         }
+
+        // SATO
+        info!(%expected, before = topology_peers.len(), 
+        after = self.topology.sorted_peers().len(), "SATO topology updated");
     }
 
     /// Returns `true` if some block is in discussion, `false` otherwise.
@@ -866,6 +874,7 @@ impl<G: GenesisNetworkTrait, K: KuraTrait, W: WorldTrait> Sumeragi<G, K, W> {
         iroha_logger::debug!("Connecting peers...");
         let peers_expected = {
             let mut res = self.topology.sorted_peers().to_owned();
+            res.retain(|id| id.address != self.peer_id.address);
             res.shuffle(&mut rand::thread_rng());
             res
         };
@@ -880,7 +889,6 @@ impl<G: GenesisNetworkTrait, K: KuraTrait, W: WorldTrait> Sumeragi<G, K, W> {
 
         for peer_to_be_connected in peers_expected
             .iter()
-            .filter(|id| id.address != self.peer_id.address)
             .filter(|id| !peers_online.contains(&id.public_key))
         {
             iroha_logger::info!(%peer_to_be_connected.address, "Connecting peer");

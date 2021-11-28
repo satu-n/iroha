@@ -47,21 +47,31 @@ fn connected_peers() {
     let (rt, network, mut client) = <TestNetwork>::start_test_with_runtime(N_PEERS as u32, 1);
     let pipeline_time = Configuration::pipeline_time();
     client.status_url.insert_str(0, "http://");
+    thread::sleep(pipeline_time * 2);
 
     // Confirm all peers connected
     n_peers = client.get_status().unwrap().peers;
     assert_eq!(n_peers, N_PEERS - 1);
 
+    let wsv_peers = network.genesis.iroha.as_ref().unwrap().wsv.trusted_peers_ids().len();
+    iroha_logger::info!(%wsv_peers, "SATO wsv peers");
+
     // Add a peer then #peers should be incremented
     let (peer, _) = rt.block_on(network.add_peer());
-    thread::sleep(pipeline_time * 2);
+    thread::sleep(pipeline_time * 5);
     n_peers = client.get_status().unwrap().peers;
     assert_eq!(n_peers, N_PEERS);
 
+    let wsv_peers = network.genesis.iroha.as_ref().unwrap().wsv.trusted_peers_ids().len();
+    iroha_logger::info!(%wsv_peers, "SATO wsv peers");
+
     // Remove the peer then #peers should be decremented
-    rt.block_on(network.remove_peer(peer, &mut client));
+    iroha_logger::info!("<target>");
+    let remove_peer = UnregisterBox::new(IdBox::PeerId(peer.id.clone()));
+    client.submit(remove_peer).expect("Failed to remove peer.");
     thread::sleep(pipeline_time * 5);
     n_peers = client.get_status().unwrap().peers;
+    iroha_logger::info!("</target>");
     // FIXME 'assertion failed: `(left == right)` left: `4`, right: `3`'
     assert_eq!(n_peers, N_PEERS - 1);
 }

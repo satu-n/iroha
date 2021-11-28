@@ -409,6 +409,8 @@ async fn handle_subscription(events: EventsSender, stream: WebSocket) -> eyre::R
 }
 
 async fn handle_status<W: WorldTrait>(state: ToriiState<W>) -> Result<Json> {
+    // SATO
+    iroha_logger::info!("SATO status request");
     let peers = state
         .network
         .send(iroha_p2p::network::GetConnectedPeers)
@@ -420,6 +422,7 @@ async fn handle_status<W: WorldTrait>(state: ToriiState<W>) -> Result<Json> {
         peers,
         blocks: state.wsv.height(),
     };
+    iroha_logger::info!(?status, "SATO got status");
     Ok(reply::json(&status))
 }
 

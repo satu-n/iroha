@@ -2,7 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::{Debug, Formatter},
     io,
-    net::SocketAddr,
+    net::{IpAddr, SocketAddr},
 };
 
 use async_stream::stream;
@@ -57,8 +57,8 @@ where
     pub new_peers: HashMap<ConnectionId, Addr<Peer<T, K, E>>>,
     /// Current [`Peer`]s in `Ready` state.
     pub peers: HashMap<PublicKey, RefPeer<T, K, E>>,
-    /// [`PeerId.address`] set whose member is inserted by [`DisconnectPeer`] and removed by [`ConnectPeer`] from Sumeragi
-    untrusted_peers: HashSet<SocketAddr>,
+    /// Untrusted [`IpAddr`]s of remote peers: inserted by [`DisconnectPeer`] and removed by [`ConnectPeer`] from Sumeragi
+    untrusted_peers: HashSet<IpAddr>,
     /// [`TcpListener`] that is accepting [`Peer`]s' connections
     pub listener: Option<TcpListener>,
     /// Our app-level public key
@@ -201,7 +201,7 @@ where
             "Creating new peer actor",
         );
         // SATO
-        self.untrusted_peers.remove(&msg.address.parse().unwrap());
+        self.untrusted_peers.remove(&msg.address.parse::<SocketAddr>().unwrap().ip());
         let peer_to_key_exchange = match Peer::new_to(
             PeerId::new(&msg.address, &self.public_key),
             self.broker.clone(),
@@ -242,7 +242,7 @@ where
         debug!(listen_addr = %self.listen_addr, %peer.conn_id, "Disconnecting peer");
 
         // SATO
-        self.untrusted_peers.insert(peer.soc_addr);
+        self.untrusted_peers.insert(peer.soc_addr.ip());
         info!(peers = self.peers.len(), "SATO DisconnectPeer");
 
         self.broker.issue_send(StopSelf::Peer(peer.conn_id)).await
@@ -392,7 +392,8 @@ where
                 return;
             }
         };
-        if self.untrusted_peers.contains(&soc_addr) {
+        info!(%soc_addr, ?self.untrusted_peers, "SATO trust check");
+        if self.untrusted_peers.contains(&soc_addr.ip()) {
             return debug!(%soc_addr, "Untrusted new peer");
         }
         let peer_to_key_exchange = Peer::ConnectedFrom(

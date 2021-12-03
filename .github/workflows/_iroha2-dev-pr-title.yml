@@ -1,0 +1,55 @@
+name: TEST Check PR Title
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check_pr_title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions-ecosystem/action-regex-match@v2
+        id: fix-match-0
+        with:
+          text: 'okay'
+          regex: 'okay'
+
+      - uses: actions-ecosystem/action-regex-match@v2
+        id: fix-match-1
+        with:
+          text: '0'
+          regex: '[[:digit:]]'
+
+      - uses: actions-ecosystem/action-regex-match@v2
+        id: fix-match-2
+        with:
+          text: '0'
+          regex: '\d'
+
+      - uses: actions-ecosystem/action-regex-match@v2
+        id: fix-match-3
+        with:
+          text: '#'
+          regex: '\#'
+
+      - uses: actions-ecosystem/action-regex-match@v2
+        id: fix-match-4
+        with:
+          text: '#'
+          regex: '#'
+
+      - uses: actions-ecosystem/action-regex-match@v2
+        id: fix-match-5
+        with:
+          text: '[fix] #0, #1234, #56789: Title'
+          regex: '^\[fix\] #\d+(, #\d+)*: .+$'
+
+      - name: Result
+        run: |
+          echo "${{ steps.fix-match-0.outputs.match }}"
+          echo "${{ steps.fix-match-1.outputs.match }}"
+          echo "${{ steps.fix-match-2.outputs.match }}"
+          echo "${{ steps.fix-match-3.outputs.match }}"
+          echo "${{ steps.fix-match-4.outputs.match }}"
+          echo "${{ steps.fix-match-5.outputs.match }}"

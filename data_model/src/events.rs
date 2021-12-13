@@ -117,7 +117,7 @@ pub mod data {
         Created,
         /// Entity's state was changed, any parameter updated it's value.
         Updated,
-        /// Entity was archived or by any other way was put into state that guarantees absense of
+        /// Entity was archived or by any other way was put into state that guarantees absence of
         /// [`Updated`](`Status::Updated`) events for this entity.
         Deleted,
     }
@@ -211,7 +211,7 @@ pub mod pipeline {
             }
         }
 
-        /// Filter by enitity.
+        /// Filter by entity.
         pub const fn by_entity(entity: EntityType) -> EventFilter {
             EventFilter {
                 entity: Some(entity),

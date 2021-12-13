@@ -22,6 +22,7 @@ use crate::{
     block::Chain,
     prelude::*,
     smartcontracts::{Execute, FindError},
+    event::EventsSender,
 };
 
 /// World trait for mocking
@@ -66,6 +67,8 @@ pub struct WorldStateView<W: WorldTrait> {
     pub transactions: DashSet<HashOf<VersionedTransaction>>,
     /// Metrics for prometheus endpoint.
     pub metrics: Arc<Metrics>,
+    // TODO Switch to `watch::Sender`, whose original receiver will be passed into `Broker` and cloned for consumers
+    events_sender: Option<EventsSender>,
 }
 
 impl<W: WorldTrait + Default> Default for WorldStateView<W> {
@@ -102,20 +105,23 @@ impl WorldTrait for World {
 impl<W: WorldTrait> WorldStateView<W> {
     /// Default `WorldStateView` constructor.
     pub fn new(world: W) -> Self {
-        WorldStateView {
-            world,
-            config: Configuration::default(),
-            transactions: DashSet::new(),
-            blocks: Arc::new(Chain::new()),
-            metrics: Arc::new(Metrics::default()),
-        }
+        WorldStateView::from_config(Configuration::default(), world)
     }
 
     /// [`WorldStateView`] constructor.
     pub fn from_config(config: Configuration, world: W) -> Self {
+        WorldStateView::with_events(None, config, world)
+    }
+
+    /// Construct [`WorldStateView`] enabling emitting events
+    pub fn with_events(events_sender: Option<EventsSender>, config: Configuration, world: W) -> Self {
         WorldStateView {
+            world,
             config,
-            ..WorldStateView::new(world)
+            transactions: DashSet::new(),
+            blocks: Arc::new(Chain::new()),
+            metrics: Arc::new(Metrics::default()),
+            events_sender,
         }
     }
 

@@ -26,7 +26,7 @@ pub mod isi {
             wsv: &WorldStateView<W>,
         ) -> Result<(), Error> {
             let account = self.object;
-            account.validate_len(wsv.config.ident_length_limits)?;
+            account.id.name.validate_len(wsv.config.ident_length_limits)?;
             let name = account.id.domain_name.clone();
             match wsv.domain_mut(&name)?.accounts.entry(account.id.clone()) {
                 Entry::Occupied(_) => {
@@ -71,7 +71,7 @@ pub mod isi {
             wsv: &WorldStateView<W>,
         ) -> Result<(), Error> {
             let asset_definition = self.object;
-            asset_definition.validate_len(wsv.config.ident_length_limits)?;
+            asset_definition.id.name.validate_len(wsv.config.ident_length_limits)?;
             let name = asset_definition.id.domain_name.clone();
             let mut domain = wsv.domain_mut(&name)?;
             match domain.asset_definitions.entry(asset_definition.id.clone()) {
@@ -123,7 +123,7 @@ pub mod isi {
         }
     }
 
-    impl<W: WorldTrait> Execute<W> for SetKeyValue<AssetDefinition, String, Value> {
+    impl<W: WorldTrait> Execute<W> for SetKeyValue<AssetDefinition, Name, Value> {
         type Error = Error;
 
         #[metrics(+"set_key_value_asset_def")]
@@ -144,7 +144,7 @@ pub mod isi {
         }
     }
 
-    impl<W: WorldTrait> Execute<W> for RemoveKeyValue<AssetDefinition, String> {
+    impl<W: WorldTrait> Execute<W> for RemoveKeyValue<AssetDefinition, Name> {
         type Error = Error;
 
         #[metrics(+"remove_key_value_asset_def")]
@@ -165,7 +165,7 @@ pub mod isi {
         }
     }
 
-    impl<W: WorldTrait> Execute<W> for SetKeyValue<Domain, String, Value> {
+    impl<W: WorldTrait> Execute<W> for SetKeyValue<Domain, Name, Value> {
         type Error = Error;
 
         #[metrics(+"set_key_value_domain")]
@@ -188,7 +188,7 @@ pub mod isi {
         }
     }
 
-    impl<W: WorldTrait> Execute<W> for RemoveKeyValue<Domain, String> {
+    impl<W: WorldTrait> Execute<W> for RemoveKeyValue<Domain, Name> {
         type Error = Error;
 
         #[metrics(+"remove_key_value_domain")]
@@ -229,7 +229,7 @@ pub mod query {
         }
     }
 
-    impl<W: WorldTrait> ValidQuery<W> for FindDomainByName {
+    impl<W: WorldTrait> ValidQuery<W> for FindDomainById {
         #[metrics(+"find_domain_by_name")]
         fn execute(&self, wsv: &WorldStateView<W>) -> Result<Self::Output> {
             let name = self

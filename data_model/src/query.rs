@@ -40,6 +40,7 @@ pub enum QueryBox {
     FindAccountKeyValueByIdAndKey(FindAccountKeyValueByIdAndKey),
     /// `FindAccountsByName` variant.
     FindAccountsByName(FindAccountsByName),
+    // SATO
     /// `FindAccountsByDomainName` variant.
     FindAccountsByDomainName(FindAccountsByDomainName),
     /// `FindAllAssets` variant.
@@ -54,8 +55,10 @@ pub enum QueryBox {
     FindAssetsByAccountId(FindAssetsByAccountId),
     /// `FindAssetsByAssetDefinitionId` variant.
     FindAssetsByAssetDefinitionId(FindAssetsByAssetDefinitionId),
+    // SATO
     /// `FindAssetsByDomainName` variant.
     FindAssetsByDomainName(FindAssetsByDomainName),
+    // SATO
     /// `FindAssetsByDomainNameAndAssetDefinitionId` variant.
     FindAssetsByDomainNameAndAssetDefinitionId(FindAssetsByDomainNameAndAssetDefinitionId),
     /// `FindAssetQuantityById` variant.
@@ -66,8 +69,8 @@ pub enum QueryBox {
     FindAssetDefinitionKeyValueByIdAndKey(FindAssetDefinitionKeyValueByIdAndKey),
     /// `FindAllDomains` variant.
     FindAllDomains(FindAllDomains),
-    /// `FindDomainByName` variant.
-    FindDomainByName(FindDomainByName),
+    /// `FindDomainById` variant.
+    FindDomainById(FindDomainById),
     /// `FindDomainKeyValueByIdAndKey` variant.
     FindDomainKeyValueByIdAndKey(FindDomainKeyValueByIdAndKey),
     /// `FindAllPeers` variant.
@@ -858,7 +861,7 @@ pub mod domain {
         type Output = Vec<Domain>;
     }
 
-    /// `FindDomainByName` Iroha Query will find a `Domain` by it's identification in Iroha `Peer`.
+    /// `FindDomainById` Iroha Query will find a `Domain` by it's identification in Iroha `Peer`.
     #[derive(
         Debug,
         Clone,
@@ -872,12 +875,12 @@ pub mod domain {
         Serialize,
         IntoSchema,
     )]
-    pub struct FindDomainByName {
-        /// Name of the domain to find.
-        pub name: EvaluatesTo<Name>,
+    pub struct FindDomainById {
+        /// Id of the domain to find.
+        pub id: EvaluatesTo<DomainId>,
     }
 
-    impl Query for FindDomainByName {
+    impl Query for FindDomainById {
         type Output = Domain;
     }
 
@@ -888,11 +891,11 @@ pub mod domain {
         }
     }
 
-    impl FindDomainByName {
-        /// Default `FindDomainByName` constructor.
-        pub fn new(name: impl Into<EvaluatesTo<Name>>) -> Self {
-            let name = name.into();
-            FindDomainByName { name }
+    impl FindDomainById {
+        /// Default `FindDomainById` constructor.
+        pub fn new(id: impl Into<EvaluatesTo<DomainId>>) -> Self {
+            let id = id.into();
+            FindDomainById { id }
         }
     }
 
@@ -933,7 +936,7 @@ pub mod domain {
 
     /// The prelude re-exports most commonly used traits, structs and macros from this crate.
     pub mod prelude {
-        pub use super::{FindAllDomains, FindDomainByName, FindDomainKeyValueByIdAndKey};
+        pub use super::{FindAllDomains, FindDomainById, FindDomainKeyValueByIdAndKey};
     }
 }
 

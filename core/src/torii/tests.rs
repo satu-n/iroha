@@ -32,7 +32,7 @@ async fn create_torii() -> (Torii<World>, KeyPair) {
     wsv.world.domains.insert(
         "wonderland".to_owned(),
         Domain::with_accounts(
-            "wonderland",
+            DomainId::new(Name::new("wonderland").unwrap()),
             std::iter::once(Account::with_signatory(
                 AccountId::new("alice", "wonderland"),
                 keys.public_key.clone(),
@@ -387,7 +387,7 @@ async fn find_account_with_no_domain() {
 async fn find_domain() {
     AssertSet::new()
         .given(register_domain())
-        .query(QueryBox::FindDomainByName(FindDomainByName::new(
+        .query(QueryBox::FindDomainById(FindDomainById::new(
             DOMAIN.to_string(),
         )))
         .status(StatusCode::OK)
@@ -398,7 +398,7 @@ async fn find_domain() {
 async fn find_domain_with_no_domain() {
     AssertSet::new()
     // .given(register_domain())
-        .query(QueryBox::FindDomainByName(FindDomainByName::new(
+        .query(QueryBox::FindDomainById(FindDomainById::new(
             DOMAIN.to_string(),
         )))
         .status(StatusCode::NOT_FOUND)

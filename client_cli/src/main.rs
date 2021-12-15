@@ -125,7 +125,7 @@ fn main() -> Result<()> {
     println!("Iroha Client CLI: build v0.0.1 [release]");
     println!(
         "User: {}@{}",
-        config.account_id.name, config.account_id.domain_name
+        config.account_id.name, config.account_id.domain_id
     );
     #[cfg(debug_assertions)]
     eprintln!(
@@ -248,7 +248,7 @@ mod domain {
     pub struct Register {
         /// Domain's name as double-quoted string
         #[structopt(short, long)]
-        pub id: Domain,
+        pub name: Name,
         /// The filename with key-value metadata pairs in JSON
         #[structopt(short, long, default_value = "")]
         pub metadata: super::Metadata,
@@ -257,10 +257,11 @@ mod domain {
     impl RunArgs for Register {
         fn run(self, cfg: &Configuration) -> Result<()> {
             let Self {
-                id,
+                name,
                 metadata: Metadata(metadata),
             } = self;
-            let create_domain = RegisterBox::new(IdentifiableBox::from(id));
+            let domain_id: DomainId = name.into();
+            let create_domain = RegisterBox::new(IdentifiableBox::from(Domain::new(domain_id)));
             submit(create_domain, cfg, metadata).wrap_err("Failed to create domain")
         }
     }

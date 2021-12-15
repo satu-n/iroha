@@ -128,7 +128,7 @@ pub mod isi {
         }
     }
 
-    impl<W: WorldTrait> Execute<W> for SetKeyValue<Asset, String, Value> {
+    impl<W: WorldTrait> Execute<W> for SetKeyValue<Asset, Name, Value> {
         type Error = Error;
 
         #[metrics(+"asset_set_key_value")]
@@ -231,7 +231,7 @@ pub mod isi {
         }
     }
 
-    impl<W: WorldTrait> Execute<W> for RemoveKeyValue<Asset, String> {
+    impl<W: WorldTrait> Execute<W> for RemoveKeyValue<Asset, Name> {
         type Error = Error;
 
         #[metrics(+"asset_remove_key_value")]
@@ -411,7 +411,7 @@ pub mod query {
                 .evaluate(wsv, &Context::default())
                 .wrap_err("Failed to get domain name")?;
             let mut vec = Vec::new();
-            for account in wsv.domain(&name)?.accounts.values() {
+            for account in wsv.domain(&name.to_string())?.accounts.values() {
                 for asset in account.assets.values() {
                     vec.push(asset.clone())
                 }
@@ -432,7 +432,7 @@ pub mod query {
                 .asset_definition_id
                 .evaluate(wsv, &Context::default())
                 .wrap_err("Failed to get asset definition id")?;
-            let domain = wsv.domain(&name)?;
+            let domain = wsv.domain(&name.to_string())?;
             let _definition = domain
                 .asset_definitions
                 .get(&asset_definition_id)
@@ -440,7 +440,7 @@ pub mod query {
             let mut assets = Vec::new();
             for account in domain.accounts.values() {
                 for asset in account.assets.values() {
-                    if asset.id.account_id.domain_name == name
+                    if asset.id.account_id.domain_id.name == name
                         && asset.id.definition_id == asset_definition_id
                     {
                         assets.push(asset.clone())

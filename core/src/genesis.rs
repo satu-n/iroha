@@ -248,7 +248,7 @@ impl RawGenesisBlock {
 }
 
 /// `GenesisTransaction` is a transaction for initialize settings.
-#[derive(Clone, Deserialize, Debug, IntoSchema, Serialize)]
+#[derive(Default, Clone, Deserialize, Debug, IntoSchema, Serialize)]
 pub struct GenesisTransaction {
     /// Instructions
     pub isi: Vec<Instruction>,
@@ -274,14 +274,28 @@ impl GenesisTransaction {
     }
 
     /// Create a [`GenesisTransaction`] with the specified [`Domain`] and [`NewAccount`].
-    pub fn new(name: &str, domain: &str, pubkey: &PublicKey) -> Self {
+    pub fn new(name: &str, domain_name: &str, public_key: &PublicKey) -> Self {
+        let name = match Name::new(name) {
+            Ok(name) => name,
+            Err(error) => {
+                iroha_logger::error!(%error, "Invalid account name");
+                return Self::default()
+            },
+        };
+        let domain_id: DomainId = match Name::new(domain_name) {
+            Ok(name) => name.into(),
+            Err(error) => {
+                iroha_logger::error!(%error, "Invalid domain name");
+                return Self::default()
+            },
+        };
         Self {
             isi: vec![
-                RegisterBox::new(IdentifiableBox::Domain(Domain::new(domain).into())).into(),
+                RegisterBox::new(IdentifiableBox::Domain(Domain::new(domain_id).into())).into(),
                 RegisterBox::new(IdentifiableBox::NewAccount(
                     NewAccount::with_signatory(
-                        iroha_data_model::account::Id::new(name, domain),
-                        pubkey.clone(),
+                        iroha_data_model::account::Id::new(name, domain_id),
+                        public_key.clone(),
                     )
                     .into(),
                 ))

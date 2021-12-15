@@ -10,7 +10,7 @@ mod http_client;
 /// Module containing sample configurations for tests and benchmarks.
 pub mod samples {
     use iroha_crypto::KeyPair;
-    use iroha_data_model::uri;
+    use iroha_data_model::{uri, prelude::AccountId, Name};
 
     use super::Configuration;
     /// Get sample client configuration.
@@ -19,10 +19,10 @@ pub mod samples {
         Configuration {
             public_key,
             private_key,
-            account_id: iroha_data_model::prelude::AccountId {
-                name: "alice".to_owned(),
-                domain_name: "wonderland".to_owned(),
-            },
+            account_id: AccountId::new(
+                Name::new("alice").unwrap(),
+                Name::new("wonderland").unwrap().into(),
+            ),
             torii_api_url: uri::DEFAULT_API_URL.to_owned(),
             ..Configuration::default()
         }

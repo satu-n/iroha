@@ -648,7 +648,7 @@ pub mod asset {
         FindAssetsByAccountId::new(account_id)
     }
 
-    /// Get query to get all assets by account id
+    /// Get query to get asset by id
     pub fn by_id(asset_id: impl Into<EvaluatesTo<<Asset as Identifiable>::Id>>) -> FindAssetById {
         FindAssetById::new(asset_id)
     }
@@ -663,9 +663,9 @@ pub mod domain {
         FindAllDomains::new()
     }
 
-    /// Get query to get all domain by name
-    pub fn by_name(domain_name: impl Into<EvaluatesTo<Name>>) -> FindDomainByName {
-        FindDomainByName::new(domain_name)
+    /// Get query to get domain by id
+    pub fn by_id(domain_id: impl Into<EvaluatesTo<DomainId>>) -> FindDomainById {
+        FindDomainById::new(domain_id)
     }
 }
 

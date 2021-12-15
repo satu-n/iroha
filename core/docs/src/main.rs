@@ -1,4 +1,4 @@
-//! Cli for generating documentation for iroha configuraion
+//! Cli for generating documentation for iroha configuration
 
 #![allow(clippy::restriction)]
 

@@ -348,7 +348,7 @@ pub mod private_blockchain {
                             ))
                         }
                     }
-                    FindDomainByName(query::FindDomainByName { name })
+                    FindDomainById(query::FindDomainById { name })
                     | FindDomainKeyValueByIdAndKey(query::FindDomainKeyValueByIdAndKey {
                         name,
                         ..
@@ -439,7 +439,7 @@ pub mod private_blockchain {
                     | FindAssetsByDomainName(_)
                     | FindAssetsByName(_)
                     | FindAllDomains(_)
-                    | FindDomainByName(_)
+                    | FindDomainById(_)
                     | FindDomainKeyValueByIdAndKey(_)
                     | FindAssetsByDomainNameAndAssetDefinitionId(_)
                     | FindAssetDefinitionKeyValueByIdAndKey(_)

@@ -187,7 +187,7 @@ impl<W: WorldTrait> ValidQuery<W> for QueryBox {
             FindAssetsByDomainNameAndAssetDefinitionId(query) => query.execute_into_value(wsv),
             FindAssetQuantityById(query) => query.execute_into_value(wsv),
             FindAllDomains(query) => query.execute_into_value(wsv),
-            FindDomainByName(query) => query.execute_into_value(wsv),
+            FindDomainById(query) => query.execute_into_value(wsv),
             FindDomainKeyValueByIdAndKey(query) => query.execute_into_value(wsv),
             FindAllPeers(query) => query.execute_into_value(wsv),
             FindAssetKeyValueByIdAndKey(query) => query.execute_into_value(wsv),

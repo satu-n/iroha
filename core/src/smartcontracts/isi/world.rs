@@ -12,14 +12,15 @@ pub mod isi {
 
     impl<W: WorldTrait> Execute<W> for Register<Peer> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             if wsv.trusted_peers_ids().insert(self.object.id) {
-                Ok(())
+                Ok(self.into())
             } else {
                 Err(eyre!("Peer already trusted.",).into())
             }
@@ -28,14 +29,15 @@ pub mod isi {
 
     impl<W: WorldTrait> Execute<W> for Unregister<Peer> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Self::Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             if wsv.trusted_peers_ids().remove(&self.object_id).is_some() {
-                Ok(())
+                Ok(self.into())
             } else {
                 Err(eyre!("Peer wasn't trusted.").into())
             }
@@ -44,64 +46,69 @@ pub mod isi {
 
     impl<W: WorldTrait> Execute<W> for Register<Domain> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let domain = self.object;
             domain.validate_len(wsv.config.ident_length_limits)?;
             wsv.domains().insert(domain.name.clone(), domain);
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for Unregister<Domain> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             // TODO: Should we fail if no domain found?
             wsv.domains().remove(&self.object_id);
-            Ok(())
+            Ok(self.into())
         }
     }
 
     #[cfg(feature = "roles")]
     impl<W: WorldTrait> Execute<W> for Register<Role> {
         type Error = Error;
+        // SATO stream roles?
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let role = self.object;
             wsv.world.roles.insert(role.id.clone(), role);
-            Ok(())
+            Ok(self.into())
         }
     }
 
     #[cfg(feature = "roles")]
     impl<W: WorldTrait> Execute<W> for Unregister<Role> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             wsv.world.roles.remove(&self.object_id);
             for mut domain in wsv.domains().iter_mut() {
                 for account in domain.accounts.values_mut() {
                     let _ = account.roles.remove(&self.object_id);
                 }
             }
-            Ok(())
+            Ok(self.into())
         }
     }
 }

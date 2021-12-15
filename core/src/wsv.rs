@@ -20,9 +20,9 @@ use tokio::task;
 
 use crate::{
     block::Chain,
+    event::EventsSender,
     prelude::*,
     smartcontracts::{Execute, FindError},
-    event::EventsSender,
 };
 
 /// World trait for mocking
@@ -114,7 +114,11 @@ impl<W: WorldTrait> WorldStateView<W> {
     }
 
     /// Construct [`WorldStateView`] enabling emitting events
-    pub fn with_events(events_sender: Option<EventsSender>, config: Configuration, world: W) -> Self {
+    pub fn with_events(
+        events_sender: Option<EventsSender>,
+        config: Configuration,
+        world: W,
+    ) -> Self {
         WorldStateView {
             world,
             config,
@@ -171,7 +175,12 @@ impl<W: WorldTrait> WorldStateView<W> {
                 .instructions
                 .iter()
                 .cloned()
-                .try_for_each(|instruction| instruction.execute(account_id.clone(), self))?;
+                .try_for_each(|instruction| {
+                    let wsv_diff = instruction.execute(account_id.clone(), self)?;
+                    if let Some(events_sender) = self.events_sender {
+                        events_sender.send(wsv_diff.into())
+                    }
+                })?;
 
             self.transactions.insert(tx.hash());
             // Yield control cooperatively to the task scheduler.

@@ -201,7 +201,6 @@ where
                 init::domains(&config).wrap_err("Failed to get initial domains")?,
                 config.sumeragi.trusted_peers.peers.clone(),
             ),
-            
         ));
         let queue = Arc::new(Queue::from_configuration(&config.queue));
 

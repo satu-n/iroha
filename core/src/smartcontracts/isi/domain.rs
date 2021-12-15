@@ -17,12 +17,13 @@ pub mod isi {
 
     impl<W: WorldTrait> Execute<W> for Register<NewAccount> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <NewAccount as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let account = self.object;
             account.validate_len(wsv.config.ident_length_limits)?;
             let name = account.id.domain_name.clone();
@@ -38,34 +39,36 @@ pub mod isi {
                     let _ = entry.insert(account.into());
                 }
             }
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for Unregister<Account> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let account_id = self.object_id;
             wsv.domain_mut(&account_id.domain_name)?
                 .accounts
                 .remove(&account_id);
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for Register<AssetDefinition> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let asset_definition = self.object;
             asset_definition.validate_len(wsv.config.ident_length_limits)?;
             let name = asset_definition.id.domain_name.clone();
@@ -85,18 +88,19 @@ pub mod isi {
                     .into())
                 }
             }
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for Unregister<AssetDefinition> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let asset_definition_id = self.object_id;
             wsv.domain_mut(&asset_definition_id.domain_name)?
                 .asset_definitions
@@ -114,18 +118,19 @@ pub mod isi {
                     }
                 }
             }
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for SetKeyValue<AssetDefinition, String, Value> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let metadata_limits = wsv.config.asset_definition_metadata_limits;
             wsv.modify_asset_definition_entry(&self.object_id, |asset_definition_entry| {
                 asset_definition_entry
@@ -134,18 +139,19 @@ pub mod isi {
                     .insert_with_limits(self.key.clone(), self.value.clone(), metadata_limits)?;
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for RemoveKeyValue<AssetDefinition, String> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             wsv.modify_asset_definition_entry(&self.object_id, |asset_definition_entry| {
                 asset_definition_entry
                     .definition
@@ -154,18 +160,19 @@ pub mod isi {
                     .ok_or_else(|| FindError::MetadataKey(self.key.clone()))?;
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for SetKeyValue<Domain, String, Value> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let Self {
                 object_id,
                 key,
@@ -176,18 +183,19 @@ pub mod isi {
                 domain.metadata.insert_with_limits(key, value, limits)?;
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for RemoveKeyValue<Domain, String> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let Self { object_id, key } = self;
             wsv.modify_domain(&object_id, |domain| {
                 domain
@@ -196,7 +204,7 @@ pub mod isi {
                     .ok_or(FindError::MetadataKey(key))?;
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 }

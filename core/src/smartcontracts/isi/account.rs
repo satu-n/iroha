@@ -15,46 +15,49 @@ pub mod isi {
 
     impl<W: WorldTrait> Execute<W> for Mint<Account, PublicKey> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let public_key = self.object.clone();
             wsv.modify_account(&self.destination_id, |account| {
                 account.signatories.push(public_key);
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for Mint<Account, SignatureCheckCondition> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let id = self.destination_id.clone();
             wsv.modify_account(&id, |account| {
                 account.signature_check_condition = self.object;
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for Burn<Account, PublicKey> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let public_key = self.object.clone();
             wsv.modify_account(&self.destination_id, |account| {
                 if let Some(index) = account
@@ -66,18 +69,19 @@ pub mod isi {
                 }
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for SetKeyValue<Account, String, Value> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let account_metadata_limits = wsv.config.account_metadata_limits;
             let id = self.object_id.clone();
             wsv.modify_account(&id, |account| {
@@ -88,18 +92,19 @@ pub mod isi {
                 )?;
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for RemoveKeyValue<Account, String> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             wsv.modify_account(&self.object_id, |account| {
                 account
                     .metadata
@@ -107,36 +112,38 @@ pub mod isi {
                     .ok_or_else(|| FindError::MetadataKey(self.key.clone()))?;
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     impl<W: WorldTrait> Execute<W> for Grant<Account, PermissionToken> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             let id = self.destination_id.clone();
             wsv.modify_account(&id, |account| {
                 let _ = account.permission_tokens.insert(self.object);
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 
     #[cfg(feature = "roles")]
     impl<W: WorldTrait> Execute<W> for Grant<Account, RoleId> {
         type Error = Error;
+        type Diff = DataEvent;
 
         fn execute(
             self,
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
-        ) -> Result<(), Error> {
+        ) -> Result<Self::Diff, Self::Error> {
             wsv.world()
                 .roles
                 .get(&self.object)
@@ -147,7 +154,7 @@ pub mod isi {
                 let _ = account.roles.insert(self.object);
                 Ok(())
             })?;
-            Ok(())
+            Ok(self.into())
         }
     }
 }

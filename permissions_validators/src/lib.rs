@@ -212,7 +212,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -226,7 +226,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -235,17 +235,17 @@ pub mod private_blockchain {
                             ))
                         }
                     }
-                    FindAccountsByDomainName(query) => {
-                        let domain_name = query
-                            .domain_name
+                    FindAccountsByDomainId(query) => {
+                        let domain_id = query
+                            .domain_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if domain_name == authority.domain_name {
+                        if domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access accounts from a different domain with name {}.",
-                                domain_name
+                                domain_id
                             ))
                         }
                     }
@@ -254,7 +254,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if asset_id.account_id.domain_name == authority.domain_name {
+                        if asset_id.account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -268,7 +268,7 @@ pub mod private_blockchain {
                             .account_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -277,31 +277,31 @@ pub mod private_blockchain {
                             ))
                         }
                     }
-                    FindAssetsByDomainName(query) => {
-                        let domain_name = query
-                            .domain_name
+                    FindAssetsByDomainId(query) => {
+                        let domain_id = query
+                            .domain_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if domain_name == authority.domain_name {
+                        if domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access assets from a different domain with name {}.",
-                                domain_name
+                                domain_id
                             ))
                         }
                     }
-                    FindAssetsByDomainNameAndAssetDefinitionId(query) => {
-                        let domain_name = query
-                            .domain_name
+                    FindAssetsByDomainIdAndAssetDefinitionId(query) => {
+                        let domain_id = query
+                            .domain_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if domain_name == authority.domain_name {
+                        if domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access assets from a different domain with name {}.",
-                                domain_name
+                                domain_id
                             ))
                         }
                     }
@@ -310,13 +310,13 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if asset_definition_id.domain_name == authority.domain_name {
+                        if asset_definition_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access asset definition from a different domain. Asset definition domain: {}. Signers account domain {}.",
-                                asset_definition_id.domain_name,
-                                authority.domain_name
+                                asset_definition_id.domain_id,
+                                authority.domain_id
                             ))
                         }
                     }
@@ -325,7 +325,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if asset_id.account_id.domain_name == authority.domain_name {
+                        if asset_id.account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -339,7 +339,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if asset_id.account_id.domain_name == authority.domain_name {
+                        if asset_id.account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -348,21 +348,17 @@ pub mod private_blockchain {
                             ))
                         }
                     }
-                    FindDomainById(query::FindDomainById { name })
+                    FindDomainById(query::FindDomainById { id })
                     | FindDomainKeyValueByIdAndKey(query::FindDomainKeyValueByIdAndKey {
-                        name,
+                        id,
                         ..
                     }) => {
-                        let domain_name = name
-                            .evaluate(wsv, &context)
-                            .map_err(|err| err.to_string())?;
-                        if domain_name == authority.domain_name {
+                        let domain_id =
+                            id.evaluate(wsv, &context).map_err(|err| err.to_string())?;
+                        if domain_id == authority.domain_id {
                             Ok(())
                         } else {
-                            Err(format!(
-                                "Cannot access a different domain: {}.",
-                                domain_name
-                            ))
+                            Err(format!("Cannot access a different domain: {}.", domain_id))
                         }
                     }
                     FindTransactionsByAccountId(query) => {
@@ -370,7 +366,7 @@ pub mod private_blockchain {
                             .account_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -386,7 +382,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -400,7 +396,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -432,16 +428,16 @@ pub mod private_blockchain {
                 let context = Context::new();
                 match query {
                     FindAccountsByName(_)
-                    | FindAccountsByDomainName(_)
+                    | FindAccountsByDomainId(_)
                     | FindAllAccounts(_)
                     | FindAllAssetsDefinitions(_)
                     | FindAssetsByAssetDefinitionId(_)
-                    | FindAssetsByDomainName(_)
+                    | FindAssetsByDomainId(_)
                     | FindAssetsByName(_)
                     | FindAllDomains(_)
                     | FindDomainById(_)
                     | FindDomainKeyValueByIdAndKey(_)
-                    | FindAssetsByDomainNameAndAssetDefinitionId(_)
+                    | FindAssetsByDomainIdAndAssetDefinitionId(_)
                     | FindAssetDefinitionKeyValueByIdAndKey(_)
                     | FindAllAssets(_) => {
                         Err("Only access to the assets of the same domain is permitted.".to_owned())
@@ -653,7 +649,7 @@ pub mod public_blockchain {
     ) -> Result<(), String> {
         let account_id = if let Value::Id(IdBox::AccountId(account_id)) = permission_token
             .params
-            .get(ACCOUNT_ID_TOKEN_PARAM_NAME)
+            .get(&Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME).expect("Valid names never fail"))
             .ok_or(format!(
                 "Failed to find permission param {}.",
                 ACCOUNT_ID_TOKEN_PARAM_NAME
@@ -682,7 +678,7 @@ pub mod public_blockchain {
     ) -> Result<(), String> {
         let asset_id = if let Value::Id(IdBox::AssetId(asset_id)) = permission_token
             .params
-            .get(ASSET_ID_TOKEN_PARAM_NAME)
+            .get(&Name::new(ASSET_ID_TOKEN_PARAM_NAME).expect("Valid names never fail"))
             .ok_or(format!(
                 "Failed to find permission param {}.",
                 ASSET_ID_TOKEN_PARAM_NAME
@@ -713,7 +709,10 @@ pub mod public_blockchain {
         let definition_id = if let Value::Id(IdBox::AssetDefinitionId(definition_id)) =
             permission_token
                 .params
-                .get(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
+                .get(
+                    &Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
+                        .expect("Valid names never fail"),
+                )
                 .ok_or(format!(
                     "Failed to find permission param {}.",
                     ASSET_DEFINITION_ID_TOKEN_PARAM_NAME
@@ -804,7 +803,11 @@ pub mod public_blockchain {
                     return Err("Source id is not an AssetId.".to_owned());
                 };
                 let mut params = BTreeMap::new();
-                params.insert(ASSET_ID_TOKEN_PARAM_NAME.to_owned(), source_id.into());
+                params.insert(
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
+                    source_id.into(),
+                );
                 Ok(PermissionToken::new(CAN_TRANSFER_USER_ASSETS_TOKEN, params))
             }
         }
@@ -829,7 +832,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_TRANSFER_USER_ASSETS_TOKEN {
+                if permission_token.name.to_string() != CAN_TRANSFER_USER_ASSETS_TOKEN {
                     return Err("Grant instruction is not for transfer permission.".to_owned());
                 }
                 check_asset_owner_for_token(&permission_token, authority)
@@ -912,7 +915,8 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_owned(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -942,7 +946,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_UNREGISTER_ASSET_WITH_DEFINITION {
+                if permission_token.name.to_string() != CAN_UNREGISTER_ASSET_WITH_DEFINITION {
                     return Err("Grant instruction is not for unregister permission.".to_owned());
                 }
                 check_asset_creator_for_token(&permission_token, authority, wsv)
@@ -1024,7 +1028,8 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_owned(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
                     asset_id.definition_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1054,7 +1059,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_MINT_USER_ASSET_DEFINITIONS_TOKEN {
+                if permission_token.name.to_string() != CAN_MINT_USER_ASSET_DEFINITIONS_TOKEN {
                     return Err("Grant instruction is not for mint permission.".to_owned());
                 }
                 check_asset_creator_for_token(&permission_token, authority, wsv)
@@ -1138,7 +1143,8 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_owned(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
                     asset_id.definition_id.into(),
                 );
                 Ok(PermissionToken::new(CAN_BURN_ASSET_WITH_DEFINITION, params))
@@ -1165,7 +1171,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_BURN_ASSET_WITH_DEFINITION {
+                if permission_token.name.to_string() != CAN_BURN_ASSET_WITH_DEFINITION {
                     return Err("Grant instruction is not for burn permission.".to_owned());
                 }
                 check_asset_creator_for_token(&permission_token, authority, wsv)
@@ -1230,7 +1236,11 @@ pub mod public_blockchain {
                     return Err("Source id is not an AssetId.".to_owned());
                 };
                 let mut params = BTreeMap::new();
-                params.insert(ASSET_ID_TOKEN_PARAM_NAME.to_owned(), destination_id.into());
+                params.insert(
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
+                    destination_id.into(),
+                );
                 Ok(PermissionToken::new(CAN_BURN_USER_ASSETS_TOKEN, params))
             }
         }
@@ -1255,7 +1265,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_BURN_USER_ASSETS_TOKEN {
+                if permission_token.name.to_string() != CAN_BURN_USER_ASSETS_TOKEN {
                     return Err("Grant instruction is not for burn permission.".to_owned());
                 }
                 check_asset_owner_for_token(&permission_token, authority)?;
@@ -1348,7 +1358,11 @@ pub mod public_blockchain {
                     return Err("Source id is not an AssetId.".to_owned());
                 };
                 let mut params = BTreeMap::new();
-                params.insert(ASSET_ID_TOKEN_PARAM_NAME.to_owned(), object_id.into());
+                params.insert(
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
+                    object_id.into(),
+                );
                 Ok(PermissionToken::new(
                     CAN_SET_KEY_VALUE_USER_ASSETS_TOKEN,
                     params,
@@ -1376,7 +1390,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_SET_KEY_VALUE_USER_ASSETS_TOKEN {
+                if permission_token.name.to_string() != CAN_SET_KEY_VALUE_USER_ASSETS_TOKEN {
                     return Err("Grant instruction is not for set permission.".to_owned());
                 }
                 check_asset_owner_for_token(&permission_token, authority)?;
@@ -1444,7 +1458,11 @@ pub mod public_blockchain {
                     return Err("Source id is not an AccountId.".to_owned());
                 };
                 let mut params = BTreeMap::new();
-                params.insert(ACCOUNT_ID_TOKEN_PARAM_NAME.to_owned(), object_id.into());
+                params.insert(
+                    Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
+                    object_id.into(),
+                );
                 Ok(PermissionToken::new(
                     CAN_SET_KEY_VALUE_IN_USER_METADATA,
                     params,
@@ -1472,7 +1490,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_SET_KEY_VALUE_IN_USER_METADATA {
+                if permission_token.name.to_string() != CAN_SET_KEY_VALUE_IN_USER_METADATA {
                     return Err("Grant instruction is not for set permission.".to_owned());
                 }
                 check_account_owner_for_token(&permission_token, authority)?;
@@ -1539,7 +1557,11 @@ pub mod public_blockchain {
                     return Err("Source id is not an AssetId.".to_owned());
                 };
                 let mut params = BTreeMap::new();
-                params.insert(ASSET_ID_TOKEN_PARAM_NAME.to_owned(), object_id.into());
+                params.insert(
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
+                    object_id.into(),
+                );
                 Ok(PermissionToken::new(
                     CAN_REMOVE_KEY_VALUE_IN_USER_ASSETS,
                     params,
@@ -1567,7 +1589,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_REMOVE_KEY_VALUE_IN_USER_ASSETS {
+                if permission_token.name.to_string() != CAN_REMOVE_KEY_VALUE_IN_USER_ASSETS {
                     return Err("Grant instruction is not for set permission.".to_owned());
                 }
                 check_asset_owner_for_token(&permission_token, authority)?;
@@ -1635,7 +1657,11 @@ pub mod public_blockchain {
                     return Err("Source id is not an AccountId.".to_owned());
                 };
                 let mut params = BTreeMap::new();
-                params.insert(ACCOUNT_ID_TOKEN_PARAM_NAME.to_owned(), object_id.into());
+                params.insert(
+                    Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
+                    object_id.into(),
+                );
                 Ok(PermissionToken::new(
                     CAN_REMOVE_KEY_VALUE_IN_USER_METADATA,
                     params,
@@ -1663,7 +1689,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_REMOVE_KEY_VALUE_IN_USER_METADATA {
+                if permission_token.name.to_string() != CAN_REMOVE_KEY_VALUE_IN_USER_METADATA {
                     return Err("Grant instruction is not for remove permission.".to_owned());
                 }
                 check_account_owner_for_token(&permission_token, authority)?;
@@ -1691,7 +1717,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_SET_KEY_VALUE_IN_ASSET_DEFINITION {
+                if permission_token.name.to_string() != CAN_SET_KEY_VALUE_IN_ASSET_DEFINITION {
                     return Err(
                         "Grant instruction is not for set key value in asset definition permission."
                             .to_owned(),
@@ -1721,7 +1747,7 @@ pub mod public_blockchain {
                     .map_err(|e| e.to_string())?
                     .try_into()
                     .map_err(|e: ErrorTryFromEnum<_, _>| e.to_string())?;
-                if permission_token.name != CAN_REMOVE_KEY_VALUE_IN_ASSET_DEFINITION {
+                if permission_token.name.to_string() != CAN_REMOVE_KEY_VALUE_IN_ASSET_DEFINITION {
                     return Err(
                         "Grant instruction is not for remove key value in asset definition permission."
                             .to_owned(),
@@ -1840,7 +1866,8 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_owned(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1879,7 +1906,8 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_owned(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
+                        .expect("Param name must have no whitespaces"),
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(

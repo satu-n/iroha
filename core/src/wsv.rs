@@ -280,13 +280,12 @@ impl<W: WorldTrait> WorldStateView<W> {
     ///
     /// # Errors
     /// Fails if there is no domain
-    pub fn domain(&self, name: impl ToString) -> Result<DashMapRef<DomainId, Domain>> {
-        let domain_id = Name::new(name)?.into();
+    pub fn domain(&self, id: &DomainId) -> Result<DashMapRef<DomainId, Domain>> {
         let domain = self
             .world
             .domains
-            .get(&domain_id)
-            .ok_or_else(|| FindError::Domain(domain_id))?;
+            .get(&id)
+            .ok_or_else(|| FindError::Domain(id.clone()))?;
         Ok(domain)
     }
 
@@ -294,13 +293,12 @@ impl<W: WorldTrait> WorldStateView<W> {
     ///
     /// # Errors
     /// Fails if there is no domain
-    pub fn domain_mut(&self, name: impl ToString) -> Result<DashMapRefMut<DomainId, Domain>> {
-        let domain_id = Name::new(name)?.into();
+    pub fn domain_mut(&self, id: &DomainId) -> Result<DashMapRefMut<DomainId, Domain>> {
         let domain = self
             .world
             .domains
-            .get_mut(&domain_id)
-            .ok_or_else(|| FindError::Domain(domain_id))?;
+            .get_mut(&id)
+            .ok_or_else(|| FindError::Domain(id.clone()))?;
         Ok(domain)
     }
 
@@ -323,10 +321,10 @@ impl<W: WorldTrait> WorldStateView<W> {
     /// Fails if there is no domain
     pub fn modify_domain(
         &self,
-        name: &str,
+        id: &<Domain as Identifiable>::Id,
         f: impl FnOnce(&mut Domain) -> Result<()>,
     ) -> Result<()> {
-        let mut domain = self.domain_mut(name)?;
+        let mut domain = self.domain_mut(id)?;
         f(domain.value_mut())
     }
 

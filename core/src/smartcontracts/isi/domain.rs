@@ -26,8 +26,11 @@ pub mod isi {
             wsv: &WorldStateView<W>,
         ) -> Result<(), Error> {
             let account = self.object;
-            account.id.name.validate_len(wsv.config.ident_length_limits)?;
-            let name = account.id.domain_name.clone();
+            account
+                .id
+                .name
+                .validate_len(wsv.config.ident_length_limits)?;
+            let name = account.id.domain_id.clone();
             match wsv.domain_mut(&name)?.accounts.entry(account.id.clone()) {
                 Entry::Occupied(_) => {
                     return Err(eyre!(
@@ -54,7 +57,7 @@ pub mod isi {
             wsv: &WorldStateView<W>,
         ) -> Result<(), Error> {
             let account_id = self.object_id;
-            wsv.domain_mut(&account_id.domain_name)?
+            wsv.domain_mut(&account_id.domain_id)?
                 .accounts
                 .remove(&account_id);
             Ok(())
@@ -71,8 +74,11 @@ pub mod isi {
             wsv: &WorldStateView<W>,
         ) -> Result<(), Error> {
             let asset_definition = self.object;
-            asset_definition.id.name.validate_len(wsv.config.ident_length_limits)?;
-            let name = asset_definition.id.domain_name.clone();
+            asset_definition
+                .id
+                .name
+                .validate_len(wsv.config.ident_length_limits)?;
+            let name = asset_definition.id.domain_id.clone();
             let mut domain = wsv.domain_mut(&name)?;
             match domain.asset_definitions.entry(asset_definition.id.clone()) {
                 Entry::Vacant(entry) => {
@@ -103,7 +109,7 @@ pub mod isi {
             wsv: &WorldStateView<W>,
         ) -> Result<(), Error> {
             let asset_definition_id = self.object_id;
-            wsv.domain_mut(&asset_definition_id.domain_name)?
+            wsv.domain_mut(&asset_definition_id.domain_id)?
                 .asset_definitions
                 .remove(&asset_definition_id);
             for mut domain in wsv.domains().iter_mut() {
@@ -232,11 +238,11 @@ pub mod query {
     impl<W: WorldTrait> ValidQuery<W> for FindDomainById {
         #[metrics(+"find_domain_by_name")]
         fn execute(&self, wsv: &WorldStateView<W>) -> Result<Self::Output> {
-            let name = self
-                .name
+            let id = self
+                .id
                 .evaluate(wsv, &Context::default())
-                .wrap_err("Failed to get domain name")?;
-            Ok(wsv.domain(&name)?.clone())
+                .wrap_err("Failed to get domain id")?;
+            Ok(wsv.domain(&id)?.clone())
         }
     }
 
@@ -244,15 +250,15 @@ pub mod query {
         #[log]
         #[metrics(+"find_domain_key_value_by_id")]
         fn execute(&self, wsv: &WorldStateView<W>) -> Result<Self::Output> {
-            let name = self
-                .name
+            let id = self
+                .id
                 .evaluate(wsv, &Context::default())
-                .wrap_err("Failed to get domain name")?;
+                .wrap_err("Failed to get domain id")?;
             let key = self
                 .key
                 .evaluate(wsv, &Context::default())
                 .wrap_err("Failed to get key")?;
-            wsv.map_domain(&name, |domain| domain.metadata.get(&key).map(Clone::clone))?
+            wsv.map_domain(&id, |domain| domain.metadata.get(&key).map(Clone::clone))?
                 .ok_or_else(|| eyre!("No metadata entry with this key."))
         }
     }

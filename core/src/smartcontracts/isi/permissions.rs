@@ -651,6 +651,7 @@ mod tests {
 
     use std::collections::{BTreeMap, BTreeSet};
 
+    use eyre::Result;
     use iroha_data_model::{expression::prelude::*, isi::*};
 
     use super::*;

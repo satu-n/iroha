@@ -240,9 +240,9 @@ impl RawGenesisBlock {
     }
 
     /// Create a [`RawGenesisBlock`] with specified [`Domain`] and [`NewAccount`].
-    pub fn new(name: &str, domain_name: &str, public_key: &PublicKey) -> Self {
+    pub fn new(name: &str, domain_id: &str, public_key: &PublicKey) -> Self {
         RawGenesisBlock {
-            transactions: vec![GenesisTransaction::new(name, domain_name, public_key)],
+            transactions: vec![GenesisTransaction::new(name, domain_id, public_key)],
         }
     }
 }
@@ -275,29 +275,25 @@ impl GenesisTransaction {
 
     /// Create a [`GenesisTransaction`] with the specified [`Domain`] and [`NewAccount`].
     pub fn new(name: &str, domain_name: &str, public_key: &PublicKey) -> Self {
-        let name = match Name::new(name) {
-            Ok(name) => name,
-            Err(error) => {
-                iroha_logger::error!(%error, "Invalid account name");
-                return Self::default()
-            },
-        };
-        let domain_id: DomainId = match Name::new(domain_name) {
-            Ok(name) => name.into(),
+        let domain: Domain = match Name::new(domain_name) {
+            Ok(name) => Domain::new(name.into()),
             Err(error) => {
                 iroha_logger::error!(%error, "Invalid domain name");
-                return Self::default()
-            },
+                return Self::default();
+            }
+        };
+        let account_id = match AccountId::new(name, domain_name) {
+            Ok(id) => id,
+            Err(error) => {
+                iroha_logger::error!(%error, "Invalid account or domain name");
+                return Self::default();
+            }
         };
         Self {
             isi: vec![
-                RegisterBox::new(IdentifiableBox::Domain(Domain::new(domain_id).into())).into(),
+                RegisterBox::new(IdentifiableBox::Domain(domain.into())).into(),
                 RegisterBox::new(IdentifiableBox::NewAccount(
-                    NewAccount::with_signatory(
-                        iroha_data_model::account::Id::new(name, domain_id),
-                        public_key.clone(),
-                    )
-                    .into(),
+                    NewAccount::with_signatory(account_id, public_key.clone()).into(),
                 ))
                 .into(),
             ],

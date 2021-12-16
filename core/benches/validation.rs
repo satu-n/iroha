@@ -18,18 +18,18 @@ const START_ACCOUNT: &str = "starter";
 
 fn build_test_transaction(keys: &KeyPair) -> Transaction {
     let domain_name = "domain";
-    let create_domain = RegisterBox::new(IdentifiableBox::Domain(Domain::new(domain_name).into()));
+    let create_domain = RegisterBox::new(IdentifiableBox::Domain(Domain::new(domain_id).into()));
     let account_name = "account";
     let create_account = RegisterBox::new(IdentifiableBox::NewAccount(
         NewAccount::with_signatory(
-            AccountId::new(account_name, domain_name),
+            AccountId::new(account_name, domain_id),
             KeyPair::generate()
                 .expect("Failed to generate KeyPair.")
                 .public_key,
         )
         .into(),
     ));
-    let asset_definition_id = AssetDefinitionId::new("xor", domain_name);
+    let asset_definition_id = AssetDefinitionId::new("xor", domain_id);
     let create_asset = RegisterBox::new(IdentifiableBox::AssetDefinition(
         AssetDefinition::new(asset_definition_id, AssetValueType::Quantity, true).into(),
     ));
@@ -170,7 +170,7 @@ fn validate_blocks(criterion: &mut Criterion) {
     let key_pair = KeyPair::generate().expect("Failed to generate KeyPair.");
     let domain_name = "global".to_string();
     let asset_definitions = BTreeMap::new();
-    let account_id = AccountId::new("root", &domain_name);
+    let account_id = AccountId::new("root", &domain_id);
     let account = Account::with_signatory(account_id.clone(), key_pair.public_key);
     let mut accounts = BTreeMap::new();
     accounts.insert(account_id, account);
@@ -181,7 +181,7 @@ fn validate_blocks(criterion: &mut Criterion) {
         metadata: Metadata::new(),
     };
     let mut domains = BTreeMap::new();
-    domains.insert(domain_name, domain);
+    domains.insert(domain_id, domain);
     let wsv = WorldStateView::new(World::with(domains, BTreeSet::new()));
     // Pepare test transaction
     let keys = KeyPair::generate().expect("Failed to generate keys");

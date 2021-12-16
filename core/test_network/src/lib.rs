@@ -131,13 +131,19 @@ impl<G: GenesisNetworkTrait> TestGenesis for G {
         let mut genesis = RawGenesisBlock::new("alice", "wonderland", &get_key_pair().public_key);
         genesis.transactions[0].isi.push(
             RegisterBox::new(IdentifiableBox::AssetDefinition(
-                AssetDefinition::new_quantity(AssetDefinitionId::new("rose", "wonderland")).into(),
+                AssetDefinition::new_quantity(
+                    AssetDefinitionId::new("rose", "wonderland").expect("Valid names never fail"),
+                )
+                .into(),
             ))
             .into(),
         );
         genesis.transactions[0].isi.push(
             RegisterBox::new(IdentifiableBox::AssetDefinition(
-                AssetDefinition::new_quantity(AssetDefinitionId::new("tulip", "wonderland")).into(),
+                AssetDefinition::new_quantity(
+                    AssetDefinitionId::new("tulip", "wonderland").expect("Valid names never fail"),
+                )
+                .into(),
             ))
             .into(),
         );
@@ -145,8 +151,8 @@ impl<G: GenesisNetworkTrait> TestGenesis for G {
             MintBox::new(
                 Value::U32(13),
                 IdBox::AssetId(AssetId::new(
-                    AssetDefinitionId::new("rose", "wonderland"),
-                    AccountId::new("alice", "wonderland"),
+                    AssetDefinitionId::new("rose", "wonderland").expect("Valid names never fail"),
+                    AccountId::new("alice", "wonderland").expect("Valid names never fail"),
                 )),
             )
             .into(),

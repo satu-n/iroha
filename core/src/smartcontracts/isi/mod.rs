@@ -205,8 +205,8 @@ impl<W: WorldTrait> Execute<W> for UnregisterBox {
             IdBox::AssetDefinitionId(asset_definition_id) => {
                 Unregister::<AssetDefinition>::new(asset_definition_id).execute(authority, wsv)
             }
-            IdBox::DomainName(domain_name) => {
-                Unregister::<Domain>::new(domain_name).execute(authority, wsv)
+            IdBox::DomainId(domain_id) => {
+                Unregister::<Domain>::new(domain_id).execute(authority, wsv)
             }
             IdBox::PeerId(peer_id) => Unregister::<Peer>::new(peer_id).execute(authority, wsv),
             _ => Err(eyre!("Unsupported unregister instruction.").into()),
@@ -321,8 +321,7 @@ impl<W: WorldTrait> Execute<W> for SetKeyValueBox {
         let value = self.value.evaluate(wsv, &context)?;
         match self.object_id.evaluate(wsv, &context)? {
             IdBox::AssetId(asset_id) => {
-                SetKeyValue::<Asset, Name, Value>::new(asset_id, key, value)
-                    .execute(authority, wsv)
+                SetKeyValue::<Asset, Name, Value>::new(asset_id, key, value).execute(authority, wsv)
             }
             IdBox::AssetDefinitionId(definition_id) => {
                 SetKeyValue::<AssetDefinition, Name, Value>::new(definition_id, key, value)

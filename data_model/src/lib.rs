@@ -7,8 +7,8 @@ use std::{
     error,
     fmt::{self, Debug},
     ops::RangeInclusive,
-    time::{Duration, SystemTime},
     str::FromStr,
+    time::{Duration, SystemTime},
 };
 
 use eyre::{eyre, Result, WrapErr};
@@ -51,7 +51,7 @@ pub struct Name(String);
 
 impl FromStr for Name {
     type Err = eyre::Report;
-    fn from_str(str: &str) -> Result<Self, Self::Err> {
+    fn from_str(str: &str) -> Result<Self> {
         // SATO validate whitespace
         Ok(Self(str.to_owned()))
     }
@@ -64,8 +64,8 @@ impl fmt::Display for Name {
 }
 
 impl Name {
-    pub fn new(str: impl ToString) -> Result<Self> {
-        str.to_string().parse::<Self>()
+    pub fn new(name: impl ToString) -> Result<Self> {
+        name.to_string().parse::<Self>()
     }
 
     /// Check the length of this [`Name`] in chars is in `range`.
@@ -616,9 +616,9 @@ pub mod permissions {
     impl PermissionToken {
         /// Constructor.
         #[inline]
-        pub fn new(name: impl Into<Name>, params: impl IntoIterator<Item = (Name, Value)>) -> Self {
+        pub fn new(valid_str: &str, params: impl IntoIterator<Item = (Name, Value)>) -> Self {
             let params = params.into_iter().collect();
-            let name = name.into();
+            let name = Name::new(valid_str).expect("Token name must have no whitespaces");
             Self { name, params }
         }
     }
@@ -937,13 +937,13 @@ pub mod account {
 
     impl Id {
         /// `Id` constructor used to easily create an `Id` from two string slices
-        /// - one for the account's name, another one for the domain's id.
+        /// - one for the account's name, another one for the domain's name.
         #[inline]
-        pub fn new(name: Name, domain_id: DomainId) -> Self {
-            Id {
-                name,
-                domain_id,
-            }
+        pub fn new(name: impl ToString, domain_name: impl ToString) -> Result<Self> {
+            Ok(Self {
+                name: Name::new(name)?,
+                domain_id: DomainId::new(domain_name)?,
+            })
         }
 
         /// `Id` of the genesis account.
@@ -1428,13 +1428,13 @@ pub mod asset {
 
     impl DefinitionId {
         /// [`Id`] constructor used to easily create an [`Id`] from three string slices
-        /// - one for the asset definition's name, another one for the domain's id.
+        /// - one for the asset definition's name, another one for the domain's name.
         #[inline]
-        pub fn new(name: Name, domain_id: DomainId) -> Self {
-            DefinitionId {
-                name,
-                domain_id,
-            }
+        pub fn new(name: impl ToString, domain_name: impl ToString) -> Result<Self> {
+            Ok(Self {
+                name: Name::new(name)?,
+                domain_id: DomainId::new(domain_name)?,
+            })
         }
     }
 
@@ -1448,14 +1448,9 @@ pub mod asset {
             account_name: &str,
             account_domain_name: &str,
         ) -> Result<Self> {
-            let definition_id = DefinitionId::new(
-                Name::new(asset_definition_name)?,
-                Name::new(asset_definition_domain_name)?.into(),
-            );
-            let account_id = AccountId::new(
-                Name::new(account_name)?, 
-                Name::new(account_domain_name)?.into(),
-            );
+            let definition_id =
+                DefinitionId::new(asset_definition_name, asset_definition_domain_name)?;
+            let account_id = AccountId::new(account_name, account_domain_name)?;
             Ok(Self::new(definition_id, account_id))
         }
 
@@ -1463,7 +1458,7 @@ pub mod asset {
         /// an [`AccountId`].
         #[inline]
         pub const fn new(definition_id: DefinitionId, account_id: AccountId) -> Self {
-            Id {
+            Self {
                 definition_id,
                 account_id,
             }
@@ -1538,11 +1533,10 @@ pub mod asset {
 pub mod domain {
     //! This module contains [`Domain`](`crate::domain::Domain`) structure and related implementations and trait implementations.
 
-    use std::{
-        cmp::Ordering, collections::BTreeMap, iter,
-    };
+    use std::{cmp::Ordering, collections::BTreeMap, fmt, iter};
 
     use dashmap::DashMap;
+    use eyre::Result;
     use iroha_crypto::PublicKey;
     use iroha_schema::IntoSchema;
     use parity_scale_codec::{Decode, Encode};
@@ -1550,14 +1544,10 @@ pub mod domain {
 
     use crate::{
         account::{Account, AccountsMap, GenesisAccount},
-        prelude::DomainId,
         asset::AssetDefinitionsMap,
         metadata::Metadata,
+        prelude::DomainId,
         Identifiable, Name, Value,
-    };
-
-    use std::{
-        fmt,
     };
 
     /// Genesis domain name. Genesis domain should contain only genesis account.
@@ -1646,15 +1636,17 @@ pub mod domain {
     impl Id {
         /// Constructor.
         #[inline]
-        pub fn new(name: impl Into<Name>) -> Self {
-            Id { name: name.into() }
+        pub fn new(name: impl ToString) -> Result<Self> {
+            Ok(Self {
+                name: Name::new(name)?,
+            })
         }
     }
 
     impl From<Name> for Id {
         #[inline]
         fn from(name: Name) -> Self {
-            Id::new(name)
+            Self { name }
         }
     }
 
@@ -1705,7 +1697,7 @@ pub mod domain {
 
     /// The prelude re-exports most commonly used traits, structs and macros from this crate.
     pub mod prelude {
-        pub use super::{Id as DomainId, Domain, GenesisDomain, GENESIS_DOMAIN_NAME};
+        pub use super::{Domain, GenesisDomain, Id as DomainId, GENESIS_DOMAIN_NAME};
     }
 }
 

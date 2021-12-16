@@ -41,8 +41,8 @@ pub enum QueryBox {
     /// `FindAccountsByName` variant.
     FindAccountsByName(FindAccountsByName),
     // SATO
-    /// `FindAccountsByDomainName` variant.
-    FindAccountsByDomainName(FindAccountsByDomainName),
+    /// `FindAccountsByDomainId` variant.
+    FindAccountsByDomainId(FindAccountsByDomainId),
     /// `FindAllAssets` variant.
     FindAllAssets(FindAllAssets),
     /// `FindAllAssetsDefinitions` variant.
@@ -53,14 +53,14 @@ pub enum QueryBox {
     FindAssetsByName(FindAssetsByName),
     /// `FindAssetsByAccountId` variant.
     FindAssetsByAccountId(FindAssetsByAccountId),
-    /// `FindAssetsByAssetDefinitionId` variant.
+    /// `FindAssetsByAssetDefinitionId` variant.g
     FindAssetsByAssetDefinitionId(FindAssetsByAssetDefinitionId),
     // SATO
-    /// `FindAssetsByDomainName` variant.
-    FindAssetsByDomainName(FindAssetsByDomainName),
+    /// `FindAssetsByDomainId` variant.
+    FindAssetsByDomainId(FindAssetsByDomainId),
     // SATO
-    /// `FindAssetsByDomainNameAndAssetDefinitionId` variant.
-    FindAssetsByDomainNameAndAssetDefinitionId(FindAssetsByDomainNameAndAssetDefinitionId),
+    /// `FindAssetsByDomainIdAndAssetDefinitionId` variant.
+    FindAssetsByDomainIdAndAssetDefinitionId(FindAssetsByDomainIdAndAssetDefinitionId),
     /// `FindAssetQuantityById` variant.
     FindAssetQuantityById(FindAssetQuantityById),
     /// `FindAssetKeyValueByIdAndKey` variant.
@@ -375,7 +375,7 @@ pub mod account {
         type Output = Vec<Account>;
     }
 
-    /// `FindAccountsByDomainName` Iroha Query will get `Domain`s name as input and
+    /// `FindAccountsByDomainId` Iroha Query will get `Domain`s id as input and
     /// find all `Account`s under this `Domain`.
     #[derive(
         Debug,
@@ -390,12 +390,12 @@ pub mod account {
         Serialize,
         IntoSchema,
     )]
-    pub struct FindAccountsByDomainName {
-        /// `domain_name` under which accounts should be found.
-        pub domain_name: EvaluatesTo<Name>,
+    pub struct FindAccountsByDomainId {
+        /// `Id of [`Domain`] under which accounts should be found.
+        pub domain_id: EvaluatesTo<DomainId>,
     }
 
-    impl Query for FindAccountsByDomainName {
+    impl Query for FindAccountsByDomainId {
         type Output = Vec<Account>;
     }
 
@@ -434,18 +434,18 @@ pub mod account {
         }
     }
 
-    impl FindAccountsByDomainName {
-        /// Default `FindAccountsByDomainName` constructor.
-        pub fn new(domain_name: impl Into<EvaluatesTo<Name>>) -> Self {
-            let domain_name = domain_name.into();
-            FindAccountsByDomainName { domain_name }
+    impl FindAccountsByDomainId {
+        /// Default `FindAccountsByDomainId` constructor.
+        pub fn new(domain_id: impl Into<EvaluatesTo<DomainId>>) -> Self {
+            let domain_id = domain_id.into();
+            FindAccountsByDomainId { domain_id }
         }
     }
 
     /// The prelude re-exports most commonly used traits, structs and macros from this crate.
     pub mod prelude {
         pub use super::{
-            FindAccountById, FindAccountKeyValueByIdAndKey, FindAccountsByDomainName,
+            FindAccountById, FindAccountKeyValueByIdAndKey, FindAccountsByDomainId,
             FindAccountsByName, FindAllAccounts,
         };
     }
@@ -602,7 +602,7 @@ pub mod asset {
         type Output = Vec<Asset>;
     }
 
-    /// `FindAssetsByDomainName` Iroha Query will get `Domain`s name as input and
+    /// `FindAssetsByDomainId` Iroha Query will get `Domain`s id as input and
     /// find all `Asset`s under this `Domain` in Iroha `Peer`.
     #[derive(
         Debug,
@@ -617,16 +617,16 @@ pub mod asset {
         Serialize,
         IntoSchema,
     )]
-    pub struct FindAssetsByDomainName {
-        /// `Name` of the domain under which assets should be found.
-        pub domain_name: EvaluatesTo<Name>,
+    pub struct FindAssetsByDomainId {
+        /// Id of the [`Domain] under which assets should be found.
+        pub domain_id: EvaluatesTo<DomainId>,
     }
 
-    impl Query for FindAssetsByDomainName {
+    impl Query for FindAssetsByDomainId {
         type Output = Vec<Asset>;
     }
 
-    /// `FindAssetsByDomainNameAndAssetDefinitionId` Iroha Query will get `Domain`'s name and
+    /// `FindAssetsByDomainIdAndAssetDefinitionId` Iroha Query will get `Domain`'s id and
     /// `AssetDefinitionId` as inputs and find all `Asset`s under the `Domain`
     /// with this `AssetDefinition` in Iroha `Peer`.
     #[derive(
@@ -642,14 +642,14 @@ pub mod asset {
         Serialize,
         IntoSchema,
     )]
-    pub struct FindAssetsByDomainNameAndAssetDefinitionId {
-        /// `Name` of the domain under which assets should be found.
-        pub domain_name: EvaluatesTo<Name>,
-        /// `AssetDefinitionId` assets of which type should be found.
+    pub struct FindAssetsByDomainIdAndAssetDefinitionId {
+        /// Id of [`Domain`] under which assets should be found.
+        pub domain_id: EvaluatesTo<DomainId>,
+        /// Id of [`AssetDefinition`] assets of which type should be found.
         pub asset_definition_id: EvaluatesTo<AssetDefinitionId>,
     }
 
-    impl Query for FindAssetsByDomainNameAndAssetDefinitionId {
+    impl Query for FindAssetsByDomainIdAndAssetDefinitionId {
         type Output = Vec<Asset>;
     }
 
@@ -777,24 +777,24 @@ pub mod asset {
         }
     }
 
-    impl FindAssetsByDomainName {
-        /// Default `FindAssetsByDomainName` constructor
-        pub fn new(domain_name: impl Into<EvaluatesTo<Name>>) -> Self {
-            let domain_name = domain_name.into();
-            Self { domain_name }
+    impl FindAssetsByDomainId {
+        /// Default `FindAssetsByDomainId` constructor
+        pub fn new(domain_id: impl Into<EvaluatesTo<DomainId>>) -> Self {
+            let domain_id = domain_id.into();
+            Self { domain_id }
         }
     }
 
-    impl FindAssetsByDomainNameAndAssetDefinitionId {
-        /// Default `FindAssetsByDomainNameAndAssetDefinitionId` constructor
+    impl FindAssetsByDomainIdAndAssetDefinitionId {
+        /// Default `FindAssetsByDomainIdAndAssetDefinitionId` constructor
         pub fn new(
-            domain_name: impl Into<EvaluatesTo<Name>>,
+            domain_id: impl Into<EvaluatesTo<DomainId>>,
             asset_definition_id: impl Into<EvaluatesTo<AssetDefinitionId>>,
         ) -> Self {
-            let domain_name = domain_name.into();
+            let domain_id = domain_id.into();
             let asset_definition_id = asset_definition_id.into();
             Self {
-                domain_name,
+                domain_id,
                 asset_definition_id,
             }
         }
@@ -823,7 +823,7 @@ pub mod asset {
             FindAllAssets, FindAllAssetsDefinitions, FindAssetById,
             FindAssetDefinitionKeyValueByIdAndKey, FindAssetKeyValueByIdAndKey,
             FindAssetQuantityById, FindAssetsByAccountId, FindAssetsByAssetDefinitionId,
-            FindAssetsByDomainName, FindAssetsByDomainNameAndAssetDefinitionId, FindAssetsByName,
+            FindAssetsByDomainId, FindAssetsByDomainIdAndAssetDefinitionId, FindAssetsByName,
         };
     }
 }
@@ -915,18 +915,21 @@ pub mod domain {
         IntoSchema,
     )]
     pub struct FindDomainKeyValueByIdAndKey {
-        /// `Name` of an domain to find.
-        pub name: EvaluatesTo<Name>,
+        /// Id of an domain to find.
+        pub id: EvaluatesTo<DomainId>,
         /// Key of the specific key-value in the domain's metadata.
         pub key: EvaluatesTo<Name>,
     }
 
     impl FindDomainKeyValueByIdAndKey {
         /// Default `FindDomainKeyValueByIdAndKey` constructor.
-        pub fn new(name: impl Into<EvaluatesTo<Name>>, key: impl Into<EvaluatesTo<Name>>) -> Self {
-            let name = name.into();
+        pub fn new(
+            id: impl Into<EvaluatesTo<DomainId>>,
+            key: impl Into<EvaluatesTo<Name>>,
+        ) -> Self {
+            let id = id.into();
             let key = key.into();
-            FindDomainKeyValueByIdAndKey { name, key }
+            FindDomainKeyValueByIdAndKey { id, key }
         }
     }
 

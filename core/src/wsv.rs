@@ -284,7 +284,7 @@ impl<W: WorldTrait> WorldStateView<W> {
         let domain = self
             .world
             .domains
-            .get(&id)
+            .get(id)
             .ok_or_else(|| FindError::Domain(id.clone()))?;
         Ok(domain)
     }
@@ -297,7 +297,7 @@ impl<W: WorldTrait> WorldStateView<W> {
         let domain = self
             .world
             .domains
-            .get_mut(&id)
+            .get_mut(id)
             .ok_or_else(|| FindError::Domain(id.clone()))?;
         Ok(domain)
     }
@@ -311,7 +311,7 @@ impl<W: WorldTrait> WorldStateView<W> {
         id: &<Domain as Identifiable>::Id,
         f: impl FnOnce(&Domain) -> T,
     ) -> Result<T> {
-        let domain = self.domain(&id)?;
+        let domain = self.domain(id)?;
         Ok(f(domain.value()))
     }
 

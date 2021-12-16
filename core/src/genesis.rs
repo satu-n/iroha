@@ -274,7 +274,7 @@ impl GenesisTransaction {
     }
 
     /// Create a [`GenesisTransaction`] with the specified [`Domain`] and [`NewAccount`].
-    pub fn new(name: &str, domain_name: &str, public_key: &PublicKey) -> Self {
+    pub fn new(account_name: &str, domain_name: &str, public_key: &PublicKey) -> Self {
         let domain: Domain = match Name::new(domain_name) {
             Ok(name) => Domain::new(name.into()),
             Err(error) => {
@@ -282,7 +282,7 @@ impl GenesisTransaction {
                 return Self::default();
             }
         };
-        let account_id = match AccountId::new(name, domain_name) {
+        let account_id = match AccountId::new(account_name, domain_name) {
             Ok(id) => id,
             Err(error) => {
                 iroha_logger::error!(%error, "Invalid account or domain name");

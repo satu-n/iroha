@@ -12,8 +12,11 @@ pub fn domains(configuration: &Configuration) -> Result<BTreeMap<DomainId, Domai
         .account_public_key
         .clone()
         .ok_or_else(|| eyre!("Genesis account public key is not specified."))?;
+    #[allow(clippy::expect_used)]
     Ok(std::iter::once((
-        Name::new(GENESIS_DOMAIN_NAME).unwrap().into(),
+        Name::new(GENESIS_DOMAIN_NAME)
+            .expect("Valid names never fail")
+            .into(),
         Domain::from(GenesisDomain::new(key)),
     ))
     .collect())

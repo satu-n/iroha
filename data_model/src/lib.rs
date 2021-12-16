@@ -64,8 +64,12 @@ impl fmt::Display for Name {
 }
 
 impl Name {
-    pub fn new(name: impl ToString) -> Result<Self> {
-        name.to_string().parse::<Self>()
+    /// Try to construct [`Name`] with validation.
+    ///
+    /// # Errors
+    /// Fails if input parsing fails.
+    pub fn new(name: &str) -> Result<Self> {
+        name.parse::<Self>()
     }
 
     /// Check the length of this [`Name`] in chars is in `range`.
@@ -151,6 +155,7 @@ pub enum Parameter {
     FromVariant,
     IntoSchema,
 )]
+#[allow(clippy::enum_variant_names)]
 pub enum IdBox {
     /// [`AccountId`](`account::Id`) variant.
     AccountId(account::Id),
@@ -618,6 +623,7 @@ pub mod permissions {
         #[inline]
         pub fn new(valid_str: &str, params: impl IntoIterator<Item = (Name, Value)>) -> Self {
             let params = params.into_iter().collect();
+            #[allow(clippy::expect_used)]
             let name = Name::new(valid_str).expect("Token name must have no whitespaces");
             Self { name, params }
         }
@@ -938,8 +944,11 @@ pub mod account {
     impl Id {
         /// `Id` constructor used to easily create an `Id` from two string slices
         /// - one for the account's name, another one for the domain's name.
+        ///
+        /// # Errors
+        /// Fails if sub-constructions fail.
         #[inline]
-        pub fn new(name: impl ToString, domain_name: impl ToString) -> Result<Self> {
+        pub fn new(name: &str, domain_name: &str) -> Result<Self> {
             Ok(Self {
                 name: Name::new(name)?,
                 domain_id: DomainId::new(domain_name)?,
@@ -948,10 +957,13 @@ pub mod account {
 
         /// `Id` of the genesis account.
         #[inline]
+        #[allow(clippy::expect_used)]
         pub fn genesis_account() -> Self {
             Id {
-                name: Name::new(GENESIS_ACCOUNT_NAME).unwrap(),
-                domain_id: Name::new(GENESIS_DOMAIN_NAME).unwrap().into(),
+                name: Name::new(GENESIS_ACCOUNT_NAME).expect("Valid names never fail"),
+                domain_id: Name::new(GENESIS_DOMAIN_NAME)
+                    .expect("Valid names never fail")
+                    .into(),
             }
         }
     }
@@ -1384,12 +1396,12 @@ pub mod asset {
         /// Fails if limit check fails
         pub fn with_parameter(
             id: Id,
-            key: String,
+            key: &str,
             value: Value,
             limits: MetadataLimits,
         ) -> Result<Self> {
             let mut store = Metadata::new();
-            store.insert_with_limits(Name::new(&key)?, value, limits)?;
+            store.insert_with_limits(Name::new(key)?, value, limits)?;
             Ok(Asset {
                 id,
                 value: store.into(),
@@ -1429,8 +1441,10 @@ pub mod asset {
     impl DefinitionId {
         /// [`Id`] constructor used to easily create an [`Id`] from three string slices
         /// - one for the asset definition's name, another one for the domain's name.
+        /// # Errors
+        /// Fails if sub-constructions fail.
         #[inline]
-        pub fn new(name: impl ToString, domain_name: impl ToString) -> Result<Self> {
+        pub fn new(name: &str, domain_name: &str) -> Result<Self> {
             Ok(Self {
                 name: Name::new(name)?,
                 domain_id: DomainId::new(domain_name)?,
@@ -1441,6 +1455,9 @@ pub mod asset {
     impl Id {
         /// [`Id`] constructor used to easily create an [`Id`] from an names of asset definition and
         /// account.
+        ///
+        /// # Errors
+        /// Fails if sub-constructions fail.
         #[inline]
         pub fn from_names(
             asset_definition_name: &str,
@@ -1572,9 +1589,12 @@ pub mod domain {
     }
 
     impl From<GenesisDomain> for Domain {
+        #[allow(clippy::expect_used)]
         fn from(domain: GenesisDomain) -> Self {
             Self {
-                id: GENESIS_DOMAIN_NAME.parse::<Name>().unwrap().into(),
+                id: Name::new(GENESIS_DOMAIN_NAME)
+                    .expect("Valid names never fail")
+                    .into(),
                 accounts: iter::once((
                     <Account as Identifiable>::Id::genesis_account(),
                     GenesisAccount::new(domain.genesis_key).into(),
@@ -1635,8 +1655,11 @@ pub mod domain {
 
     impl Id {
         /// Constructor.
+        ///
+        /// # Errors
+        /// Fails if sub-constructions fail.
         #[inline]
-        pub fn new(name: impl ToString) -> Result<Self> {
+        pub fn new(name: &str) -> Result<Self> {
             Ok(Self {
                 name: Name::new(name)?,
             })

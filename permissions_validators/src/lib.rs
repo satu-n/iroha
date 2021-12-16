@@ -649,7 +649,7 @@ pub mod public_blockchain {
     ) -> Result<(), String> {
         let account_id = if let Value::Id(IdBox::AccountId(account_id)) = permission_token
             .params
-            .get(&Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME).expect("Valid names never fail"))
+            .get(&Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?)
             .ok_or(format!(
                 "Failed to find permission param {}.",
                 ACCOUNT_ID_TOKEN_PARAM_NAME
@@ -678,7 +678,7 @@ pub mod public_blockchain {
     ) -> Result<(), String> {
         let asset_id = if let Value::Id(IdBox::AssetId(asset_id)) = permission_token
             .params
-            .get(&Name::new(ASSET_ID_TOKEN_PARAM_NAME).expect("Valid names never fail"))
+            .get(&Name::new(ASSET_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?)
             .ok_or(format!(
                 "Failed to find permission param {}.",
                 ASSET_ID_TOKEN_PARAM_NAME
@@ -709,10 +709,7 @@ pub mod public_blockchain {
         let definition_id = if let Value::Id(IdBox::AssetDefinitionId(definition_id)) =
             permission_token
                 .params
-                .get(
-                    &Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
-                        .expect("Valid names never fail"),
-                )
+                .get(&Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?)
                 .ok_or(format!(
                     "Failed to find permission param {}.",
                     ASSET_DEFINITION_ID_TOKEN_PARAM_NAME
@@ -804,8 +801,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     source_id.into(),
                 );
                 Ok(PermissionToken::new(CAN_TRANSFER_USER_ASSETS_TOKEN, params))
@@ -915,8 +911,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1028,8 +1023,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     asset_id.definition_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1143,8 +1137,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     asset_id.definition_id.into(),
                 );
                 Ok(PermissionToken::new(CAN_BURN_ASSET_WITH_DEFINITION, params))
@@ -1237,8 +1230,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     destination_id.into(),
                 );
                 Ok(PermissionToken::new(CAN_BURN_USER_ASSETS_TOKEN, params))
@@ -1359,8 +1351,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1459,8 +1450,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1558,8 +1548,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1658,8 +1647,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ACCOUNT_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1866,8 +1854,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(
@@ -1906,8 +1893,7 @@ pub mod public_blockchain {
                 };
                 let mut params = BTreeMap::new();
                 params.insert(
-                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME)
-                        .expect("Param name must have no whitespaces"),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).map_err(|e| e.to_string())?,
                     object_id.into(),
                 );
                 Ok(PermissionToken::new(

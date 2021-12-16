@@ -16,6 +16,7 @@ pub mod samples {
     /// Get sample client configuration.
     pub fn get_client_config(key_pair: &KeyPair) -> Configuration {
         let (public_key, private_key) = key_pair.clone().into();
+        #[allow(clippy::expect_used)]
         Configuration {
             public_key,
             private_key,

@@ -45,6 +45,7 @@ pub struct Configuration {
 
 impl Default for Configuration {
     fn default() -> Self {
+        #[allow(clippy::expect_used)]
         Self {
             public_key: PublicKey::default(),
             private_key: PrivateKey::default(),

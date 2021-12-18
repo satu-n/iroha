@@ -36,9 +36,9 @@ fn query_requests(criterion: &mut Criterion) {
 
     let mut group = criterion.benchmark_group("query-reqeuests");
     let domain_name = "domain";
-    let create_domain = RegisterBox::new(IdentifiableBox::Domain(Domain::new(domain_id).into()));
+    let create_domain = RegisterBox::new(IdentifiableBox::from(Domain::new(Name::new(domain_name).unwrap().into())));
     let account_name = "account";
-    let account_id = AccountId::new(account_name, domain_id);
+    let account_id = AccountId::new(account_name, domain_name).unwrap();
     let create_account = RegisterBox::new(IdentifiableBox::NewAccount(
         NewAccount::with_signatory(
             account_id.clone(),
@@ -48,7 +48,7 @@ fn query_requests(criterion: &mut Criterion) {
         )
         .into(),
     ));
-    let asset_definition_id = AssetDefinitionId::new("xor", domain_id);
+    let asset_definition_id = AssetDefinitionId::new("xor", domain_name).unwrap();
     let create_asset = RegisterBox::new(IdentifiableBox::AssetDefinition(
         AssetDefinition::new_quantity(asset_definition_id.clone()).into(),
     ));
@@ -117,9 +117,9 @@ fn instruction_submits(criterion: &mut Criterion) {
 
     let mut group = criterion.benchmark_group("instruction-requests");
     let domain_name = "domain";
-    let create_domain = RegisterBox::new(IdentifiableBox::Domain(Domain::new(domain_id).into()));
+    let create_domain = RegisterBox::new(IdentifiableBox::from(Domain::new(Name::new(domain_name).unwrap().into())));
     let account_name = "account";
-    let account_id = AccountId::new(account_name, domain_id);
+    let account_id = AccountId::new(account_name, domain_name).unwrap();
     let create_account = RegisterBox::new(IdentifiableBox::NewAccount(
         NewAccount::with_signatory(
             account_id.clone(),
@@ -129,7 +129,7 @@ fn instruction_submits(criterion: &mut Criterion) {
         )
         .into(),
     ));
-    let asset_definition_id = AssetDefinitionId::new("xor", domain_id);
+    let asset_definition_id = AssetDefinitionId::new("xor", domain_name).unwrap();
     let mut client_config = iroha_client::samples::get_client_config(&get_key_pair());
     client_config.torii_api_url = peer.api_address.clone();
     let mut iroha_client = Client::new(&client_config);

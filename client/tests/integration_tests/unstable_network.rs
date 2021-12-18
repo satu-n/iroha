@@ -79,8 +79,8 @@ fn unstable_network(
 
     let pipeline_time = Configuration::pipeline_time();
 
-    let account_id = AccountId::new("alice", "wonderland");
-    let asset_definition_id = AssetDefinitionId::new("rose", "wonderland");
+    let account_id = AccountId::new("alice", "wonderland").unwrap();
+    let asset_definition_id = AssetDefinitionId::new("rose", "wonderland").unwrap();
     // Initially there are 13 roses.
     let mut account_has_quantity = 13;
 

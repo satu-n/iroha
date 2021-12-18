@@ -473,36 +473,36 @@ mod tests {
 
     fn world_with_test_domains() -> Result<World> {
         let domains = DomainsMap::new();
-        let mut domain = Domain::new("wonderland");
-        let account_id = AccountId::new("alice", "wonderland");
+        let mut domain = Domain::new(DomainId::new("wonderland").unwrap());
+        let account_id = AccountId::new("alice", "wonderland")?;
         let mut account = Account::new(account_id.clone());
         let key_pair = KeyPair::generate()?;
         account.signatories.push(key_pair.public_key);
         domain.accounts.insert(account_id.clone(), account);
-        let asset_definition_id = AssetDefinitionId::new("rose", "wonderland");
+        let asset_definition_id = AssetDefinitionId::new("rose", "wonderland")?;
         domain.asset_definitions.insert(
             asset_definition_id.clone(),
             AssetDefinitionEntry::new(AssetDefinition::new_store(asset_definition_id), account_id),
         );
-        domains.insert("wonderland".to_string(), domain);
+        domains.insert(DomainId::new("wonderland").unwrap(), domain);
         Ok(World::with(domains, PeersIds::new()))
     }
 
     #[test]
     fn asset_store() -> Result<()> {
         let wsv = WorldStateView::<World>::new(world_with_test_domains()?);
-        let account_id = AccountId::new("alice", "wonderland");
-        let asset_definition_id = AssetDefinitionId::new("rose", "wonderland");
+        let account_id = AccountId::new("alice", "wonderland")?;
+        let asset_definition_id = AssetDefinitionId::new("rose", "wonderland")?;
         let asset_id = AssetId::new(asset_definition_id, account_id.clone());
         SetKeyValueBox::new(
             IdBox::from(asset_id.clone()),
-            "Bytes".to_owned(),
+            Name::new("Bytes")?,
             vec![1_u32, 2_u32, 3_u32],
         )
         .execute(account_id, &wsv)?;
         let asset = wsv.asset(&asset_id)?;
         let metadata: &Metadata = asset.try_as_ref()?;
-        let bytes = metadata.get("Bytes").cloned();
+        let bytes = metadata.get(&Name::new("Bytes").unwrap()).cloned();
         assert_eq!(
             bytes,
             Some(Value::Vec(vec![
@@ -517,15 +517,15 @@ mod tests {
     #[test]
     fn account_metadata() -> Result<()> {
         let wsv = WorldStateView::new(world_with_test_domains()?);
-        let account_id = AccountId::new("alice", "wonderland");
+        let account_id = AccountId::new("alice", "wonderland")?;
         SetKeyValueBox::new(
             IdBox::from(account_id.clone()),
-            "Bytes".to_owned(),
+            Name::new("Bytes")?,
             vec![1_u32, 2_u32, 3_u32],
         )
         .execute(account_id.clone(), &wsv)?;
         let bytes = wsv.map_account(&account_id, |account| {
-            account.metadata.get("Bytes").cloned()
+            account.metadata.get(&Name::new("Bytes").unwrap()).cloned()
         })?;
         assert_eq!(
             bytes,
@@ -541,11 +541,11 @@ mod tests {
     #[test]
     fn asset_definition_metadata() -> Result<()> {
         let wsv = WorldStateView::new(world_with_test_domains()?);
-        let definition_id = AssetDefinitionId::new("rose", "wonderland");
-        let account_id = AccountId::new("alice", "wonderland");
+        let definition_id = AssetDefinitionId::new("rose", "wonderland")?;
+        let account_id = AccountId::new("alice", "wonderland")?;
         SetKeyValueBox::new(
             IdBox::from(definition_id.clone()),
-            "Bytes".to_owned(),
+            Name::new("Bytes")?,
             vec![1_u32, 2_u32, 3_u32],
         )
         .execute(account_id, &wsv)?;
@@ -553,7 +553,7 @@ mod tests {
             .asset_definition_entry(&definition_id)?
             .definition
             .metadata
-            .get("Bytes")
+            .get(&Name::new("Bytes").unwrap())
             .cloned();
         assert_eq!(
             bytes,
@@ -569,15 +569,19 @@ mod tests {
     #[test]
     fn domain_metadata() -> Result<()> {
         let wsv = WorldStateView::new(world_with_test_domains()?);
-        let domain_name = "wonderland".to_owned();
-        let account_id = AccountId::new("alice", "wonderland");
+        let domain_id = Name::new("wonderland")?.into();
+        let account_id = AccountId::new("alice", "wonderland")?;
         SetKeyValueBox::new(
-            IdBox::from(domain_name.clone()),
-            "Bytes".to_owned(),
+            IdBox::from(domain_id.clone()),
+            Name::new("Bytes")?,
             vec![1_u32, 2_u32, 3_u32],
         )
         .execute(account_id, &wsv)?;
-        let bytes = wsv.domain(&domain_name)?.metadata.get("Bytes").cloned();
+        let bytes = wsv
+            .domain(&domain_id)?
+            .metadata
+            .get(&Name::new("Bytes")?)
+            .cloned();
         assert_eq!(
             bytes,
             Some(Value::Vec(vec![

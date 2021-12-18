@@ -18,18 +18,18 @@ const START_ACCOUNT: &str = "starter";
 
 fn build_test_transaction(keys: &KeyPair) -> Transaction {
     let domain_name = "domain";
-    let create_domain = RegisterBox::new(IdentifiableBox::Domain(Domain::new(domain_id).into()));
+    let create_domain = RegisterBox::new(IdentifiableBox::from(Domain::new(Name::new(domain_name).unwrap().into())));
     let account_name = "account";
     let create_account = RegisterBox::new(IdentifiableBox::NewAccount(
         NewAccount::with_signatory(
-            AccountId::new(account_name, domain_id),
+            AccountId::new(account_name, domain_name).unwrap(),
             KeyPair::generate()
                 .expect("Failed to generate KeyPair.")
                 .public_key,
         )
         .into(),
     ));
-    let asset_definition_id = AssetDefinitionId::new("xor", domain_id);
+    let asset_definition_id = AssetDefinitionId::new("xor", domain_name).unwrap();
     let create_asset = RegisterBox::new(IdentifiableBox::AssetDefinition(
         AssetDefinition::new(asset_definition_id, AssetValueType::Quantity, true).into(),
     ));
@@ -39,7 +39,7 @@ fn build_test_transaction(keys: &KeyPair) -> Transaction {
             create_account.into(),
             create_asset.into(),
         ],
-        AccountId::new(START_ACCOUNT, START_DOMAIN),
+        AccountId::new(START_ACCOUNT, START_DOMAIN).unwrap(),
         TRANSACTION_TIME_TO_LIVE_MS,
     )
     .sign(keys)
@@ -49,12 +49,12 @@ fn build_test_transaction(keys: &KeyPair) -> Transaction {
 fn build_test_wsv(keys: &KeyPair) -> WorldStateView<World> {
     WorldStateView::new({
         let mut domains = BTreeMap::new();
-        let mut domain = Domain::new(START_DOMAIN);
-        let account_id = AccountId::new(START_ACCOUNT, START_DOMAIN);
+        let mut domain = Domain::new(Name::new(START_DOMAIN).unwrap().into());
+        let account_id = AccountId::new(START_ACCOUNT, START_DOMAIN).unwrap();
         let mut account = Account::new(account_id.clone());
         account.signatories.push(keys.public_key.clone());
         domain.accounts.insert(account_id, account);
-        domains.insert(START_DOMAIN.to_string(), domain);
+        domains.insert(DomainId::new(START_DOMAIN).unwrap(), domain);
         World::with(domains, BTreeSet::new())
     })
 }
@@ -168,22 +168,23 @@ fn sign_blocks(criterion: &mut Criterion) {
 fn validate_blocks(criterion: &mut Criterion) {
     // Prepare WSV
     let key_pair = KeyPair::generate().expect("Failed to generate KeyPair.");
-    let domain_name = "global".to_string();
+    let domain_name_str = "global";
+    let domain_name = Name::new(domain_name_str).unwrap();
     let asset_definitions = BTreeMap::new();
-    let account_id = AccountId::new("root", &domain_id);
+    let account_id = AccountId::new("root", domain_name_str).unwrap();
     let account = Account::with_signatory(account_id.clone(), key_pair.public_key);
     let mut accounts = BTreeMap::new();
     accounts.insert(account_id, account);
     let domain = Domain {
-        name: domain_name.clone(),
+        id: domain_name.into(),
         accounts,
         asset_definitions,
         metadata: Metadata::new(),
     };
     let mut domains = BTreeMap::new();
-    domains.insert(domain_id, domain);
+    domains.insert(DomainId::new(domain_name_str).unwrap(), domain);
     let wsv = WorldStateView::new(World::with(domains, BTreeSet::new()));
-    // Pepare test transaction
+    // Prepare test transaction
     let keys = KeyPair::generate().expect("Failed to generate keys");
     let transaction = AcceptedTransaction::from_transaction(build_test_transaction(&keys), 4096)
         .expect("Failed to accept transaction.");

@@ -72,6 +72,11 @@ impl Name {
         name.parse::<Self>()
     }
 
+    /// Check if this [`Name`] equals to `rhs`
+    pub fn is(&self, rhs: &str) -> bool {
+        self.0 == rhs
+    }
+
     /// Check the length of this [`Name`] in chars is in `range`.
     ///
     /// # Errors
@@ -855,7 +860,7 @@ pub mod account {
     /// ```
     /// use iroha_data_model::account::Id;
     ///
-    /// let id = Id::new("user", "company");
+    /// let id = Id::new("user", "company").unwrap();
     /// ```
     #[derive(
         Debug,
@@ -1257,7 +1262,7 @@ pub mod asset {
     /// ```
     /// use iroha_data_model::asset::DefinitionId;
     ///
-    /// let definition_id = DefinitionId::new("xor", "soramitsu");
+    /// let definition_id = DefinitionId::new("xor", "soramitsu").unwrap();
     /// ```
     #[derive(
         Debug,
@@ -2143,16 +2148,17 @@ pub mod metadata {
     #[cfg(test)]
     mod tests {
         use super::{Limits, Metadata};
+        use crate::Name;
 
         #[test]
         fn insert_exceeds_entry_size() {
             let mut metadata = Metadata::new();
             let limits = Limits::new(10, 5);
             assert!(metadata
-                .insert_with_limits("1".to_owned(), "2".to_owned().into(), limits)
+                .insert_with_limits(Name::new("1").unwrap(), Name::new("2").unwrap().into(), limits)
                 .is_ok());
             assert!(metadata
-                .insert_with_limits("1".to_owned(), "23456".to_owned().into(), limits)
+                .insert_with_limits(Name::new("1").unwrap(), Name::new("23456").unwrap().into(), limits)
                 .is_err());
         }
 
@@ -2161,16 +2167,16 @@ pub mod metadata {
             let mut metadata = Metadata::new();
             let limits = Limits::new(2, 5);
             assert!(metadata
-                .insert_with_limits("1".to_owned(), "0".to_owned().into(), limits)
+                .insert_with_limits(Name::new("1").unwrap(), Name::new("0").unwrap().into(), limits)
                 .is_ok());
             assert!(metadata
-                .insert_with_limits("2".to_owned(), "0".to_owned().into(), limits)
+                .insert_with_limits(Name::new("2").unwrap(), Name::new("0").unwrap().into(), limits)
                 .is_ok());
             assert!(metadata
-                .insert_with_limits("2".to_owned(), "1".to_owned().into(), limits)
+                .insert_with_limits(Name::new("2").unwrap(), Name::new("1").unwrap().into(), limits)
                 .is_ok());
             assert!(metadata
-                .insert_with_limits("3".to_owned(), "0".to_owned().into(), limits)
+                .insert_with_limits(Name::new("3").unwrap(), Name::new("0").unwrap().into(), limits)
                 .is_err());
         }
     }

@@ -15,9 +15,9 @@ fn client_sends_transaction_with_invalid_instruction_should_not_see_any_changes(
     let pipeline_time = Configuration::pipeline_time();
 
     //When
-    let account_id = AccountId::new("alice", "wonderland");
-    let asset_definition_id = AssetDefinitionId::new("xor", "wonderland");
-    let wrong_asset_definition_id = AssetDefinitionId::new("ksor", "wonderland");
+    let account_id = AccountId::new("alice", "wonderland").unwrap();
+    let asset_definition_id = AssetDefinitionId::new("xor", "wonderland").unwrap();
+    let wrong_asset_definition_id = AssetDefinitionId::new("ksor", "wonderland").unwrap();
     let create_asset = RegisterBox::new(IdentifiableBox::AssetDefinition(
         AssetDefinition::new_quantity(asset_definition_id).into(),
     ));

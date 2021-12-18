@@ -694,7 +694,7 @@ mod tests {
             _instruction: &Instruction,
             _wsv: &WorldStateView<W>,
         ) -> Result<(), super::DenialReason> {
-            if authority.name == "alice" {
+            if authority.name.is("alice") {
                 Err("Alice account is denied.".to_owned())
             } else {
                 Ok(())
@@ -723,14 +723,14 @@ mod tests {
             .all_should_succeed();
         let instruction_burn: Instruction = BurnBox::new(
             Value::U32(10),
-            IdBox::AssetId(AssetId::from_names("xor", "test", "alice", "test")),
+            IdBox::AssetId(AssetId::from_names("xor", "test", "alice", "test").unwrap()),
         )
         .into();
         let instruction_fail = Instruction::Fail(FailBox {
             message: "fail message".to_owned(),
         });
-        let account_bob = <Account as Identifiable>::Id::new("bob", "test");
-        let account_alice = <Account as Identifiable>::Id::new("alice", "test");
+        let account_bob = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+        let account_alice = <Account as Identifiable>::Id::new("alice", "test").unwrap();
         let wsv = WorldStateView::new(World::new());
         assert!(permissions_validator
             .check(&account_bob, &instruction_burn, &wsv)
@@ -753,7 +753,7 @@ mod tests {
             .all_should_succeed();
         let instruction_burn: Instruction = BurnBox::new(
             Value::U32(10),
-            IdBox::AssetId(AssetId::from_names("xor", "test", "alice", "test")),
+            IdBox::AssetId(AssetId::from_names("xor", "test", "alice", "test").unwrap()),
         )
         .into();
         let instruction_fail = Instruction::Fail(FailBox {
@@ -761,7 +761,7 @@ mod tests {
         });
         let nested_instruction_sequence =
             Instruction::If(If::new(true, instruction_burn.clone()).into());
-        let account_alice = <Account as Identifiable>::Id::new("alice", "test");
+        let account_alice = <Account as Identifiable>::Id::new("alice", "test").unwrap();
         let wsv = WorldStateView::new(World::new());
         assert!(permissions_validator
             .check(&account_alice, &instruction_fail, &wsv)
@@ -776,17 +776,17 @@ mod tests {
 
     #[test]
     pub fn granted_permission() {
-        let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-        let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-        let alice_xor_id = <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
+        let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+        let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+        let alice_xor_id = <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
         let instruction_burn: Instruction = BurnBox::new(Value::U32(10), alice_xor_id).into();
-        let mut domain = Domain::new("test");
+        let mut domain = Domain::new(DomainId::new("test").unwrap());
         let mut bob_account = Account::new(bob_id.clone());
         let _ = bob_account
             .permission_tokens
             .insert(PermissionToken::new("token", BTreeMap::default()));
         domain.accounts.insert(bob_id.clone(), bob_account);
-        let domains = vec![("test".to_string(), domain)];
+        let domains = vec![(DomainId::new("test").unwrap(), domain)];
         let wsv = WorldStateView::new(World::with(domains, BTreeSet::new()));
         let validator: HasTokenBoxed<_> = Box::new(GrantedToken);
         assert!(validator.check(&alice_id, &instruction_burn, &wsv).is_err());
@@ -797,7 +797,7 @@ mod tests {
     pub fn check_query_permissions_nested() {
         let instruction: Instruction = Pair::new(
             TransferBox::new(
-                IdBox::AssetId(AssetId::from_names("btc", "crypto", "seller", "company")),
+                IdBox::AssetId(AssetId::from_names("btc", "crypto", "seller", "company").unwrap()),
                 Expression::Add(Add::new(
                     Expression::Query(
                         FindAssetQuantityById::new(AssetId::from_names(
@@ -805,22 +805,22 @@ mod tests {
                             "exchange",
                             "dex",
                             "exchange",
-                        ))
+                        ).unwrap())
                         .into(),
                     ),
                     10_u32,
                 )),
-                IdBox::AssetId(AssetId::from_names("btc", "crypto", "buyer", "company")),
+                IdBox::AssetId(AssetId::from_names("btc", "crypto", "buyer", "company").unwrap()),
             ),
             TransferBox::new(
-                IdBox::AssetId(AssetId::from_names("eth", "crypto", "buyer", "company")),
+                IdBox::AssetId(AssetId::from_names("eth", "crypto", "buyer", "company").unwrap()),
                 15_u32,
-                IdBox::AssetId(AssetId::from_names("eth", "crypto", "seller", "company")),
+                IdBox::AssetId(AssetId::from_names("eth", "crypto", "seller", "company").unwrap()),
             ),
         )
         .into();
         let wsv = WorldStateView::new(World::new());
-        let alice_id = <Account as Identifiable>::Id::new("alice", "test");
+        let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
         assert!(check_query_in_instruction(&alice_id, &instruction, &wsv, &DenyAll.into()).is_err())
     }
 }

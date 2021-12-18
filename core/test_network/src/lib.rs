@@ -132,7 +132,7 @@ impl<G: GenesisNetworkTrait> TestGenesis for G {
         genesis.transactions[0].isi.push(
             RegisterBox::new(IdentifiableBox::AssetDefinition(
                 AssetDefinition::new_quantity(
-                    AssetDefinitionId::new("rose", "wonderland").expect("Valid names never fail"),
+                    AssetDefinitionId::new("rose", "wonderland").unwrap(),
                 )
                 .into(),
             ))
@@ -141,7 +141,7 @@ impl<G: GenesisNetworkTrait> TestGenesis for G {
         genesis.transactions[0].isi.push(
             RegisterBox::new(IdentifiableBox::AssetDefinition(
                 AssetDefinition::new_quantity(
-                    AssetDefinitionId::new("tulip", "wonderland").expect("Valid names never fail"),
+                    AssetDefinitionId::new("tulip", "wonderland").unwrap(),
                 )
                 .into(),
             ))
@@ -151,7 +151,7 @@ impl<G: GenesisNetworkTrait> TestGenesis for G {
             MintBox::new(
                 Value::U32(13),
                 IdBox::AssetId(AssetId::new(
-                    AssetDefinitionId::new("rose", "wonderland").expect("Valid names never fail"),
+                    AssetDefinitionId::new("rose", "wonderland").unwrap(),
                     AccountId::new("alice", "wonderland").expect("Valid names never fail"),
                 )),
             )

@@ -1920,11 +1920,11 @@ pub mod public_blockchain {
 
         #[test]
         fn transfer_only_owned_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
-            let bob_xor_id = <Asset as Identifiable>::Id::from_names("xor", "test", "bob", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
+            let bob_xor_id = <Asset as Identifiable>::Id::from_names("xor", "test", "bob", "test").unwrap();
             let wsv = WorldStateView::<World>::new(World::new());
             let transfer = Instruction::Transfer(TransferBox {
                 source_id: IdBox::AssetId(alice_xor_id).into(),
@@ -1941,22 +1941,22 @@ pub mod public_blockchain {
 
         #[test]
         fn transfer_granted_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
-            let bob_xor_id = <Asset as Identifiable>::Id::from_names("xor", "test", "bob", "test");
-            let mut domain = Domain::new("test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
+            let bob_xor_id = <Asset as Identifiable>::Id::from_names("xor", "test", "bob", "test").unwrap();
+            let mut domain = Domain::new(DomainId::new("test").unwrap());
             let mut bob_account = Account::new(bob_id.clone());
             let _ = bob_account.permission_tokens.insert(PermissionToken::new(
                 transfer::CAN_TRANSFER_USER_ASSETS_TOKEN,
                 [(
-                    ASSET_ID_TOKEN_PARAM_NAME.to_string(),
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME).unwrap(),
                     alice_xor_id.clone().into(),
                 )],
             ));
             domain.accounts.insert(bob_id.clone(), bob_account);
-            let domains = vec![("test".to_string(), domain)];
+            let domains = vec![(DomainId::new("test").unwrap(), domain)];
             let wsv = WorldStateView::<World>::new(World::with(domains, BTreeSet::new()));
             let transfer = Instruction::Transfer(TransferBox {
                 source_id: IdBox::AssetId(alice_xor_id).into(),
@@ -1972,13 +1972,14 @@ pub mod public_blockchain {
 
         #[test]
         fn grant_transfer_of_my_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
             let permission_token_to_alice = PermissionToken::new(
                 transfer::CAN_TRANSFER_USER_ASSETS_TOKEN,
-                [(ASSET_ID_TOKEN_PARAM_NAME.to_owned(), alice_xor_id.into())],
+                [(
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME).unwrap(), alice_xor_id.into())],
             );
             let wsv = WorldStateView::<World>::new(World::new());
             let grant = Instruction::Grant(GrantBox {
@@ -1992,16 +1993,16 @@ pub mod public_blockchain {
 
         #[test]
         fn unregister_only_assets_created_by_this_account() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
             let wsv = WorldStateView::<World>::new(World::with(
                 [(
                     "test".to_owned(),
                     Domain {
                         accounts: BTreeMap::new(),
-                        name: "test".to_owned(),
+                        id: Name::new("test").unwrap().into(),
                         asset_definitions: [(
                             xor_id.clone(),
                             AssetDefinitionEntry {
@@ -2027,16 +2028,16 @@ pub mod public_blockchain {
 
         #[test]
         fn unregister_granted_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
-            let mut domain = Domain::new("test");
+            let mut domain = Domain::new(DomainId::new("test").unwrap());
             let mut bob_account = Account::new(bob_id.clone());
             let _ = bob_account.permission_tokens.insert(PermissionToken::new(
                 unregister::CAN_UNREGISTER_ASSET_WITH_DEFINITION,
                 [(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_string(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).unwrap(),
                     xor_id.clone().into(),
                 )],
             ));
@@ -2045,7 +2046,7 @@ pub mod public_blockchain {
                 xor_id.clone(),
                 AssetDefinitionEntry::new(xor_definition, alice_id.clone()),
             );
-            let domains = [("test".to_owned(), domain)];
+            let domains = vec![(DomainId::new("test").unwrap(), domain)];
             let wsv = WorldStateView::<World>::new(World::with(domains, []));
             let instruction = Instruction::Unregister(UnregisterBox::new(xor_id));
             let validator: IsInstructionAllowedBoxed<World> =
@@ -2058,23 +2059,23 @@ pub mod public_blockchain {
 
         #[test]
         fn grant_unregister_of_assets_created_by_this_account() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
             let permission_token_to_alice = PermissionToken::new(
                 unregister::CAN_UNREGISTER_ASSET_WITH_DEFINITION,
                 [(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_owned(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).unwrap(),
                     xor_id.clone().into(),
                 )],
             );
-            let mut domain = Domain::new("test");
+            let mut domain = Domain::new(DomainId::new("test").unwrap());
             domain.asset_definitions.insert(
                 xor_id,
                 AssetDefinitionEntry::new(xor_definition, alice_id.clone()),
             );
-            let domains = [("test".to_owned(), domain)];
+            let domains = vec![(DomainId::new("test").unwrap(), domain)];
 
             let wsv = WorldStateView::<World>::new(World::with(domains, []));
             let grant = Instruction::Grant(GrantBox {
@@ -2089,18 +2090,18 @@ pub mod public_blockchain {
 
         #[test]
         fn mint_only_assets_created_by_this_account() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
             let wsv = WorldStateView::<World>::new(World::with(
                 [(
                     "test".to_string(),
                     Domain {
                         accounts: BTreeMap::new(),
-                        name: "test".to_string(),
+                        id: DomainId::new("test").unwrap(),
                         asset_definitions: [(
                             xor_id,
                             AssetDefinitionEntry {
@@ -2128,18 +2129,18 @@ pub mod public_blockchain {
 
         #[test]
         fn mint_granted_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
-            let mut domain = Domain::new("test");
+            let mut domain = Domain::new(DomainId::new("test").unwrap());
             let mut bob_account = Account::new(bob_id.clone());
             let _ = bob_account.permission_tokens.insert(PermissionToken::new(
                 mint::CAN_MINT_USER_ASSET_DEFINITIONS_TOKEN,
                 [(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_string(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).unwrap(),
                     xor_id.clone().into(),
                 )],
             ));
@@ -2148,7 +2149,7 @@ pub mod public_blockchain {
                 xor_id,
                 AssetDefinitionEntry::new(xor_definition, alice_id.clone()),
             );
-            let domains = [("test".to_owned(), domain)];
+            let domains = vec![(DomainId::new("test").unwrap(), domain)];
             let wsv = WorldStateView::<World>::new(World::with(domains, []));
             let instruction = Instruction::Mint(MintBox {
                 object: Value::U32(100).into(),
@@ -2163,23 +2164,23 @@ pub mod public_blockchain {
 
         #[test]
         fn grant_mint_of_assets_created_by_this_account() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
             let permission_token_to_alice = PermissionToken::new(
                 mint::CAN_MINT_USER_ASSET_DEFINITIONS_TOKEN,
                 [(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_owned(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).unwrap(),
                     xor_id.clone().into(),
                 )],
             );
-            let mut domain = Domain::new("test");
+            let mut domain = Domain::new(DomainId::new("test").unwrap());
             domain.asset_definitions.insert(
                 xor_id,
                 AssetDefinitionEntry::new(xor_definition, alice_id.clone()),
             );
-            let domains = [("test".to_owned(), domain)];
+            let domains = vec![(DomainId::new("test").unwrap(), domain)];
             let wsv = WorldStateView::<World>::new(World::with(domains, vec![]));
             let grant = Instruction::Grant(GrantBox {
                 object: permission_token_to_alice.into(),
@@ -2193,18 +2194,18 @@ pub mod public_blockchain {
 
         #[test]
         fn burn_only_assets_created_by_this_account() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
             let wsv = WorldStateView::<World>::new(World::with(
                 [(
                     "test".to_string(),
                     Domain {
                         accounts: [].into(),
-                        name: "test".to_string(),
+                        id: DomainId::new("test").unwrap(),
                         asset_definitions: [(
                             xor_id,
                             AssetDefinitionEntry {
@@ -2232,18 +2233,18 @@ pub mod public_blockchain {
 
         #[test]
         fn burn_granted_asset_definition() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
-            let mut domain = Domain::new("test");
+            let mut domain = Domain::new(DomainId::new("test").unwrap());
             let mut bob_account = Account::new(bob_id.clone());
             let _ = bob_account.permission_tokens.insert(PermissionToken::new(
                 burn::CAN_BURN_ASSET_WITH_DEFINITION,
                 [(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_string(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).unwrap(),
                     xor_id.clone().into(),
                 )],
             ));
@@ -2252,7 +2253,7 @@ pub mod public_blockchain {
                 xor_id,
                 AssetDefinitionEntry::new(xor_definition, alice_id.clone()),
             );
-            let domains = [("test".to_owned(), domain)];
+            let domains = vec![(DomainId::new("test").unwrap(), domain)];
             let wsv = WorldStateView::<World>::new(World::with(domains, vec![]));
             let instruction = Instruction::Burn(BurnBox {
                 object: Value::U32(100).into(),
@@ -2267,23 +2268,23 @@ pub mod public_blockchain {
 
         #[test]
         fn grant_burn_of_assets_created_by_this_account() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
             let permission_token_to_alice = PermissionToken::new(
                 burn::CAN_BURN_ASSET_WITH_DEFINITION,
                 [(
-                    ASSET_DEFINITION_ID_TOKEN_PARAM_NAME.to_owned(),
+                    Name::new(ASSET_DEFINITION_ID_TOKEN_PARAM_NAME).unwrap(),
                     xor_id.clone().into(),
                 )],
             );
-            let mut domain = Domain::new("test");
+            let mut domain = Domain::new(DomainId::new("test").unwrap());
             domain.asset_definitions.insert(
                 xor_id,
                 AssetDefinitionEntry::new(xor_definition, alice_id.clone()),
             );
-            let domains = [("test".to_owned(), domain)];
+            let domains = vec![(DomainId::new("test").unwrap(), domain)];
             let wsv = WorldStateView::<World>::new(World::with(domains, vec![]));
             let grant = Instruction::Grant(GrantBox {
                 object: permission_token_to_alice.into(),
@@ -2297,10 +2298,10 @@ pub mod public_blockchain {
 
         #[test]
         fn burn_only_owned_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
             let wsv = WorldStateView::<World>::new(World::new());
             let burn = Instruction::Burn(BurnBox {
                 object: Value::U32(100).into(),
@@ -2312,21 +2313,21 @@ pub mod public_blockchain {
 
         #[test]
         fn burn_granted_assets() -> Result<(), String> {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
-            let mut domain = Domain::new("test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
+            let mut domain = Domain::new("test")?;
             let mut bob_account = Account::new(bob_id.clone());
             let _ = bob_account.permission_tokens.insert(PermissionToken::new(
                 burn::CAN_BURN_USER_ASSETS_TOKEN,
                 [(
-                    ASSET_ID_TOKEN_PARAM_NAME.to_string(),
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME).unwrap(),
                     alice_xor_id.clone().into(),
                 )],
             ));
             domain.accounts.insert(bob_id.clone(), bob_account);
-            let domains = vec![("test".to_string(), domain)];
+            let domains = vec![(DomainId::new("test").unwrap(), domain)];
             let wsv = WorldStateView::<World>::new(World::with(domains, vec![]));
             let transfer = Instruction::Burn(BurnBox {
                 object: Value::U32(10).into(),
@@ -2341,13 +2342,14 @@ pub mod public_blockchain {
 
         #[test]
         fn grant_burn_of_my_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
             let permission_token_to_alice = PermissionToken::new(
                 burn::CAN_BURN_USER_ASSETS_TOKEN,
-                [(ASSET_ID_TOKEN_PARAM_NAME.to_owned(), alice_xor_id.into())],
+                [(
+                    Name::new(ASSET_ID_TOKEN_PARAM_NAME).unwrap(), alice_xor_id.into())],
             );
             let wsv = WorldStateView::<World>::new(World::new());
             let grant = Instruction::Grant(GrantBox {
@@ -2361,15 +2363,15 @@ pub mod public_blockchain {
 
         #[test]
         fn set_to_only_owned_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
             let wsv = WorldStateView::<World>::new(World::new());
             let set = Instruction::SetKeyValue(SetKeyValueBox::new(
                 IdBox::AssetId(alice_xor_id),
-                Value::from("key".to_owned()),
-                Value::from("value".to_owned()),
+                Name::new("key").unwrap(),
+                Name::new("value").unwrap(),
             ));
             assert!(key_value::AssetSetOnlyForSignerAccount
                 .check(&alice_id, &set, &wsv)
@@ -2381,14 +2383,14 @@ pub mod public_blockchain {
 
         #[test]
         fn remove_to_only_owned_assets() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let alice_xor_id =
-                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test");
+                <Asset as Identifiable>::Id::from_names("xor", "test", "alice", "test").unwrap();
             let wsv = WorldStateView::<World>::new(World::new());
             let set = Instruction::RemoveKeyValue(RemoveKeyValueBox::new(
                 IdBox::AssetId(alice_xor_id),
-                Value::from("key".to_owned()),
+                Name::new("key").unwrap(),
             ));
             assert!(key_value::AssetRemoveOnlyForSignerAccount
                 .check(&alice_id, &set, &wsv)
@@ -2400,13 +2402,13 @@ pub mod public_blockchain {
 
         #[test]
         fn set_to_only_owned_account() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let wsv = WorldStateView::<World>::new(World::new());
             let set = Instruction::SetKeyValue(SetKeyValueBox::new(
                 IdBox::AccountId(alice_id.clone()),
-                Value::from("key".to_owned()),
-                Value::from("value".to_owned()),
+                Name::new("key").unwrap(),
+                Name::new("value").unwrap(),
             ));
             assert!(key_value::AccountSetOnlyForSignerAccount
                 .check(&alice_id, &set, &wsv)
@@ -2418,12 +2420,12 @@ pub mod public_blockchain {
 
         #[test]
         fn remove_to_only_owned_account() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
             let wsv = WorldStateView::<World>::new(World::new());
             let set = Instruction::RemoveKeyValue(RemoveKeyValueBox::new(
                 IdBox::AccountId(alice_id.clone()),
-                Value::from("key".to_owned()),
+                Name::new("key").unwrap(),
             ));
             assert!(key_value::AccountRemoveOnlyForSignerAccount
                 .check(&alice_id, &set, &wsv)
@@ -2435,16 +2437,16 @@ pub mod public_blockchain {
 
         #[test]
         fn set_to_only_owned_asset_definition() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
             let wsv = WorldStateView::<World>::new(World::with(
                 [(
                     "test".to_string(),
                     Domain {
                         accounts: BTreeMap::new(),
-                        name: "test".to_string(),
+                        id: DomainId::new("test").unwrap(),
                         asset_definitions: [(
                             xor_id.clone(),
                             AssetDefinitionEntry {
@@ -2460,8 +2462,8 @@ pub mod public_blockchain {
             ));
             let set = Instruction::SetKeyValue(SetKeyValueBox::new(
                 IdBox::AssetDefinitionId(xor_id),
-                Value::from("key".to_owned()),
-                Value::from("value".to_owned()),
+                Name::new("key").unwrap(),
+                Name::new("value").unwrap(),
             ));
             assert!(key_value::AssetDefinitionSetOnlyForSignerAccount
                 .check(&alice_id, &set, &wsv)
@@ -2473,16 +2475,16 @@ pub mod public_blockchain {
 
         #[test]
         fn remove_to_only_owned_asset_definition() {
-            let alice_id = <Account as Identifiable>::Id::new("alice", "test");
-            let bob_id = <Account as Identifiable>::Id::new("bob", "test");
-            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test");
+            let alice_id = <Account as Identifiable>::Id::new("alice", "test").unwrap();
+            let bob_id = <Account as Identifiable>::Id::new("bob", "test").unwrap();
+            let xor_id = <AssetDefinition as Identifiable>::Id::new("xor", "test").unwrap();
             let xor_definition = new_xor_definition(&xor_id);
             let wsv = WorldStateView::<World>::new(World::with(
                 [(
                     "test".to_string(),
                     Domain {
                         accounts: BTreeMap::new(),
-                        name: "test".to_string(),
+                        id: DomainId::new("test").unwrap(),
                         asset_definitions: [(
                             xor_id.clone(),
                             AssetDefinitionEntry {
@@ -2498,7 +2500,7 @@ pub mod public_blockchain {
             ));
             let set = Instruction::RemoveKeyValue(RemoveKeyValueBox::new(
                 IdBox::AssetDefinitionId(xor_id),
-                Value::from("key".to_owned()),
+                Name::new("key").unwrap(),
             ));
             assert!(key_value::AssetDefinitionRemoveOnlyForSignerAccount
                 .check(&alice_id, &set, &wsv)

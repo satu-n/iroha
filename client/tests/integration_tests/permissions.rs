@@ -36,9 +36,9 @@ fn permissions_disallow_asset_transfer() {
     let pipeline_time = Configuration::pipeline_time();
 
     // Given
-    let alice_id = AccountId::new("alice", "wonderland");
-    let bob_id = AccountId::new("bob", "wonderland");
-    let asset_definition_id = AssetDefinitionId::new("xor", "wonderland");
+    let alice_id = AccountId::new("alice", "wonderland").unwrap();
+    let bob_id = AccountId::new("bob", "wonderland").unwrap();
+    let asset_definition_id = AssetDefinitionId::new("xor", "wonderland").unwrap();
     let create_asset = RegisterBox::new(IdentifiableBox::from(AssetDefinition::new_quantity(
         asset_definition_id.clone(),
     )));
@@ -98,9 +98,9 @@ fn permissions_disallow_asset_burn() {
     thread::sleep(pipeline_time * 5);
 
     let domain_name = "wonderland";
-    let alice_id = AccountId::new("alice", domain_id);
-    let bob_id = AccountId::new("bob", domain_id);
-    let asset_definition_id = AssetDefinitionId::new("xor", domain_id);
+    let alice_id = AccountId::new("alice", domain_name).unwrap();
+    let bob_id = AccountId::new("bob", domain_name).unwrap();
+    let asset_definition_id = AssetDefinitionId::new("xor", domain_name).unwrap();
     let create_asset = RegisterBox::new(IdentifiableBox::from(AssetDefinition::new_quantity(
         asset_definition_id.clone(),
     )));
@@ -163,7 +163,7 @@ fn account_can_query_only_its_own_domain() {
 
     let domain_name = "wonderland";
     let new_domain_name = "wonderland2";
-    let register_domain = RegisterBox::new(IdentifiableBox::from(Domain::new(new_domain_id)));
+    let register_domain = RegisterBox::new(IdentifiableBox::from(Domain::new(Name::new(new_domain_name).unwrap().into())));
 
     iroha_client
         .submit(register_domain)
@@ -173,11 +173,11 @@ fn account_can_query_only_its_own_domain() {
 
     // Alice can query the domain in which her account exists.
     assert!(iroha_client
-        .request(client::domain::by_id(domain_name.to_owned()))
+        .request(client::domain::by_id(DomainId::new(domain_name).unwrap()))
         .is_ok());
 
     // Alice can not query other domains.
     assert!(iroha_client
-        .request(client::domain::by_id(new_domain_name.to_owned()))
+        .request(client::domain::by_id(DomainId::new(new_domain_name).unwrap()))
         .is_err());
 }

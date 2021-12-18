@@ -185,7 +185,7 @@ impl AssertReady {
             torii.query_validator = Arc::new(DenyAll.into());
         }
 
-        let authority = AccountId::new("alice", "wonderland");
+        let authority = AccountId::new("alice", "wonderland")?;
         for instruction in self.instructions {
             instruction
                 .execute(authority.clone(), &torii.wsv)

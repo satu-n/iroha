@@ -9,7 +9,7 @@ use std::{
 
 use config::Configuration;
 use dashmap::{
-    mapref::one::{Ref as DashmapRef, RefMut as DashmapRefMut},
+    mapref::one::{Ref as DashMapRef, RefMut as DashMapRefMut},
     DashSet,
 };
 use eyre::Result;
@@ -319,12 +319,12 @@ impl<W: WorldTrait> WorldStateView<W> {
     ///
     /// # Errors
     /// Fails if there is no domain
-    pub fn domain(&self, name: &str) -> Result<DashmapRef<Name, Domain>> {
+    pub fn domain(&self, id: &<Domain as Identifiable>::Id) -> Result<DashMapRef<DomainId, Domain>> {
         let domain = self
             .world
             .domains
-            .get(name)
-            .ok_or_else(|| FindError::Domain(name.to_owned()))?;
+            .get(&id)
+            .ok_or_else(|| FindError::Domain(id))?;
         Ok(domain)
     }
 
@@ -332,12 +332,12 @@ impl<W: WorldTrait> WorldStateView<W> {
     ///
     /// # Errors
     /// Fails if there is no domain
-    pub fn domain_mut(&self, name: &str) -> Result<DashmapRefMut<Name, Domain>> {
+    pub fn domain_mut(&self, id: &<Domain as Identifiable>::Id) -> Result<DashMapRefMut<DomainId, Domain>> {
         let domain = self
             .world
             .domains
-            .get_mut(name)
-            .ok_or_else(|| FindError::Domain(name.to_owned()))?;
+            .get_mut(&id)
+            .ok_or_else(|| FindError::Domain(id))?;
         Ok(domain)
     }
 
@@ -350,7 +350,7 @@ impl<W: WorldTrait> WorldStateView<W> {
         id: &<Domain as Identifiable>::Id,
         f: impl FnOnce(&Domain) -> T,
     ) -> Result<T> {
-        let domain = self.domain(id)?;
+        let domain = self.domain(&id)?;
         Ok(f(domain.value()))
     }
 
@@ -360,10 +360,10 @@ impl<W: WorldTrait> WorldStateView<W> {
     /// Fails if there is no domain
     pub fn modify_domain(
         &self,
-        name: &str,
+        id: &<Domain as Identifiable>::Id,
         f: impl FnOnce(&mut Domain) -> Result<()>,
     ) -> Result<()> {
-        let mut domain = self.domain_mut(name)?;
+        let mut domain = self.domain_mut(id)?;
         f(domain.value_mut())
     }
 

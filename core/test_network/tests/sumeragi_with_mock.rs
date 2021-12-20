@@ -563,7 +563,7 @@ pub mod utils {
         impl WorldTrait for WithRoot {
             /// Creates `World` with these `domains` and `trusted_peers_ids`
             fn with(
-                domains: impl IntoIterator<Item = (Name, Domain)>,
+                domains: impl IntoIterator<Item = (DomainId, Domain)>,
                 trusted_peers_ids: impl IntoIterator<Item = PeerId>,
             ) -> Self {
                 Self(World::with(

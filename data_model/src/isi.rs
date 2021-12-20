@@ -633,8 +633,9 @@ impl FailBox {
     }
 }
 
+// SATO
 impl Identifiable for Instruction {
-    type Id = Name;
+    type Id = DomainId;
 }
 
 #[cfg(test)]

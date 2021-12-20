@@ -248,7 +248,7 @@ mod domain {
     pub struct Register {
         /// Domain's name as double-quoted string
         #[structopt(short, long)]
-        pub id: Domain,
+        pub id: DomainId,
         /// The filename with key-value metadata pairs in JSON
         #[structopt(short, long, default_value = "")]
         pub metadata: super::Metadata,
@@ -260,7 +260,7 @@ mod domain {
                 id,
                 metadata: Metadata(metadata),
             } = self;
-            let create_domain = RegisterBox::new(IdentifiableBox::from(id));
+            let create_domain = RegisterBox::new(IdentifiableBox::from(Domain::new(id)));
             submit(create_domain, cfg, metadata).wrap_err("Failed to create domain")
         }
     }

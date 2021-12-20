@@ -58,7 +58,7 @@ pub enum FindError {
     Account(AccountId),
     /// Failed to find domain
     #[error("Failed to find domain: `{0}`")]
-    Domain(Name),
+    Domain(DomainId),
     /// Failed to find metadata key
     #[error("Failed to find metadata key")]
     MetadataKey(Name),
@@ -205,8 +205,8 @@ impl<W: WorldTrait> Execute<W> for UnregisterBox {
             IdBox::AssetDefinitionId(asset_definition_id) => {
                 Unregister::<AssetDefinition>::new(asset_definition_id).execute(authority, wsv)
             }
-            IdBox::DomainName(domain_name) => {
-                Unregister::<Domain>::new(domain_name).execute(authority, wsv)
+            IdBox::DomainId(domain_id) => {
+                Unregister::<Domain>::new(domain_id).execute(authority, wsv)
             }
             IdBox::PeerId(peer_id) => Unregister::<Peer>::new(peer_id).execute(authority, wsv),
             _ => Err(eyre!("Unsupported unregister instruction.").into()),
@@ -332,8 +332,8 @@ impl<W: WorldTrait> Execute<W> for SetKeyValueBox {
                 SetKeyValue::<Account, Name, Value>::new(account_id, key, value)
                     .execute(authority, wsv)
             }
-            IdBox::DomainName(name) => {
-                SetKeyValue::<Domain, Name, Value>::new(name, key, value).execute(authority, wsv)
+            IdBox::DomainId(id) => {
+                SetKeyValue::<Domain, Name, Value>::new(id, key, value).execute(authority, wsv)
             }
             _ => Err(eyre!("Unsupported set key-value instruction.").into()),
         }

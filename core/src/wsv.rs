@@ -36,7 +36,7 @@ pub trait WorldTrait:
 {
     /// Creates a [`World`] with these [`Domain`]s and trusted [`PeerId`]s.
     fn with(
-        domains: impl IntoIterator<Item = (Name, Domain)>,
+        domains: impl IntoIterator<Item = (DomainId, Domain)>,
         trusted_peers_ids: impl IntoIterator<Item = PeerId>,
     ) -> Self;
 }
@@ -93,7 +93,7 @@ impl World {
 
 impl WorldTrait for World {
     fn with(
-        domains: impl IntoIterator<Item = (Name, Domain)>,
+        domains: impl IntoIterator<Item = (DomainId, Domain)>,
         trusted_peers_ids: impl IntoIterator<Item = PeerId>,
     ) -> Self {
         let domains = domains.into_iter().collect();
@@ -302,7 +302,7 @@ impl<W: WorldTrait> WorldStateView<W> {
 
     /// Add new `Domain` entity.
     pub fn add_domain(&mut self, domain: Domain) {
-        self.world.domains.insert(domain.name.clone(), domain);
+        self.world.domains.insert(domain.id.clone(), domain);
     }
 
     /// Returns reference for domains map
@@ -324,7 +324,7 @@ impl<W: WorldTrait> WorldStateView<W> {
             .world
             .domains
             .get(&id)
-            .ok_or_else(|| FindError::Domain(id))?;
+            .ok_or_else(|| FindError::Domain(id.clone()))?;
         Ok(domain)
     }
 
@@ -337,7 +337,7 @@ impl<W: WorldTrait> WorldStateView<W> {
             .world
             .domains
             .get_mut(&id)
-            .ok_or_else(|| FindError::Domain(id))?;
+            .ok_or_else(|| FindError::Domain(id.clone()))?;
         Ok(domain)
     }
 
@@ -376,7 +376,7 @@ impl<W: WorldTrait> WorldStateView<W> {
         id: &<Account as Identifiable>::Id,
         f: impl FnOnce(&Account) -> T,
     ) -> Result<T> {
-        let domain = self.domain(&id.domain_name)?;
+        let domain = self.domain(&id.domain_id)?;
         let account = domain
             .accounts
             .get(id)
@@ -393,7 +393,7 @@ impl<W: WorldTrait> WorldStateView<W> {
         id: &<Account as Identifiable>::Id,
         f: impl FnOnce(&mut Account) -> Result<()>,
     ) -> Result<()> {
-        let mut domain = self.domain_mut(&id.domain_name)?;
+        let mut domain = self.domain_mut(&id.domain_id)?;
         let account = domain
             .accounts
             .get_mut(id)
@@ -495,7 +495,7 @@ impl<W: WorldTrait> WorldStateView<W> {
         &self,
         id: &<AssetDefinition as Identifiable>::Id,
     ) -> Result<AssetDefinitionEntry> {
-        self.domain(&id.domain_name)?
+        self.domain(&id.domain_id)?
             .asset_definitions
             .get(id)
             .ok_or_else(|| FindError::AssetDefinition(id.clone()).into())
@@ -511,7 +511,7 @@ impl<W: WorldTrait> WorldStateView<W> {
         id: &<AssetDefinition as Identifiable>::Id,
         f: impl FnOnce(&mut AssetDefinitionEntry) -> Result<()>,
     ) -> Result<()> {
-        let mut domain = self.domain_mut(&id.domain_name)?;
+        let mut domain = self.domain_mut(&id.domain_id)?;
         let asset_definition_entry = domain
             .asset_definitions
             .get_mut(id)

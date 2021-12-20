@@ -125,7 +125,7 @@ fn main() -> Result<()> {
     println!("Iroha Client CLI: build v0.0.1 [release]");
     println!(
         "User: {}@{}",
-        config.account_id.name, config.account_id.domain_name
+        config.account_id.name, config.account_id.domain_id
     );
     #[cfg(debug_assertions)]
     eprintln!(

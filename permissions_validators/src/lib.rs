@@ -212,7 +212,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -226,7 +226,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -235,17 +235,17 @@ pub mod private_blockchain {
                             ))
                         }
                     }
-                    FindAccountsByDomainName(query) => {
-                        let domain_name = query
-                            .domain_name
+                    FindAccountsByDomainId(query) => {
+                        let domain_id = query
+                            .domain_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if domain_name == authority.domain_name {
+                        if domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access accounts from a different domain with name {}.",
-                                domain_name
+                                domain_id
                             ))
                         }
                     }
@@ -254,7 +254,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if asset_id.account_id.domain_name == authority.domain_name {
+                        if asset_id.account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -268,7 +268,7 @@ pub mod private_blockchain {
                             .account_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -277,31 +277,31 @@ pub mod private_blockchain {
                             ))
                         }
                     }
-                    FindAssetsByDomainName(query) => {
-                        let domain_name = query
-                            .domain_name
+                    FindAssetsByDomainId(query) => {
+                        let domain_id = query
+                            .domain_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if domain_name == authority.domain_name {
+                        if domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access assets from a different domain with name {}.",
-                                domain_name
+                                domain_id
                             ))
                         }
                     }
-                    FindAssetsByDomainNameAndAssetDefinitionId(query) => {
-                        let domain_name = query
-                            .domain_name
+                    FindAssetsByDomainIdAndAssetDefinitionId(query) => {
+                        let domain_id = query
+                            .domain_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if domain_name == authority.domain_name {
+                        if domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access assets from a different domain with name {}.",
-                                domain_name
+                                domain_id
                             ))
                         }
                     }
@@ -310,13 +310,13 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if asset_definition_id.domain_name == authority.domain_name {
+                        if asset_definition_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access asset definition from a different domain. Asset definition domain: {}. Signers account domain {}.",
-                                asset_definition_id.domain_name,
-                                authority.domain_name
+                                asset_definition_id.domain_id,
+                                authority.domain_id
                             ))
                         }
                     }
@@ -325,7 +325,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if asset_id.account_id.domain_name == authority.domain_name {
+                        if asset_id.account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -339,7 +339,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if asset_id.account_id.domain_name == authority.domain_name {
+                        if asset_id.account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -348,20 +348,20 @@ pub mod private_blockchain {
                             ))
                         }
                     }
-                    FindDomainByName(query::FindDomainByName { name })
+                    FindDomainById(query::FindDomainById { id })
                     | FindDomainKeyValueByIdAndKey(query::FindDomainKeyValueByIdAndKey {
-                        name,
+                        id,
                         ..
                     }) => {
-                        let domain_name = name
+                        let domain_id = id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if domain_name == authority.domain_name {
+                        if domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
                                 "Cannot access a different domain: {}.",
-                                domain_name
+                                domain_id
                             ))
                         }
                     }
@@ -370,7 +370,7 @@ pub mod private_blockchain {
                             .account_id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -400,7 +400,7 @@ pub mod private_blockchain {
                             .id
                             .evaluate(wsv, &context)
                             .map_err(|err| err.to_string())?;
-                        if account_id.domain_name == authority.domain_name {
+                        if account_id.domain_id == authority.domain_id {
                             Ok(())
                         } else {
                             Err(format!(
@@ -432,16 +432,16 @@ pub mod private_blockchain {
                 let context = Context::new();
                 match query {
                     FindAccountsByName(_)
-                    | FindAccountsByDomainName(_)
+                    | FindAccountsByDomainId(_)
                     | FindAllAccounts(_)
                     | FindAllAssetsDefinitions(_)
                     | FindAssetsByAssetDefinitionId(_)
-                    | FindAssetsByDomainName(_)
+                    | FindAssetsByDomainId(_)
                     | FindAssetsByName(_)
                     | FindAllDomains(_)
-                    | FindDomainByName(_)
+                    | FindDomainById(_)
                     | FindDomainKeyValueByIdAndKey(_)
-                    | FindAssetsByDomainNameAndAssetDefinitionId(_)
+                    | FindAssetsByDomainIdAndAssetDefinitionId(_)
                     | FindAssetDefinitionKeyValueByIdAndKey(_)
                     | FindAllAssets(_) => {
                         Err("Only access to the assets of the same domain is permitted.".to_owned())

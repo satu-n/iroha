@@ -555,7 +555,7 @@ pub mod utils {
             account
         });
         pub static GLOBAL: Lazy<Domain> = Lazy::new(|| {
-            let mut domain = Domain::new("global");
+            let mut domain = Domain::new(DomainId::new("global"));
             domain.accounts.insert(ROOT_ID.clone(), ROOT.clone());
             domain
         });
@@ -567,7 +567,7 @@ pub mod utils {
                 trusted_peers_ids: impl IntoIterator<Item = PeerId>,
             ) -> Self {
                 Self(World::with(
-                    vec![(GLOBAL.name.clone(), GLOBAL.clone())]
+                    vec![(GLOBAL.id.clone(), GLOBAL.clone())]
                         .into_iter()
                         .chain(domains),
                     trusted_peers_ids,

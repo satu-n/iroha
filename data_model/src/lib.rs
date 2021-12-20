@@ -599,7 +599,7 @@ pub mod account {
     use crate::role::Id as RoleId;
     use crate::{
         asset::AssetsMap,
-        domain::prelude::*;,
+        domain::prelude::*,
         expression::{ContainsAny, ContextValue, EvaluatesTo, ExpressionBox, WhereBuilder},
         metadata::Metadata,
         permissions::PermissionToken,

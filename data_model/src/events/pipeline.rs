@@ -25,7 +25,7 @@ impl EventFilter {
         }
     }
 
-    /// Filter by enitity.
+    /// Filter by entity.
     pub const fn by_entity(entity: EntityType) -> EventFilter {
         EventFilter {
             entity: Some(entity),

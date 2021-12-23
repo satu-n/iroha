@@ -121,15 +121,23 @@ impl<W: WorldTrait> WorldStateView<W> {
         Self::with_events(None, config, world)
     }
 
+<<<<<<< Updated upstream
     /// Construct [`WorldStateView`] enabling emitting events.
+=======
+    /// Construct [`WorldStateView`] enabling emitting events
+>>>>>>> Stashed changes
     pub fn with_events(
         events_sender: Option<EventsSender>,
         config: Configuration,
         world: W,
     ) -> Self {
+<<<<<<< Updated upstream
         let (new_block_notifier, _) = tokio::sync::watch::channel(());
 
         Self {
+=======
+        WorldStateView {
+>>>>>>> Stashed changes
             world,
             config,
             transactions: DashSet::new(),
@@ -186,7 +194,10 @@ impl<W: WorldTrait> WorldStateView<W> {
                 .instructions
                 .iter()
                 .cloned()
-                .try_for_each(|instruction| instruction.execute(account_id.clone(), self))?;
+                .try_for_each(|instruction| {
+                    let events: Vec<Event> = instruction.execute(account_id.clone(), self)?.into();
+                    self.produce_events(events)
+                })?;
 
             self.transactions.insert(tx.hash());
             // Yield control cooperatively to the task scheduler.
@@ -202,10 +213,22 @@ impl<W: WorldTrait> WorldStateView<W> {
         Ok(())
     }
 
+<<<<<<< Updated upstream
     /// Returns receiving end of the spmc channel through which subscribers are notified when
     /// new block is added to the blockchain(after block validation)
     pub fn subscribe_to_new_block_notifications(&self) -> NewBlockNotificationReceiver {
         self.new_block_notifier.subscribe()
+=======
+    fn produce_events(&self, events: Vec<Event>) -> Result<()> {
+        let events_sender = match self.events_sender {
+            Some(sender) => sender,
+            _ => return Ok(()),
+        };
+        for event in events {
+            events_sender.send(event)?;
+        }
+        Ok(())
+>>>>>>> Stashed changes
     }
 
     /// Hash of latest block

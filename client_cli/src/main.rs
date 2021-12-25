@@ -194,22 +194,14 @@ mod events {
         /// Gets pipeline events
         Pipeline,
         /// Gets data events
-        Data(Data),
-    }
-
-    /// SATO
-    #[derive(StructOpt, Debug, Clone)]
-    pub struct Data {
-        /// SATO
-        #[structopt(short, long)]
-        pub filter: DataEventFilter,
+        Data,
     }
 
     impl RunArgs for Args {
         fn run(self, cfg: &ClientConfiguration) -> Result<()> {
             let filter = match self {
-                Args::Pipeline => EventFilter::Pipeline(PipelineEventFilter::identity()),
-                Args::Data(data) => data.filter.into(),
+                Args::Pipeline => EventFilter::Pipeline(PipelineEventFilter::default()),
+                Args::Data => EventFilter::Data(DataEventFilter::default()),
             };
             listen(filter, cfg)
         }

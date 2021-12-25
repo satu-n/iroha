@@ -8,7 +8,7 @@ use parity_scale_codec::{Decode, Encode};
 pub use crate::transaction::RejectionReason as PipelineRejectionReason;
 
 /// Event filter.
-#[derive(Debug, Clone, Copy, Decode, Encode, IntoSchema)]
+#[derive(Default, Debug, Clone, Copy, Decode, Encode, IntoSchema)]
 pub struct EventFilter {
     /// Filter by Entity if `Some`, if `None` all entities are accepted.
     pub entity: Option<EntityType>,
@@ -17,14 +17,6 @@ pub struct EventFilter {
 }
 
 impl EventFilter {
-    /// Do not filter at all.
-    pub const fn identity() -> EventFilter {
-        EventFilter {
-            entity: None,
-            hash: None,
-        }
-    }
-
     /// Filter by entity.
     pub const fn by_entity(entity: EntityType) -> EventFilter {
         EventFilter {

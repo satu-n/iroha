@@ -93,11 +93,11 @@ pub enum Status {
 // }
 
 /// Filter to select [`Event`] which matches the `entity` and `status` conditions
-#[derive(Debug, Decode, Encode, Deserialize, Serialize, Clone, IntoSchema)]
+#[derive(Default, Debug, Decode, Encode, Deserialize, Serialize, Clone, IntoSchema)]
 pub struct EventFilter {
-    /// Filter by [`Entity`].
+    /// Filter by [`Entity`]. [`None`] accepts any [`Entity`].
     entity: Option<EntityFilter>,
-    /// Filter by [`Status`]. [`None`] means accept all the [`Status`]es.
+    /// Filter by [`Status`]. [`None`] accepts any [`Status`].
     status: Option<StatusFilter>,
 }
 
@@ -447,6 +447,6 @@ mod asset {
 pub mod prelude {
     pub use super::{
         Entity as DataEntity, Event as DataEvent, EventFilter as DataEventFilter,
-        Status as DataStatus
+        Status as DataStatus,
     };
 }

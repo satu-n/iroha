@@ -97,18 +97,19 @@ pub enum Status {
 //     }
 // }
 
-/// Filter to select [`Event`] which matches the `entity` and `status` conditions
+/// Filter to select [`Event`]s which match the `entity` and `status` conditions.
 #[derive(Default, Debug, Decode, Encode, Deserialize, Serialize, Clone, IntoSchema)]
 pub struct EventFilter {
-    /// Filter by [`Entity`]. [`None`] accepts any [`Entity`].
+    /// Optional filter by [`Entity`]. [`None`] accepts any entities.
     entity: Option<EntityFilter>,
-    /// Filter by [`Status`]. [`None`] accepts any [`Status`].
+    /// Optional filter by [`Status`]. [`None`] accepts any statuses.
     status: Option<StatusFilter>,
 }
 
-/// Select entities under the entity of specified id, or all the entities of the entity type.
+/// Filter to select entities under the [`Entity`] of the optional id,
+/// or all the entities of the [`Entity`] type.
 #[derive(Debug, Decode, Encode, Deserialize, Serialize, Clone, IntoSchema)]
-enum EntityFilter {
+pub enum EntityFilter {
     /// Filter by [`Account`].
     Account(Option<AccountId>),
     /// Filter by [`AssetDefinition`].
@@ -121,17 +122,23 @@ enum EntityFilter {
     Peer(Option<PeerId>),
 }
 
-type StatusFilter = Status;
+/// Filter to select a status.
+pub type StatusFilter = Status;
 
 impl Event {
     /// Construct [`Event`].
-    pub fn new(entity: Entity, status: Status) -> Self {
+    pub const fn new(entity: Entity, status: Status) -> Self {
         Self { entity, status }
     }
 }
 
 impl EventFilter {
-    /// Apply filter to `event`: check if `event` is accepted.
+    /// Construct [`EventFilter`].
+    pub const fn new(entity: Option<EntityFilter>, status: Option<StatusFilter>) -> Self {
+        Self { entity, status }
+    }
+
+    /// Check if `event` is accepted.
     pub fn apply(&self, event: &Event) -> bool {
         let entity_check = self
             .entity
@@ -453,4 +460,29 @@ pub mod prelude {
         Entity as DataEntity, Event as DataEvent, EventFilter as DataEventFilter,
         Status as DataStatus,
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn entity_filter_scope() {
+        const DOMAIN: &str = "wonderland";
+        const ACCOUNT: &str = "alice";
+        const ASSET: &str = "rose";
+        let domain = DomainId::test(DOMAIN);
+        let account = AccountId::test(ACCOUNT, DOMAIN);
+        let asset = AssetId::test(ASSET, DOMAIN, ACCOUNT, DOMAIN);
+
+        let entity_created = |entity: Entity| Event::new(entity, Status::Created);
+        let domain_created = entity_created(Entity::Domain(domain));
+        let account_created = entity_created(Entity::Account(account.clone()));
+        let asset_created = entity_created(Entity::Asset(asset));
+
+        let account_filter = EventFilter::new(Some(EntityFilter::Account(Some(account))), None);
+        assert!(!account_filter.apply(&domain_created));
+        assert!(account_filter.apply(&account_created));
+        assert!(account_filter.apply(&asset_created));
+    }
 }

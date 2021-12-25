@@ -31,7 +31,9 @@ pub struct Event {
 // }
 
 /// Enumeration of all possible Iroha data entities.
-#[derive(Clone, PartialEq, Eq, Debug, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema)]
+#[derive(
+    Clone, PartialEq, Eq, Debug, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema,
+)]
 pub enum Entity {
     /// [`Account`].
     Account(AccountId),
@@ -43,6 +45,9 @@ pub enum Entity {
     Domain(DomainId),
     /// [`Peer`].
     Peer(PeerId),
+    #[cfg(feature = "roles")]
+    /// [`Role`].
+    Role(RoleId),
 }
 
 /// Entity status.
@@ -119,6 +124,7 @@ enum EntityFilter {
 type StatusFilter = Status;
 
 impl Event {
+    /// Construct [`Event`].
     pub fn new(entity: Entity, status: Status) -> Self {
         Self { entity, status }
     }
@@ -133,7 +139,7 @@ impl EventFilter {
             .map_or(true, |entity| entity.apply(&event.entity));
         let status_check = self
             .status
-            .map_or(true, |status| status.apply(&event.status));
+            .map_or(true, |status| status.apply(event.status));
         entity_check && status_check
     }
 }
@@ -178,9 +184,7 @@ impl EntityFilter {
                     asset_id.account_id.domain_id == *filter_id
                         || asset_id.definition_id.domain_id == *filter_id
                 }),
-                Entity::Domain(id) => {
-                    opt.as_ref().map_or(true, |filter_id| id == filter_id)
-                }
+                Entity::Domain(id) => opt.as_ref().map_or(true, |filter_id| id == filter_id),
                 _ => false,
             },
             Self::Peer(opt) => match entity {
@@ -194,7 +198,7 @@ impl EntityFilter {
 }
 
 impl StatusFilter {
-    fn apply(&self, status: &Status) -> bool {
+    fn apply(self, status: Status) -> bool {
         self == status
     }
 }
@@ -243,7 +247,7 @@ mod world {
     #[cfg(feature = "roles")]
     impl From<Unregister<Role>> for DataEvent {
         fn from(src: Unregister<Role>) -> Self {
-            Self::new(DataEntity::Role(src.object.id), DataStatus::Deleted)
+            Self::new(DataEntity::Role(src.object_id), DataStatus::Deleted)
         }
     }
 }

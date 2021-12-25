@@ -151,13 +151,15 @@ impl<W: WorldTrait> Execute<W> for Instruction {
             Unregister(unregister_box) => Ok(unregister_box.execute(authority, wsv)?.into()),
             Mint(mint_box) => Ok(mint_box.execute(authority, wsv)?.into()),
             Burn(burn_box) => Ok(burn_box.execute(authority, wsv)?.into()),
-            Transfer(transfer_box) => Ok(transfer_box.execute(authority, wsv)?.into()),
-            If(if_box) => Ok(if_box.execute(authority, wsv)?.into()),
-            Pair(pair_box) => Ok(pair_box.execute(authority, wsv)?.into()),
-            Sequence(sequence) => Ok(sequence.execute(authority, wsv)?.into()),
+            Transfer(transfer_box) => transfer_box.execute(authority, wsv),
+            If(if_box) => if_box.execute(authority, wsv),
+            Pair(pair_box) => pair_box.execute(authority, wsv),
+            Sequence(sequence) => sequence.execute(authority, wsv),
             Fail(fail_box) => Ok(fail_box.execute(authority, wsv)?.into()),
             SetKeyValue(set_key_value) => Ok(set_key_value.execute(authority, wsv)?.into()),
-            RemoveKeyValue(remove_key_value) => Ok(remove_key_value.execute(authority, wsv)?.into()),
+            RemoveKeyValue(remove_key_value) => {
+                Ok(remove_key_value.execute(authority, wsv)?.into())
+            }
             Grant(grant_box) => Ok(grant_box.execute(authority, wsv)?.into()),
         }
     }

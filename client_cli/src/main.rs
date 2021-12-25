@@ -189,7 +189,7 @@ mod events {
     use super::*;
 
     /// Get event stream from iroha peer
-    #[derive(StructOpt, Debug, Clone)]
+    #[derive(StructOpt, Debug, Clone, Copy)]
     pub enum Args {
         /// Gets pipeline events
         Pipeline,

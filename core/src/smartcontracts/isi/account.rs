@@ -160,7 +160,7 @@ pub mod isi {
 
             let id = self.destination_id.clone();
             wsv.modify_account(&id, |account| {
-                let _ = account.roles.insert(self.object);
+                let _ = account.roles.insert(self.object.clone());
                 Ok(())
             })?;
             Ok(self.into())

@@ -97,7 +97,7 @@ pub mod isi {
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
         ) -> Result<Self::Diff, Self::Error> {
-            let role = self.object;
+            let role = self.object.clone();
             wsv.world.roles.insert(role.id.clone(), role);
             Ok(self.into())
         }

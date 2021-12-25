@@ -91,6 +91,7 @@ pub enum Event {
 }
 
 /// Event filter.
+#[allow(variant_size_differences)]
 #[derive(Debug, Clone, Decode, Encode, FromVariant, IntoSchema)]
 pub enum EventFilter {
     /// Listen to pipeline events with filter.

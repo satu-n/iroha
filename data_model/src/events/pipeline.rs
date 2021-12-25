@@ -188,7 +188,7 @@ mod tests {
             events
                 .iter()
                 .cloned()
-                .filter(|event| EventFilter::identity().apply(event))
+                .filter(|event| EventFilter::default().apply(event))
                 .collect::<Vec<Event>>()
         )
     }

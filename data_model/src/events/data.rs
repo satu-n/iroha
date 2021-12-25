@@ -40,7 +40,7 @@ pub enum Entity {
     /// [`Asset`].
     Asset(AssetId),
     /// [`Domain`].
-    Domain(Name),
+    Domain(DomainId),
     /// [`Peer`].
     Peer(PeerId),
 }
@@ -111,7 +111,7 @@ enum EntityFilter {
     /// Filter by [`Asset`].
     Asset(Option<AssetId>),
     /// Filter by [`Domain`].
-    Domain(Option<Name>),
+    Domain(Option<DomainId>),
     /// Filter by [`Peer`].
     Peer(Option<PeerId>),
 }
@@ -168,18 +168,18 @@ impl EntityFilter {
             Self::Domain(opt) => match entity {
                 Entity::Account(account_id) => opt
                     .as_ref()
-                    .map_or(false, |filter_name| account_id.domain_name == *filter_name),
+                    .map_or(false, |filter_id| account_id.domain_id == *filter_id),
                 Entity::AssetDefinition(asset_definition_id) => {
-                    opt.as_ref().map_or(false, |filter_name| {
-                        asset_definition_id.domain_name == *filter_name
+                    opt.as_ref().map_or(false, |filter_id| {
+                        asset_definition_id.domain_id == *filter_id
                     })
                 }
-                Entity::Asset(asset_id) => opt.as_ref().map_or(false, |filter_name| {
-                    asset_id.account_id.domain_name == *filter_name
-                        || asset_id.definition_id.domain_name == *filter_name
+                Entity::Asset(asset_id) => opt.as_ref().map_or(false, |filter_id| {
+                    asset_id.account_id.domain_id == *filter_id
+                        || asset_id.definition_id.domain_id == *filter_id
                 }),
-                Entity::Domain(name) => {
-                    opt.as_ref().map_or(true, |filter_name| name == filter_name)
+                Entity::Domain(id) => {
+                    opt.as_ref().map_or(true, |filter_id| id == filter_id)
                 }
                 _ => false,
             },
@@ -199,11 +199,19 @@ impl StatusFilter {
     }
 }
 
-impl From<Vec<Event>> for Vec<super::Event> {
-    fn from(src: Vec<Event>) -> Self {
-        Vec::new()
-    }
-}
+// SATO
+// impl From<Event> for super::Event {
+//     fn from(src: Event) -> Self {
+//         Self::Data(vec![src])
+//     }
+// }
+
+// SATO
+// impl From<(Event, Event)> for super::Event {
+//     fn from(src: (Event, Event)) -> Self {
+//         Self::Data(vec![src.0, src.1])
+//     }
+// }
 
 mod world {
     use crate::prelude::*;
@@ -222,7 +230,7 @@ mod world {
 
     impl From<Register<Domain>> for DataEvent {
         fn from(src: Register<Domain>) -> Self {
-            Self::new(DataEntity::Domain(src.object.name), DataStatus::Created)
+            Self::new(DataEntity::Domain(src.object.id), DataStatus::Created)
         }
     }
 
@@ -280,8 +288,8 @@ mod domain {
         }
     }
 
-    impl From<SetKeyValue<AssetDefinition, String, Value>> for DataEvent {
-        fn from(src: SetKeyValue<AssetDefinition, String, Value>) -> Self {
+    impl From<SetKeyValue<AssetDefinition, Name, Value>> for DataEvent {
+        fn from(src: SetKeyValue<AssetDefinition, Name, Value>) -> Self {
             Self::new(
                 DataEntity::AssetDefinition(src.object_id),
                 // SATO Inserted
@@ -290,8 +298,8 @@ mod domain {
         }
     }
 
-    impl From<RemoveKeyValue<AssetDefinition, String>> for DataEvent {
-        fn from(src: RemoveKeyValue<AssetDefinition, String>) -> Self {
+    impl From<RemoveKeyValue<AssetDefinition, Name>> for DataEvent {
+        fn from(src: RemoveKeyValue<AssetDefinition, Name>) -> Self {
             Self::new(
                 DataEntity::AssetDefinition(src.object_id),
                 // SATO Removed
@@ -300,8 +308,8 @@ mod domain {
         }
     }
 
-    impl From<SetKeyValue<Domain, String, Value>> for DataEvent {
-        fn from(src: SetKeyValue<Domain, String, Value>) -> Self {
+    impl From<SetKeyValue<Domain, Name, Value>> for DataEvent {
+        fn from(src: SetKeyValue<Domain, Name, Value>) -> Self {
             Self::new(
                 DataEntity::Domain(src.object_id),
                 // SATO Inserted
@@ -310,8 +318,8 @@ mod domain {
         }
     }
 
-    impl From<RemoveKeyValue<Domain, String>> for DataEvent {
-        fn from(src: RemoveKeyValue<Domain, String>) -> Self {
+    impl From<RemoveKeyValue<Domain, Name>> for DataEvent {
+        fn from(src: RemoveKeyValue<Domain, Name>) -> Self {
             Self::new(
                 DataEntity::Domain(src.object_id),
                 // SATO Removed
@@ -346,14 +354,14 @@ mod account {
         }
     }
 
-    impl From<SetKeyValue<Account, String, Value>> for DataEvent {
-        fn from(src: SetKeyValue<Account, String, Value>) -> Self {
+    impl From<SetKeyValue<Account, Name, Value>> for DataEvent {
+        fn from(src: SetKeyValue<Account, Name, Value>) -> Self {
             Self::new(DataEntity::Account(src.object_id), DataStatus::Updated)
         }
     }
 
-    impl From<RemoveKeyValue<Account, String>> for DataEvent {
-        fn from(src: RemoveKeyValue<Account, String>) -> Self {
+    impl From<RemoveKeyValue<Account, Name>> for DataEvent {
+        fn from(src: RemoveKeyValue<Account, Name>) -> Self {
             Self::new(DataEntity::Account(src.object_id), DataStatus::Updated)
         }
     }
@@ -402,8 +410,8 @@ mod asset {
     //     }
     // }
 
-    impl From<SetKeyValue<Asset, String, Value>> for DataEvent {
-        fn from(src: SetKeyValue<Asset, String, Value>) -> Self {
+    impl From<SetKeyValue<Asset, Name, Value>> for DataEvent {
+        fn from(src: SetKeyValue<Asset, Name, Value>) -> Self {
             Self::new(DataEntity::Asset(src.object_id), DataStatus::Updated)
         }
     }
@@ -426,8 +434,8 @@ mod asset {
         }
     }
 
-    impl From<RemoveKeyValue<Asset, String>> for DataEvent {
-        fn from(src: RemoveKeyValue<Asset, String>) -> Self {
+    impl From<RemoveKeyValue<Asset, Name>> for DataEvent {
+        fn from(src: RemoveKeyValue<Asset, Name>) -> Self {
             Self::new(DataEntity::Asset(src.object_id), DataStatus::Updated)
         }
     }

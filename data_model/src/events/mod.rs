@@ -104,7 +104,7 @@ impl EventFilter {
     pub fn apply(&self, event: &Event) -> bool {
         match (event, self) {
             (Event::Pipeline(event), EventFilter::Pipeline(filter)) => filter.apply(event),
-            (Event::Data(event), EventFilter::Data(filter)) => filter.apply(*event),
+            (Event::Data(event), EventFilter::Data(filter)) => filter.apply(event),
             _ => false,
         }
     }

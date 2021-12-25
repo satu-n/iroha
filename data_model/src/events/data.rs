@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use crate::prelude::*;
 
 /// Event.
-#[derive(Debug, Decode, Encode, Deserialize, Serialize, Clone, IntoSchema)]
+#[derive(Debug, PartialEq, Eq, Decode, Encode, Deserialize, Serialize, Clone, IntoSchema)]
 pub struct Event {
     entity: Entity,
     status: Status,
@@ -31,7 +31,7 @@ pub struct Event {
 // }
 
 /// Enumeration of all possible Iroha data entities.
-#[derive(Clone, Debug, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema)]
+#[derive(Clone, PartialEq, Eq, Debug, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema)]
 pub enum Entity {
     /// [`Account`].
     Account(AccountId),
@@ -200,18 +200,11 @@ impl StatusFilter {
 }
 
 // SATO
-// impl From<Event> for super::Event {
-//     fn from(src: Event) -> Self {
-//         Self::Data(vec![src])
-//     }
-// }
-
-// SATO
-// impl From<(Event, Event)> for super::Event {
-//     fn from(src: (Event, Event)) -> Self {
-//         Self::Data(vec![src.0, src.1])
-//     }
-// }
+impl From<Event> for Vec<Event> {
+    fn from(src: Event) -> Self {
+        vec![src]
+    }
+}
 
 mod world {
     use crate::prelude::*;
@@ -440,12 +433,12 @@ mod asset {
         }
     }
 
-    impl From<Transfer<Asset, u32, Asset>> for (DataEvent, DataEvent) {
+    impl From<Transfer<Asset, u32, Asset>> for Vec<DataEvent> {
         fn from(src: Transfer<Asset, u32, Asset>) -> Self {
-            (
+            vec![
                 DataEvent::new(DataEntity::Asset(src.source_id), DataStatus::Updated),
                 DataEvent::new(DataEntity::Asset(src.destination_id), DataStatus::Updated),
-            )
+            ]
         }
     }
 }
@@ -454,6 +447,6 @@ mod asset {
 pub mod prelude {
     pub use super::{
         Entity as DataEntity, Event as DataEvent, EventFilter as DataEventFilter,
-        Status as DataStatus,
+        Status as DataStatus
     };
 }

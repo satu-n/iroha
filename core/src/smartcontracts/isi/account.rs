@@ -46,7 +46,7 @@ pub mod isi {
         ) -> Result<Self::Diff, Self::Error> {
             let id = self.destination_id.clone();
             wsv.modify_account(&id, |account| {
-                account.signature_check_condition = self.object;
+                account.signature_check_condition = self.object.clone();
                 Ok(())
             })?;
             Ok(self.into())
@@ -93,7 +93,7 @@ pub mod isi {
             wsv.modify_account(&id, |account| {
                 account.metadata.insert_with_limits(
                     self.key.clone(),
-                    self.value,
+                    self.value.clone(),
                     account_metadata_limits,
                 )?;
                 Ok(())
@@ -135,7 +135,7 @@ pub mod isi {
         ) -> Result<Self::Diff, Self::Error> {
             let id = self.destination_id.clone();
             wsv.modify_account(&id, |account| {
-                let _ = account.permission_tokens.insert(self.object);
+                let _ = account.permission_tokens.insert(self.object.clone());
                 Ok(())
             })?;
             Ok(self.into())

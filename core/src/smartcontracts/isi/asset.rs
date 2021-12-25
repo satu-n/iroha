@@ -70,8 +70,9 @@ pub mod isi {
                     .checked_add(self.object)
                     .ok_or(MathError::OverflowError)?;
                 wsv.metrics.tx_amounts.observe(f64::from(*quantity));
-                Ok(self.into())
+                Ok(())
             })
+            .map(|_| self.into())
             .map_err(Into::into)
         }
     }
@@ -99,8 +100,9 @@ pub mod isi {
                     .ok_or(MathError::OverflowError)?;
                 #[allow(clippy::cast_precision_loss)]
                 wsv.metrics.tx_amounts.observe(*quantity as f64);
-                Ok(self.into())
+                Ok(())
             })
+            .map(|_| self.into())
             .map_err(Into::into)
         }
     }
@@ -125,8 +127,9 @@ pub mod isi {
                 let quantity: &mut Fixed = asset.try_as_mut()?;
                 *quantity = quantity.checked_add(self.object)?;
                 wsv.metrics.tx_amounts.observe((*quantity).into());
-                Ok(self.into())
+                Ok(())
             })
+            .map(|_| self.into())
             .map_err(Into::into)
         }
     }
@@ -151,8 +154,9 @@ pub mod isi {
                     self.value.clone(),
                     asset_metadata_limits,
                 )?;
-                Ok(self.into())
+                Ok(())
             })
+            .map(|_| self.into())
             .map_err(Into::into)
         }
     }
@@ -178,8 +182,9 @@ pub mod isi {
                     .checked_sub(self.object)
                     .ok_or(MathError::NotEnoughQuantity)?;
                 wsv.metrics.tx_amounts.observe(f64::from(*quantity));
-                Ok(self.into())
+                Ok(())
             })
+            .map(|_| self.into())
             .map_err(Into::into)
         }
     }
@@ -206,8 +211,9 @@ pub mod isi {
                     .ok_or(MathError::NotEnoughQuantity)?;
                 #[allow(clippy::cast_precision_loss)]
                 wsv.metrics.tx_amounts.observe(*quantity as f64);
-                Ok(self.into())
+                Ok(())
             })
+            .map(|_| self.into())
             .map_err(Into::into)
         }
     }
@@ -232,8 +238,9 @@ pub mod isi {
                 *quantity = quantity.checked_sub(self.object)?;
                 // Careful if `Fixed` stops being `Copy`.
                 wsv.metrics.tx_amounts.observe((*quantity).into());
-                Ok(self.into())
+                Ok(())
             })
+            .map(|_| self.into())
             .map_err(Into::into)
         }
     }
@@ -254,15 +261,16 @@ pub mod isi {
                 store
                     .remove(&self.key)
                     .ok_or_else(|| FindError::MetadataKey(self.key.clone()))?;
-                Ok(self.into())
+                Ok(())
             })
+            .map(|_| self.into())
             .map_err(Into::into)
         }
     }
 
     impl<W: WorldTrait> Execute<W> for Transfer<Asset, u32, Asset> {
         type Error = Error;
-        type Diff = (DataEvent, DataEvent);
+        type Diff = Vec<DataEvent>;
 
         #[log(skip(_authority))]
         #[metrics(+"transfer_qty_asset")]

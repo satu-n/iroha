@@ -138,7 +138,7 @@ impl StdError for ParentHashNotFound {}
 
 impl<W: WorldTrait> Execute<W> for Instruction {
     type Error = Error;
-    type Diff = DataEvent;
+    type Diff = Vec<DataEvent>;
 
     fn execute(
         self,
@@ -147,18 +147,18 @@ impl<W: WorldTrait> Execute<W> for Instruction {
     ) -> Result<Self::Diff, Self::Error> {
         use Instruction::*;
         match self {
-            Register(register_box) => register_box.execute(authority, wsv),
-            Unregister(unregister_box) => unregister_box.execute(authority, wsv),
-            Mint(mint_box) => mint_box.execute(authority, wsv),
-            Burn(burn_box) => burn_box.execute(authority, wsv),
-            Transfer(transfer_box) => transfer_box.execute(authority, wsv),
-            If(if_box) => if_box.execute(authority, wsv),
-            Pair(pair_box) => pair_box.execute(authority, wsv),
-            Sequence(sequence) => sequence.execute(authority, wsv),
-            Fail(fail_box) => fail_box.execute(authority, wsv),
-            SetKeyValue(set_key_value) => set_key_value.execute(authority, wsv),
-            RemoveKeyValue(remove_key_value) => remove_key_value.execute(authority, wsv),
-            Grant(grant_box) => grant_box.execute(authority, wsv),
+            Register(register_box) => Ok(register_box.execute(authority, wsv)?.into()),
+            Unregister(unregister_box) => Ok(unregister_box.execute(authority, wsv)?.into()),
+            Mint(mint_box) => Ok(mint_box.execute(authority, wsv)?.into()),
+            Burn(burn_box) => Ok(burn_box.execute(authority, wsv)?.into()),
+            Transfer(transfer_box) => Ok(transfer_box.execute(authority, wsv)?.into()),
+            If(if_box) => Ok(if_box.execute(authority, wsv)?.into()),
+            Pair(pair_box) => Ok(pair_box.execute(authority, wsv)?.into()),
+            Sequence(sequence) => Ok(sequence.execute(authority, wsv)?.into()),
+            Fail(fail_box) => Ok(fail_box.execute(authority, wsv)?.into()),
+            SetKeyValue(set_key_value) => Ok(set_key_value.execute(authority, wsv)?.into()),
+            RemoveKeyValue(remove_key_value) => Ok(remove_key_value.execute(authority, wsv)?.into()),
+            Grant(grant_box) => Ok(grant_box.execute(authority, wsv)?.into()),
         }
     }
 }
@@ -284,7 +284,7 @@ impl<W: WorldTrait> Execute<W> for BurnBox {
 
 impl<W: WorldTrait> Execute<W> for TransferBox {
     type Error = Error;
-    type Diff = (DataEvent, DataEvent);
+    type Diff = Vec<DataEvent>;
 
     #[log]
     fn execute(
@@ -376,7 +376,7 @@ impl<W: WorldTrait> Execute<W> for RemoveKeyValueBox {
 
 impl<W: WorldTrait> Execute<W> for If {
     type Error = Error;
-    type Diff = Option<DataEvent>;
+    type Diff = Vec<DataEvent>;
 
     #[log]
     fn execute(
@@ -386,17 +386,17 @@ impl<W: WorldTrait> Execute<W> for If {
     ) -> Result<Self::Diff, Self::Error> {
         let context = Context::new();
         if self.condition.evaluate(wsv, &context)? {
-            Some(self.then.execute(authority, wsv)).transpose()
+            self.then.execute(authority, wsv)
         } else {
             self.otherwise
-                .map(|otherwise| otherwise.execute(authority, wsv)).transpose()
+                .map_or(Ok(vec![]), |otherwise| otherwise.execute(authority, wsv))
         }
     }
 }
 
 impl<W: WorldTrait> Execute<W> for Pair {
     type Error = Error;
-    type Diff = (DataEvent, DataEvent);
+    type Diff = Vec<DataEvent>;
 
     #[log]
     fn execute(
@@ -404,9 +404,10 @@ impl<W: WorldTrait> Execute<W> for Pair {
         authority: <Account as Identifiable>::Id,
         wsv: &WorldStateView<W>,
     ) -> Result<Self::Diff, Self::Error> {
-        let left = self.left_instruction.execute(authority.clone(), wsv)?;
-        let right = self.right_instruction.execute(authority, wsv)?;
-        Ok((left, right))
+        let mut left = self.left_instruction.execute(authority.clone(), wsv)?;
+        let mut right = self.right_instruction.execute(authority, wsv)?;
+        left.append(&mut right);
+        Ok(left)
     }
 }
 
@@ -422,7 +423,7 @@ impl<W: WorldTrait> Execute<W> for SequenceBox {
     ) -> Result<Self::Diff, Self::Error> {
         let mut diff = Vec::new();
         for instruction in self.instructions {
-            diff.push(instruction.execute(authority.clone(), wsv)?);
+            diff.append(&mut instruction.execute(authority.clone(), wsv)?);
         }
         Ok(diff)
     }

@@ -18,7 +18,7 @@ pub trait Execute<W: WorldTrait> {
     /// Error type returned by execute function
     type Error: Error;
     /// Difference on [`WorldStateView`] made by the execution.
-    type Diff: Into<Vec<Event>>;
+    type Diff: Into<Vec<DataEvent>>;
 
     /// Apply actions to `wsv` on behalf of `authority`.
     fn execute(

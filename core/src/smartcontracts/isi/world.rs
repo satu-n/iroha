@@ -21,7 +21,7 @@ pub mod isi {
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
         ) -> Result<Self::Diff, Self::Error> {
-            if wsv.trusted_peers_ids().insert(self.object.id) {
+            if wsv.trusted_peers_ids().insert(self.object.id.clone()) {
                 Ok(self.into())
             } else {
                 Err(eyre!("Peer already trusted.",).into())
@@ -57,7 +57,7 @@ pub mod isi {
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
         ) -> Result<Self::Diff, Self::Error> {
-            let domain = self.object;
+            let domain = self.object.clone();
             domain
                 .id
                 .name

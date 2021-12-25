@@ -26,7 +26,7 @@ pub mod isi {
             _authority: <NewAccount as Identifiable>::Id,
             wsv: &WorldStateView<W>,
         ) -> Result<Self::Diff, Self::Error> {
-            let account = self.object;
+            let account = self.object.clone();
             account
                 .id
                 .name
@@ -62,7 +62,7 @@ pub mod isi {
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
         ) -> Result<Self::Diff, Self::Error> {
-            let account_id = self.object_id;
+            let account_id = self.object_id.clone();
             wsv.domain_mut(&account_id.domain_id)?
                 .accounts
                 .remove(&account_id);
@@ -80,7 +80,7 @@ pub mod isi {
             authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
         ) -> Result<Self::Diff, Self::Error> {
-            let asset_definition = self.object;
+            let asset_definition = self.object.clone();
             asset_definition
                 .id
                 .name
@@ -116,7 +116,7 @@ pub mod isi {
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
         ) -> Result<Self::Diff, Self::Error> {
-            let asset_definition_id = self.object_id;
+            let asset_definition_id = self.object_id.clone();
             wsv.domain_mut(&asset_definition_id.domain_id)?
                 .asset_definitions
                 .remove(&asset_definition_id);
@@ -195,7 +195,7 @@ pub mod isi {
                 object_id,
                 key,
                 value,
-            } = self;
+            } = self.clone();
             let limits = wsv.config.domain_metadata_limits;
             wsv.modify_domain(&object_id, |domain| {
                 domain.metadata.insert_with_limits(key, value, limits)?;
@@ -215,7 +215,7 @@ pub mod isi {
             _authority: <Account as Identifiable>::Id,
             wsv: &WorldStateView<W>,
         ) -> Result<Self::Diff, Self::Error> {
-            let Self { object_id, key } = self;
+            let Self { object_id, key } = self.clone();
             wsv.modify_domain(&object_id, |domain| {
                 domain
                     .metadata

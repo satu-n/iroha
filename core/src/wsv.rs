@@ -12,7 +12,7 @@ use dashmap::{
     mapref::one::{Ref as DashMapRef, RefMut as DashMapRefMut},
     DashSet,
 };
-use eyre::Result;
+use eyre::{Report, Result};
 use iroha_crypto::HashOf;
 use iroha_data_model::{domain::DomainsMap, peer::PeersIds, prelude::*};
 use iroha_logger::prelude::*;
@@ -188,7 +188,10 @@ impl<W: WorldTrait> WorldStateView<W> {
                 .cloned()
                 .try_for_each(|instruction| {
                     let events = instruction.execute(account_id.clone(), self)?;
-                    self.produce_events(events.into_iter().map(Into::into).collect())
+                    if let Err(send_error) = self.produce_events(events) {
+                        warn!(%send_error)
+                    }
+                    Ok::<_, Report>(())
                 })?;
 
             self.transactions.insert(tx.hash());
@@ -211,10 +214,13 @@ impl<W: WorldTrait> WorldStateView<W> {
         self.new_block_notifier.subscribe()
     }
 
-    fn produce_events(&self, events: Vec<Event>) -> Result<()> {
-        let events_sender = match &self.events_sender {
-            Some(sender) => sender,
-            _ => return Ok(()),
+    fn produce_events(&self, events: impl IntoIterator<Item = DataEvent>) -> Result<()> {
+        let events = events.into_iter().map(Event::from);
+        let events_sender = if let Some(sender) = &self.events_sender {
+            sender
+        } else {
+            warn!("wsv does not equip an events sender");
+            return Ok(());
         };
         for event in events {
             events_sender.send(event)?;

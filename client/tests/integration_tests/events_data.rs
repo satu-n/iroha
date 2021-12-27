@@ -14,13 +14,17 @@ fn data_events() -> Result<()> {
     let pipeline_time = Configuration::pipeline_time();
 
     // spawn event reporter
-    let listener = client.clone();
-    let (event_sender, event_receiver) = mpsc::channel::<Event>();
+    let mut listener = client.clone();
+    let (init_sender, init_receiver) = mpsc::channel();
+    let (event_sender, event_receiver) = mpsc::channel();
     let event_filter = DataEventFilter::default().into();
-    thread::spawn(move || {
-        listener.for_each_event(event_filter, |event| {
-            event_sender.send(event.unwrap()).unwrap()
-        });
+    let _handle = thread::spawn(move || {
+        let event_iterator = listener.listen_for_events(event_filter).unwrap();
+        init_sender.send(()).unwrap();
+        for event in event_iterator.flatten() {
+            iroha_logger::error!(?event, "listen!");
+            event_sender.send(event).unwrap()
+        }
     });
 
     // submit instructions to produce events
@@ -52,6 +56,7 @@ fn data_events() -> Result<()> {
         )
         .into(),
     ];
+    init_receiver.recv()?;
     client.submit_all(instructions)?;
     thread::sleep(pipeline_time * 2);
 

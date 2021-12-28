@@ -14,26 +14,11 @@ pub struct Event {
     status: Status,
 }
 
-// SATO
-// /// Enumeration of all possible Iroha data entities.
-// #[derive(Clone, Debug, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema)]
-// pub enum Entity {
-//     /// [`Account`].
-//     Account(Box<Account>),
-//     /// [`AssetDefinition`].
-//     AssetDefinition(AssetDefinition),
-//     /// [`Asset`].
-//     Asset(Asset),
-//     /// [`Domain`].
-//     Domain(Domain),
-//     /// [`Peer`].
-//     Peer(Peer),
-// }
-
 /// Enumeration of all possible Iroha data entities.
 #[derive(
     Clone, PartialEq, Eq, Debug, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema,
 )]
+// SATO How detailed should an entity be?
 pub enum Entity {
     /// [`Account`].
     Account(AccountId),
@@ -52,6 +37,7 @@ pub enum Entity {
 
 /// Entity status.
 #[derive(Debug, Decode, Encode, Deserialize, Serialize, Eq, PartialEq, Copy, Clone, IntoSchema)]
+// SATO How detailed should a status be?
 pub enum Status {
     /// Entity was added, registered, minted or another action was made to make entity appear on
     /// the blockchain for the first time.
@@ -66,35 +52,15 @@ pub enum Status {
 
 // #[derive(Debug, Decode, Encode, Deserialize, Serialize, Eq, PartialEq, Copy, Clone, IntoSchema)]
 // enum Updated {
-//     Metadata,
+//     Authentication,
+//     Metadata(Metadata),
+//     Permission,
 // }
 
-// SATO
-// /// Entity type to filter events.
 // #[derive(Debug, Decode, Encode, Deserialize, Serialize, Eq, PartialEq, Copy, Clone, IntoSchema)]
-// pub enum EntityType {
-//     /// [`Account`]s.
-//     Account,
-//     /// [`AssetDefinition`]s.
-//     AssetDefinition,
-//     /// [`Asset`]s.
-//     Asset,
-//     /// [`Domain`]s.
-//     Domain,
-//     /// [`Peer`]s.
-//     Peer,
-// }
-
-// impl From<Entity> for EntityType {
-//     fn from(entity: Entity) -> Self {
-//         match entity {
-//             Entity::Account(_) => EntityType::Account,
-//             Entity::AssetDefinition(_) => EntityType::AssetDefinition,
-//             Entity::Asset(_) => EntityType::Asset,
-//             Entity::Domain(_) => EntityType::Domain,
-//             Entity::Peer(_) => EntityType::Peer,
-//         }
-//     }
+// enum Metadata {
+//     Inserted,
+//     Removed,
 // }
 
 /// Filter to select [`Event`]s which match the `entity` and `status` conditions.
@@ -210,7 +176,6 @@ impl StatusFilter {
     }
 }
 
-// SATO
 impl From<Event> for Vec<Event> {
     fn from(src: Event) -> Self {
         vec![src]
@@ -387,7 +352,6 @@ mod account {
 mod asset {
     use crate::{prelude::*, ValueMarker};
 
-    // SATO DataStatus::Created(...)
     // SATO DataStatus::Updated(...)
 
     impl<O: ValueMarker> From<Mint<Asset, O>> for DataEvent {
@@ -396,44 +360,14 @@ mod asset {
         }
     }
 
-    // impl From<Mint<Asset, u32>> for DataEvent {
-    //     fn from(src: Mint<Asset, u32>) -> Self {
-    //         Self::new(DataEntity::Asset(src.destination_id), DataStatus::Created)
-    //     }
-    // }
-
-    // impl From<Mint<Asset, u128>> for DataEvent {
-    //     fn from(src: Mint<Asset, u128>) -> Self {
-    //         Self::new(DataEntity::Asset(src.destination_id), DataStatus::Created)
-    //     }
-    // }
-
-    // impl From<Mint<Asset, Fixed>> for DataEvent {
-    //     fn from(src: Mint<Asset, Fixed>) -> Self {
-    //         Self::new(DataEntity::Asset(src.destination_id), DataStatus::Created)
-    //     }
-    // }
-
     impl From<SetKeyValue<Asset, Name, Value>> for DataEvent {
         fn from(src: SetKeyValue<Asset, Name, Value>) -> Self {
             Self::new(DataEntity::Asset(src.object_id), DataStatus::Updated)
         }
     }
 
-    impl From<Burn<Asset, u32>> for DataEvent {
-        fn from(src: Burn<Asset, u32>) -> Self {
-            Self::new(DataEntity::Asset(src.destination_id), DataStatus::Deleted)
-        }
-    }
-
-    impl From<Burn<Asset, u128>> for DataEvent {
-        fn from(src: Burn<Asset, u128>) -> Self {
-            Self::new(DataEntity::Asset(src.destination_id), DataStatus::Deleted)
-        }
-    }
-
-    impl From<Burn<Asset, Fixed>> for DataEvent {
-        fn from(src: Burn<Asset, Fixed>) -> Self {
+    impl<O: ValueMarker> From<Burn<Asset, O>> for DataEvent {
+        fn from(src: Burn<Asset, O>) -> Self {
             Self::new(DataEntity::Asset(src.destination_id), DataStatus::Deleted)
         }
     }

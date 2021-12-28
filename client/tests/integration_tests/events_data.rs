@@ -20,8 +20,6 @@ fn nested_instructions_are_flatten_to_data_events() -> Result<()> {
         let event_iterator = listener.listen_for_events(event_filter)?;
         init_sender.send(())?;
         for event in event_iterator.flatten() {
-            // SATO
-            iroha_logger::error!(?event, "listen!");
             event_sender.send(event)?
         }
         Ok(())

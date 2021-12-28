@@ -88,7 +88,6 @@ pub mod isi {
     #[cfg(feature = "roles")]
     impl<W: WorldTrait> Execute<W> for Register<Role> {
         type Error = Error;
-        // SATO stream roles?
         type Diff = DataEvent;
 
         #[metrics(+"register_role")]

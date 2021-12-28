@@ -188,9 +188,7 @@ impl<W: WorldTrait> WorldStateView<W> {
                 .cloned()
                 .try_for_each(|instruction| {
                     let events = instruction.execute(account_id.clone(), self)?;
-                    if let Err(send_error) = self.produce_events(events) {
-                        warn!(%send_error)
-                    }
+                    self.produce_events(events);
                     Ok::<_, Report>(())
                 })?;
 
@@ -214,18 +212,16 @@ impl<W: WorldTrait> WorldStateView<W> {
         self.new_block_notifier.subscribe()
     }
 
-    fn produce_events(&self, events: impl IntoIterator<Item = DataEvent>) -> Result<()> {
+    fn produce_events(&self, events: impl IntoIterator<Item = DataEvent>) {
         let events = events.into_iter().map(Event::from);
         let events_sender = if let Some(sender) = &self.events_sender {
             sender
         } else {
-            warn!("wsv does not equip an events sender");
-            return Ok(());
+            return warn!("wsv does not equip an events sender");
         };
         for event in events {
-            events_sender.send(event)?;
+            drop(events_sender.send(event))
         }
-        Ok(())
     }
 
     /// Hash of latest block

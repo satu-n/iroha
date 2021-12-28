@@ -1,14 +1,12 @@
-#![allow(clippy::restriction)]
-
 use std::{sync::mpsc, thread};
 
-use eyre::Result;
+use eyre::{eyre, Result};
 use iroha_core::config::Configuration;
 use iroha_data_model::prelude::*;
 use test_network::{Peer as TestPeer, *};
 
 #[test]
-fn data_events() -> Result<()> {
+fn nested_instructions_are_flatten_to_data_events() -> Result<()> {
     let (_rt, _peer, mut client) = <TestPeer>::start_test_with_runtime();
     wait_for_genesis_committed(vec![client.clone()], 0);
     let pipeline_time = Configuration::pipeline_time();
@@ -18,40 +16,44 @@ fn data_events() -> Result<()> {
     let (init_sender, init_receiver) = mpsc::channel();
     let (event_sender, event_receiver) = mpsc::channel();
     let event_filter = DataEventFilter::default().into();
-    let _handle = thread::spawn(move || {
-        let event_iterator = listener.listen_for_events(event_filter).unwrap();
-        init_sender.send(()).unwrap();
+    thread::spawn(move || -> Result<()> {
+        let event_iterator = listener.listen_for_events(event_filter)?;
+        init_sender.send(())?;
         for event in event_iterator.flatten() {
+            // SATO
             iroha_logger::error!(?event, "listen!");
-            event_sender.send(event).unwrap()
+            event_sender.send(event)?
         }
+        Ok(())
     });
 
     // submit instructions to produce events
-    let domains: Vec<Domain> = (0..3)
-        .map(|domain_index| Domain::test(&domain_index.to_string()))
+    let domains: Vec<Domain> = (0..4)
+        .map(|domain_index: usize| Domain::test(&domain_index.to_string()))
         .collect();
-    let registers: [Instruction; 3] = domains
-        .iter()
-        .map(|domain| RegisterBox::new(IdentifiableBox::from(domain.clone())).into())
-        .collect::<Vec<Instruction>>()
+    let registers: [Instruction; 4] = domains
+        .clone()
+        .into_iter()
+        .map(IdentifiableBox::from)
+        .map(RegisterBox::new)
+        .map(Instruction::from)
+        .collect::<Vec<_>>()
         .try_into()
-        .unwrap();
-    let fail = FailBox::new("fail");
+        .map_err(|_err| eyre!("unreachable"))?;
     let instructions = vec![
         // domain "0"
         // pair
         //      domain "1"
         //      if false fail else sequence
-        //          fail
         //          domain "2"
+        //          domain "3"
         registers[0].clone(),
         Pair::new::<Instruction, _>(
             registers[1].clone(),
             IfInstruction::with_otherwise(
                 false,
-                fail.clone(),
-                SequenceBox::new(vec![fail.into(), registers[2].clone()]),
+                FailBox::new("unreachable"),
+                SequenceBox::new(vec![registers[2].clone(), registers[3].clone()]),
             ),
         )
         .into(),
@@ -61,14 +63,16 @@ fn data_events() -> Result<()> {
     thread::sleep(pipeline_time * 2);
 
     // assertion
-    for expected_event in domains
+    for tester in domains
         .into_iter()
         .map(Register::new)
         .map(DataEvent::from)
         .map(Event::from)
     {
-        let actual_event = event_receiver.recv()?;
-        assert_eq!(actual_event, expected_event);
+        let testee = event_receiver.recv()?;
+        if tester != testee {
+            return Err(eyre!("expected: {:?}, actual: {:?}", tester, testee));
+        }
     }
 
     Ok(())

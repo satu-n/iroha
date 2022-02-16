@@ -7,6 +7,7 @@ use iroha_crypto::SignatureOf;
 use iroha_data_model::{prelude::*, query};
 use iroha_version::scale::DecodeVersioned;
 use parity_scale_codec::{Decode, Encode};
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use warp::{
     http::StatusCode,
@@ -117,7 +118,7 @@ impl fmt::Display for UnsupportedVersionError {
 }
 
 /// Query errors.
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, Deserialize, Serialize)]
 pub enum Error {
     /// Query can not be decoded.
     #[error("Query can not be decoded")]
@@ -153,9 +154,10 @@ impl Error {
     pub const fn status_code(&self) -> StatusCode {
         use Error::*;
         match *self {
-            Conversion(_) | Decode(_) | Version(_) => StatusCode::BAD_REQUEST,
+            Decode(_) | Version(_) | Evaluate(_) | Conversion(_) => StatusCode::BAD_REQUEST,
             Signature(_) => StatusCode::UNAUTHORIZED,
-            Evaluate(_) | Permission(_) | Find(_) => StatusCode::NOT_FOUND,
+            Permission(_) => StatusCode::FORBIDDEN,
+            Find(_) => StatusCode::NOT_FOUND,
         }
     }
 }
@@ -163,7 +165,7 @@ impl Error {
 impl Reply for Error {
     #[inline]
     fn into_response(self) -> Response {
-        reply::with_status(self.to_string(), self.status_code()).into_response()
+        reply::with_status(reply::json(&self), self.status_code()).into_response()
     }
 }
 impl warp::reject::Reject for Error {}

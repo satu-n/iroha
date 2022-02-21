@@ -7,7 +7,6 @@ use iroha_crypto::SignatureOf;
 use iroha_data_model::{prelude::*, query};
 use iroha_version::scale::DecodeVersioned;
 use parity_scale_codec::{Decode, Encode};
-use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use warp::{
     http::StatusCode,
@@ -90,85 +89,100 @@ impl ValidQueryRequest {
     }
 }
 
-/// Unsupported version error
-#[derive(Clone, Copy, Eq, PartialEq, Debug)]
-pub struct UnsupportedVersionError {
-    /// Version that we got
-    pub version: u8,
-}
+pub mod error {
+    use super::*;
 
-impl UnsupportedVersionError {
-    /// Expected version
-    pub const fn expected_version() -> u8 {
-        1
+    /// Unsupported version error
+    #[derive(Clone, Copy, Eq, PartialEq, Debug)]
+    pub struct UnsupportedVersion {
+        /// Version that we got
+        pub version: u8,
     }
-}
 
-impl StdError for UnsupportedVersionError {}
-
-impl fmt::Display for UnsupportedVersionError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Unsupported version. Expected version {}, got: {}",
-            Self::expected_version(),
-            self.version
-        )
-    }
-}
-
-/// Query errors.
-#[derive(Error, Debug, Clone, Deserialize, Serialize)]
-pub enum Error {
-    /// Query can not be decoded.
-    #[error("Query can not be decoded")]
-    Decode(#[source] Box<iroha_version::error::Error>),
-    /// Query has unsupported version.
-    #[error("Query has unsupported version")]
-    Version(#[source] UnsupportedVersionError),
-    /// Query has wrong signature.
-    #[error("Query has wrong signature: {0}")]
-    Signature(eyre::Error),
-    /// Query is not allowed.
-    #[error("Query is not allowed: {0}")]
-    Permission(String),
-    /// Query found nothing.
-    #[error("Query found nothing: {0}")]
-    Find(#[source] Box<FindError>),
-    /// Evaluate
-    #[error("Evaluation failed. {0}")]
-    Evaluate(#[source] eyre::Report),
-    /// Conversion failures
-    #[error("Conversion failed")]
-    Conversion(#[source] eyre::Report),
-}
-
-impl From<FindError> for Error {
-    fn from(err: FindError) -> Self {
-        Error::Find(Box::new(err))
-    }
-}
-
-impl Error {
-    /// Status code for query error response.
-    pub const fn status_code(&self) -> StatusCode {
-        use Error::*;
-        match *self {
-            Decode(_) | Version(_) | Evaluate(_) | Conversion(_) => StatusCode::BAD_REQUEST,
-            Signature(_) => StatusCode::UNAUTHORIZED,
-            Permission(_) => StatusCode::FORBIDDEN,
-            Find(_) => StatusCode::NOT_FOUND,
+    impl UnsupportedVersion {
+        /// Expected version
+        pub const fn expected_version() -> u8 {
+            1
         }
     }
+
+    impl StdError for UnsupportedVersion {}
+
+    impl fmt::Display for UnsupportedVersion {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            write!(
+                f,
+                "Unsupported version. Expected version {}, got: {}",
+                Self::expected_version(),
+                self.version
+            )
+        }
+    }
+
+    /// Query errors.
+    #[derive(Error, Debug, Clone, Encode, Decode)]
+    pub enum Error {
+        /// Query can not be decoded.
+        #[error("Query can not be decoded")]
+        Decode(#[source] Box<iroha_version::error::Error>),
+        /// Query has unsupported version.
+        #[error("Query has unsupported version")]
+        Version(#[source] UnsupportedVersion),
+        /// Query has wrong signature.
+        #[error("Query has wrong signature: {0}")]
+        Signature(String),
+        /// Query is not allowed.
+        #[error("Query is not allowed: {0}")]
+        Permission(String),
+        /// Query found nothing.
+        #[error("Query found nothing: {0}")]
+        Find(#[source] Box<FindError>),
+        /// Evaluate
+        #[error("Evaluation failed: {0}")]
+        Evaluate(String),
+        /// Conversion failures
+        #[error("Conversion failed: {0}")]
+        Conversion(String),
+    }
+
+    // #[derive(Debug)]
+    // enum Signature {}
+    // #[derive(Debug)]
+    // enum Evaluate {}
+    // #[derive(Debug)]
+    // enum Conversion {}
+
+    impl From<FindError> for Error {
+        fn from(err: FindError) -> Self {
+            Error::Find(Box::new(err))
+        }
+    }
+
+    impl Error {
+        /// Status code for query error response.
+        pub const fn status_code(&self) -> StatusCode {
+            use Error::*;
+            match *self {
+                Decode(_) | Version(_) | Evaluate(_) | Conversion(_) => StatusCode::BAD_REQUEST,
+                Signature(_) => StatusCode::UNAUTHORIZED,
+                Permission(_) => StatusCode::FORBIDDEN,
+                Find(_) => StatusCode::NOT_FOUND,
+            }
+        }
+    }
+
+    impl Reply for Error {
+        #[inline]
+        fn into_response(self) -> Response {
+            reply::with_status(crate::torii::utils::Scale(self), self.status_code()).into_response()
+        }
+    }
+
+    impl warp::reject::Reject for Error {}
 }
 
-impl Reply for Error {
-    #[inline]
-    fn into_response(self) -> Response {
-        reply::with_status(reply::json(&self), self.status_code()).into_response()
-    }
-}
-impl warp::reject::Reject for Error {}
+pub use error::Error as Error;
+pub use error::UnsupportedVersion as UnsupportedVersionError;
 
 impl TryFrom<&Bytes> for VerifiedQueryRequest {
     type Error = Error;

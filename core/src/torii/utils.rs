@@ -1,3 +1,5 @@
+//! // SATO
+
 use std::convert::Infallible;
 
 use iroha_version::scale::DecodeVersioned;
@@ -7,6 +9,7 @@ use warp::{hyper::body::Bytes, reply::Response, Filter, Rejection, Reply};
 use super::VerifiedQueryRequest;
 
 /// Structure for empty response body
+#[derive(Clone, Copy)]
 pub struct Empty;
 
 impl Reply for Empty {
@@ -34,6 +37,7 @@ macro_rules! add_state {
     }
 }
 
+/// SATO
 pub mod body {
     use super::*;
 

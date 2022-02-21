@@ -292,23 +292,24 @@ async fn update_metrics<W: WorldTrait>(
 /// Convert accumulated `Rejection` into appropriate `Reply`.
 #[allow(clippy::unused_async)]
 // TODO: -> Result<impl Reply, Infallible>
-async fn handle_rejection(rejection: Rejection) -> Result<Response, Rejection> {
-    let err = match rejection.find::<Error>() {
-        Some(err) => err,
-        _ => {
-            iroha_logger::error!(?rejection, "unhandled rejection");
-            return Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response());
-        }
+pub(crate) async fn handle_rejection(rejection: Rejection) -> Result<Response, Rejection> {
+    use super::Error::*;
+
+    let err = if let Some(err) = rejection.find::<Error>() {
+        err
+    } else {
+        iroha_logger::error!(?rejection, "unhandled rejection");
+        return Ok(StatusCode::INTERNAL_SERVER_ERROR.into_response());
     };
 
-    use Error::*;
+    #[allow(clippy::match_same_arms)]
     let response = match err {
         Query(err) => err.clone().into_response(),
         VersionedTransaction(err) => {
             reply::with_status(err.to_string(), err.status_code()).into_response()
         }
-        AcceptTransaction(err) => return unhandled(rejection),
-        RequestPendingTransactions(err) => return unhandled(rejection),
+        AcceptTransaction(_err) => return unhandled(rejection),
+        RequestPendingTransactions(_err) => return unhandled(rejection),
         DecodeRequestPendingTransactions(err) => {
             reply::with_status(err.to_string(), err.status_code()).into_response()
         }
@@ -316,11 +317,11 @@ async fn handle_rejection(rejection: Rejection) -> Result<Response, Rejection> {
             reply::with_status(err.to_string(), err.status_code()).into_response()
         }
         TxTooBig => return unhandled(rejection),
-        Config(err) => return unhandled(rejection),
-        PushIntoQueue(err) => return unhandled(rejection),
-        Status(err) => return unhandled(rejection),
-        ConfigurationReload(err) => return unhandled(rejection),
-        Prometheus(err) => return unhandled(rejection),
+        Config(_err) => return unhandled(rejection),
+        PushIntoQueue(_err) => return unhandled(rejection),
+        Status(_err) => return unhandled(rejection),
+        ConfigurationReload(_err) => return unhandled(rejection),
+        Prometheus(_err) => return unhandled(rejection),
     };
 
     Ok(response)

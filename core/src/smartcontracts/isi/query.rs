@@ -2,7 +2,7 @@
 
 use std::{error::Error as StdError, fmt};
 
-use eyre::{eyre, Result};
+use eyre::Result;
 use iroha_crypto::SignatureOf;
 use iroha_data_model::{prelude::*, query};
 use iroha_version::scale::DecodeVersioned;
@@ -44,8 +44,8 @@ impl VerifiedQueryRequest {
             account.signatories.contains(&self.signature.public_key)
         })?;
         if !account_has_public_key {
-            return Err(Error::Signature(eyre!(
-                "Signature public key doesn't correspond to the account."
+            return Err(Error::Signature(String::from(
+                "Signature public key doesn't correspond to the account.",
             )));
         }
         query_validator
@@ -68,7 +68,7 @@ impl TryFrom<SignedQueryRequest> for VerifiedQueryRequest {
                 payload: query.payload,
                 signature: query.signature,
             })
-            .map_err(|e| Error::Signature(eyre!(e)))
+            .map_err(|e| Error::Signature(e.to_string()))
     }
 }
 
@@ -89,11 +89,12 @@ impl ValidQueryRequest {
     }
 }
 
+/// SATO
 pub mod error {
     use super::*;
 
     /// Unsupported version error
-    #[derive(Clone, Copy, Eq, PartialEq, Debug)]
+    #[derive(Clone, Copy, Eq, PartialEq, Debug, Decode, Encode)]
     pub struct UnsupportedVersion {
         /// Version that we got
         pub version: u8,
@@ -120,7 +121,7 @@ pub mod error {
     }
 
     /// Query errors.
-    #[derive(Error, Debug, Clone, Encode, Decode)]
+    #[derive(Error, Debug, Clone, Decode, Encode)]
     pub enum Error {
         /// Query can not be decoded.
         #[error("Query can not be decoded")]
@@ -174,15 +175,15 @@ pub mod error {
     impl Reply for Error {
         #[inline]
         fn into_response(self) -> Response {
-            reply::with_status(crate::torii::utils::Scale(self), self.status_code()).into_response()
+            let status_code = self.status_code();
+            reply::with_status(crate::torii::utils::Scale(self), status_code).into_response()
         }
     }
 
     impl warp::reject::Reject for Error {}
 }
 
-pub use error::Error as Error;
-pub use error::UnsupportedVersion as UnsupportedVersionError;
+pub use error::{Error, UnsupportedVersion as UnsupportedVersionError};
 
 impl TryFrom<&Bytes> for VerifiedQueryRequest {
     type Error = Error;

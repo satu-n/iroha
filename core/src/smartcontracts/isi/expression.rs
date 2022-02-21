@@ -25,7 +25,7 @@ where
 
         V::try_from(expr)
             .map_err(Into::into)
-            .map_err(Error::Conversion)
+            .map_err(|e| Error::Conversion(e.to_string()))
     }
 }
 

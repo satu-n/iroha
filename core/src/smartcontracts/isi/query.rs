@@ -138,20 +138,13 @@ pub mod error {
         /// Query found nothing.
         #[error("Query found nothing: {0}")]
         Find(#[source] Box<FindError>),
-        /// Evaluate
-        #[error("Evaluation failed: {0}")]
+        /// Query has wrong expression.
+        #[error("Query has wrong expression: {0}")]
         Evaluate(String),
-        /// Conversion failures
-        #[error("Conversion failed: {0}")]
+        /// Query found wrong type of asset.
+        #[error("Query found wrong type of asset: {0}")]
         Conversion(String),
     }
-
-    // #[derive(Debug)]
-    // enum Signature {}
-    // #[derive(Debug)]
-    // enum Evaluate {}
-    // #[derive(Debug)]
-    // enum Conversion {}
 
     impl From<FindError> for Error {
         fn from(err: FindError) -> Self {

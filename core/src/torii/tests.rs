@@ -478,6 +478,7 @@ async fn query_with_wrong_signatory() {
         .query(query())
         .await
         .status(StatusCode::UNAUTHORIZED)
+        .body_matches_err(|body| matches!(*body, query::Error::Signature(_)))
         .assert()
 }
 #[tokio::test]
@@ -490,6 +491,7 @@ async fn query_with_wrong_signature() {
         .query(query())
         .await
         .status(StatusCode::UNAUTHORIZED)
+        .body_matches_err(|body| matches!(*body, query::Error::Signature(_)))
         .assert()
 }
 #[tokio::test]
@@ -502,6 +504,7 @@ async fn query_with_wrong_signature_and_no_permission() {
         .query(query())
         .await
         .status(StatusCode::UNAUTHORIZED)
+        .body_matches_err(|body| matches!(*body, query::Error::Signature(_)))
         .assert()
 }
 #[tokio::test]
@@ -514,6 +517,7 @@ async fn query_with_no_permission() {
         .query(query())
         .await
         .status(StatusCode::FORBIDDEN)
+        .body_matches_err(|body| matches!(*body, query::Error::Permission(_)))
         .assert()
 }
 #[tokio::test]
@@ -526,6 +530,7 @@ async fn query_with_no_permission_and_no_find() {
         .query(query())
         .await
         .status(StatusCode::FORBIDDEN)
+        .body_matches_err(|body| matches!(*body, query::Error::Permission(_)))
         .assert()
 }
 #[tokio::test]
@@ -538,6 +543,7 @@ async fn query_with_no_find() {
         .query(query())
         .await
         .status(StatusCode::NOT_FOUND)
+        .body_matches_err(|body| matches!(*body, query::Error::Find(_)))
         .assert()
 }
 

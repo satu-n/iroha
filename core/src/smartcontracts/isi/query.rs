@@ -135,12 +135,12 @@ pub mod error {
         /// Query is not allowed.
         #[error("Query is not allowed: {0}")]
         Permission(String),
-        /// Query found nothing.
-        #[error("Query found nothing: {0}")]
-        Find(#[source] Box<FindError>),
         /// Query has wrong expression.
         #[error("Query has wrong expression: {0}")]
         Evaluate(String),
+        /// Query found nothing.
+        #[error("Query found nothing: {0}")]
+        Find(#[source] Box<FindError>),
         /// Query found wrong type of asset.
         #[error("Query found wrong type of asset: {0}")]
         Conversion(String),

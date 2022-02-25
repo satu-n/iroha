@@ -243,9 +243,10 @@ For more information on codec check [Substrate Dev Hub](https://substrate.dev/do
 
 - `VersionedTransaction` - `iroha_data_model::transaction::VersionedTransaction`
 - `VersionedSignedQueryRequest` - `iroha_data_model::query::VersionedSignedQueryRequest`
+
 - `VersionedQueryResult` - `iroha_data_model::query::VersionedQueryResult`
-<!-- SATO -->
-- `QueryError` - 
+- `QueryError` - `iroha_core::smartcontracts::isi::query::Error`
+- `FindError` - `iroha_core::smartcontracts::isi::error::FindError`
 
 - `EventStreamSubscriptionRequest` - `iroha_data_model::events::EventSubscriberMessage::SubscriptionRequest`
 - `EventStreamSubscriptionAccepted` - `iroha_data_model::events::EventPublisherMessage::SubscriptionAccepted`

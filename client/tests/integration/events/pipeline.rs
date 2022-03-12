@@ -54,9 +54,9 @@ fn test_with_instruction_and_status(
             let hash = transaction.hash();
             let _handle = thread::spawn(move || {
                 listener_client.for_each_event(
-                    EventFilter::Pipeline(PipelineEventFilter::by_entity(
-                        PipelineEntityType::Transaction,
-                    )),
+                    EventFilter::Pipeline(
+                        PipelineEventFilter::new().entity_type(PipelineEntityType::Transaction),
+                    ),
                     |event| {
                         if let Ok(Event::Pipeline(event)) = event {
                             if event.entity_type == PipelineEntityType::Transaction

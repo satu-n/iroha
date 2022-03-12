@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 pub use crate::transaction::RejectionReason as PipelineRejectionReason;
 
-/// Event filter.
+/// [`Event`] filter.
 #[derive(
     Default,
     Debug,
@@ -29,48 +29,55 @@ pub use crate::transaction::RejectionReason as PipelineRejectionReason;
     Deserialize,
 )]
 pub struct EventFilter {
-    /// Filter by Entity if `Some`, if `None` all entities are accepted.
-    pub entity: Option<EntityType>,
-    /// Filter by Hash if `Some`, if `None` all hashes are accepted.
+    /// If `Some::<EntityType>` filters by the [`EntityType`]. If `None` accepts all the [`EntityType`].
+    pub entity_type: Option<EntityType>,
+    /// If `Some::<StatusType>` filters by the [`StatusType`]. If `None` accepts all the [`StatusType`].
+    pub status_type: Option<StatusType>,
+    /// If `Some::<Hash>` filters by the [`Hash`]. If `None` accepts all the [`Hash`].
     pub hash: Option<Hash>,
 }
 
 impl EventFilter {
-    /// Filter by entity
-    pub const fn by_entity(entity: EntityType) -> EventFilter {
-        EventFilter {
-            entity: Some(entity),
-            hash: None,
-        }
+    /// Construct [`EventFilter`].
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    /// Filter by hash.
-    pub const fn by_hash(hash: Hash) -> EventFilter {
-        EventFilter {
-            hash: Some(hash),
-            entity: None,
-        }
+    /// Filter by [`EntityType`].
+    pub const fn entity_type(mut self, entity_type: EntityType) -> Self {
+        self.entity_type = Some(entity_type);
+        self
     }
 
-    /// Filter by entity and hash.
-    pub const fn by_entity_and_hash(entity: EntityType, hash: Hash) -> EventFilter {
-        EventFilter {
-            entity: Some(entity),
-            hash: Some(hash),
-        }
+    /// Filter by [`StatusType`].
+    pub const fn status_type(mut self, status_type: StatusType) -> Self {
+        self.status_type = Some(status_type);
+        self
     }
 
-    /// Apply filter to event.
-    pub fn apply(&self, event: &Event) -> bool {
-        let entity_check = self
-            .entity
-            .map_or(true, |entity| entity == event.entity_type);
-        let hash_check = self.hash.map_or(true, |hash| hash == event.hash);
-        entity_check && hash_check
+    /// Filter by [`Hash`].
+    pub const fn hash(mut self, hash: Hash) -> Self {
+        self.hash = Some(hash);
+        self
+    }
+
+    /// Check if `self` accepts the `event`.
+    pub fn matches(&self, event: &Event) -> bool {
+        [
+            Self::field_matches(&self.entity_type, &event.entity_type),
+            Self::field_matches(&self.status_type, &event.status.type_()),
+            Self::field_matches(&self.hash, &event.hash),
+        ]
+        .into_iter()
+        .all(core::convert::identity)
+    }
+
+    fn field_matches<T: Eq>(filter: &Option<T>, event: &T) -> bool {
+        filter.as_ref().map_or(true, |field| field == event)
     }
 }
 
-/// Entity type to filter events.
+/// Type of the pipeline entity.
 #[derive(
     Debug,
     Clone,
@@ -93,19 +100,19 @@ pub enum EntityType {
     Transaction,
 }
 
-/// Entity type to filter events.
+/// [`Event`].
 #[derive(Debug, Clone, PartialEq, Eq, Decode, Encode, IntoSchema)]
 pub struct Event {
-    /// Type of entity that caused this event.
+    /// [`EntityType`] of the entity that caused this [`Event`].
     pub entity_type: EntityType,
-    /// The status of this entity.
+    /// [`Status`] of the entity that caused this [`Event`].
     pub status: Status,
-    /// The hash of this entity.
+    /// [`Hash`] of the entity that caused this [`Event`].
     pub hash: Hash,
 }
 
 impl Event {
-    /// Constructs pipeline event.
+    /// Construct [`Event`].
     pub const fn new(entity_type: EntityType, status: Status, hash: Hash) -> Self {
         Event {
             entity_type,
@@ -115,7 +122,7 @@ impl Event {
     }
 }
 
-/// Entity type to filter events.
+/// [`Status`] of the entity.
 #[derive(Debug, Clone, PartialEq, Eq, Decode, Encode, FromVariant, IntoSchema)]
 pub enum Status {
     /// Entity has been seen in blockchain, but has not passed validation.
@@ -124,6 +131,42 @@ pub enum Status {
     Rejected(PipelineRejectionReason),
     /// Entity has passed validation.
     Committed,
+}
+
+/// Type of [`Status`].
+#[derive(
+    Debug,
+    PartialOrd,
+    Ord,
+    PartialEq,
+    Eq,
+    Clone,
+    Copy,
+    Decode,
+    Encode,
+    IntoSchema,
+    Hash,
+    Serialize,
+    Deserialize,
+)]
+pub enum StatusType {
+    /// Represents [`Status::Validating`].
+    Validating,
+    /// Represents [`Status::Rejected`].
+    Rejected,
+    /// Represents [`Status::Committed`].
+    Committed,
+}
+
+impl Status {
+    fn type_(&self) -> StatusType {
+        use Status::*;
+        match self {
+            Validating => StatusType::Validating,
+            Rejected(_) => StatusType::Rejected,
+            Committed => StatusType::Committed,
+        }
+    }
 }
 
 /// Exports common structs and enums from this module.
@@ -188,7 +231,7 @@ mod tests {
             events
                 .iter()
                 .cloned()
-                .filter(|event| EventFilter::by_hash(Hash([0_u8; 32])).apply(event))
+                .filter(|event| EventFilter::new().hash(Hash([0_u8; 32])).matches(event))
                 .collect::<Vec<Event>>()
         );
         assert_eq!(
@@ -200,7 +243,9 @@ mod tests {
             events
                 .iter()
                 .cloned()
-                .filter(|event| EventFilter::by_entity(EntityType::Block).apply(event))
+                .filter(|event| EventFilter::new()
+                    .entity_type(EntityType::Block)
+                    .matches(event))
                 .collect::<Vec<Event>>()
         );
         assert_eq!(
@@ -212,11 +257,10 @@ mod tests {
             events
                 .iter()
                 .cloned()
-                .filter(|event| EventFilter::by_entity_and_hash(
-                    EntityType::Transaction,
-                    Hash([2_u8; 32])
-                )
-                .apply(event))
+                .filter(|event| EventFilter::new()
+                    .entity_type(EntityType::Transaction)
+                    .hash(Hash([2_u8; 32]))
+                    .matches(event))
                 .collect::<Vec<Event>>()
         );
         assert_eq!(
@@ -224,7 +268,7 @@ mod tests {
             events
                 .iter()
                 .cloned()
-                .filter(|event| EventFilter::default().apply(event))
+                .filter(|event| EventFilter::new().matches(event))
                 .collect::<Vec<Event>>()
         )
     }

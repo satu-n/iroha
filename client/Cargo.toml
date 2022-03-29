@@ -47,6 +47,7 @@ criterion = { version = "0.3.5", features = ["html_reports"] }
 color-eyre = "0.5.11"
 tempfile = "3"
 hex = "0.4.0"
+iai = "0.1"
 
 [[bench]]
 name = "torii"
@@ -56,6 +57,11 @@ harness = false
 name = "tps-dev"
 harness = false
 path = "benches/tps/dev.rs"
+
+[[bench]]
+name = "tps-ci"
+harness = false
+path = "benches/tps/ci.rs"
 
 [[example]]
 name = "tps-oneshot"

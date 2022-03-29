@@ -638,7 +638,7 @@ impl From<&ValidBlock> for Vec<Event> {
             .iter()
             .map(|transaction| {
                 PipelineEvent::new(
-                    PipelineEntityType::Transaction,
+                    PipelineEntityKind::Transaction,
                     PipelineStatus::Validating,
                     transaction.hash().into(),
                 )
@@ -646,7 +646,7 @@ impl From<&ValidBlock> for Vec<Event> {
             })
             .chain(block.rejected_transactions.iter().map(|transaction| {
                 PipelineEvent::new(
-                    PipelineEntityType::Transaction,
+                    PipelineEntityKind::Transaction,
                     PipelineStatus::Validating,
                     transaction.hash().into(),
                 )
@@ -654,7 +654,7 @@ impl From<&ValidBlock> for Vec<Event> {
             }))
             .chain(iter::once(
                 PipelineEvent::new(
-                    PipelineEntityType::Block,
+                    PipelineEntityKind::Block,
                     PipelineStatus::Validating,
                     block.hash().into(),
                 )
@@ -779,7 +779,7 @@ impl From<&CommittedBlock> for Vec<Event> {
             .cloned()
             .map(|transaction| {
                 PipelineEvent::new(
-                    PipelineEntityType::Transaction,
+                    PipelineEntityKind::Transaction,
                     PipelineStatus::Rejected(transaction.as_v1().rejection_reason.clone().into()),
                     transaction.hash().into(),
                 )
@@ -787,7 +787,7 @@ impl From<&CommittedBlock> for Vec<Event> {
             });
         let tx = block.transactions.iter().cloned().map(|transaction| {
             PipelineEvent::new(
-                PipelineEntityType::Transaction,
+                PipelineEntityKind::Transaction,
                 PipelineStatus::Committed,
                 transaction.hash().into(),
             )
@@ -800,7 +800,7 @@ impl From<&CommittedBlock> for Vec<Event> {
             .copied()
             .map(|hash| {
                 PipelineEvent::new(
-                    PipelineEntityType::Block,
+                    PipelineEntityKind::Block,
                     //TODO: store rejection reasons for blocks?
                     PipelineStatus::Rejected(PipelineRejectionReason::Block(
                         BlockRejectionReason::ConsensusBlockRejection,
@@ -811,7 +811,7 @@ impl From<&CommittedBlock> for Vec<Event> {
             });
         let current_block: iter::Once<Event> = iter::once(
             PipelineEvent::new(
-                PipelineEntityType::Block,
+                PipelineEntityKind::Block,
                 PipelineStatus::Committed,
                 block.hash().into(),
             )

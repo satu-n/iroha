@@ -123,7 +123,7 @@ impl EventFilter {
     /// Apply filter to event.
     pub fn apply(&self, event: &Event) -> bool {
         match (event, self) {
-            (Event::Pipeline(event), EventFilter::Pipeline(filter)) => filter.apply(event),
+            (Event::Pipeline(event), EventFilter::Pipeline(filter)) => filter.matches(event),
             (Event::Data(event), EventFilter::Data(filter)) => filter.matches(event),
             _ => false,
         }

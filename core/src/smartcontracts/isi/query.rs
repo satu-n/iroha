@@ -63,7 +63,7 @@ impl fmt::Display for UnsupportedVersionError {
 }
 
 /// Query errors.
-#[derive(Error, Debug, Clone, Decode, Encode, IntoSchema)]
+#[derive(Error, Debug, Decode, Encode, IntoSchema)]
 pub enum Error {
     /// Query can not be decoded.
     #[error("Query can not be decoded")]

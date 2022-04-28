@@ -117,7 +117,7 @@ pub mod error {
     }
 
     /// Type assertion error
-    #[derive(Debug, Clone, Error, Decode, Encode, IntoSchema)]
+    #[derive(Debug, Error, Decode, Encode, IntoSchema)]
     pub enum FindError {
         /// Failed to find asset
         #[error("Failed to find asset: `{0}`")]

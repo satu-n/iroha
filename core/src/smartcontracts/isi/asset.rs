@@ -28,10 +28,10 @@ pub mod isi {
         if *definition.value_type() == expected_value_type {
             Ok(definition.clone())
         } else {
-            Err(Error::Type(TypeError::Asset(AssetTypeError {
+            Err(TypeError::Asset(AssetTypeError {
                 expected: expected_value_type,
                 got: *definition.value_type(),
-            })))
+            }).into())
         }
     }
 
@@ -77,7 +77,7 @@ pub mod isi {
                     .map_err(|e| Error::Conversion(e.to_string()))?;
                 *quantity = quantity
                     .checked_add(self.object)
-                    .ok_or(Error::Math(MathError::Overflow))?;
+                    .ok_or(MathError::Overflow)?;
                 wsv.metrics.tx_amounts.observe(f64::from(*quantity));
 
                 Ok(AssetEvent::Added(asset_id.clone()))
@@ -106,7 +106,7 @@ pub mod isi {
                     .map_err(|e| Error::Conversion(e.to_string()))?;
                 *quantity = quantity
                     .checked_add(self.object)
-                    .ok_or(Error::Math(MathError::Overflow))?;
+                    .ok_or(MathError::Overflow)?;
                 #[allow(clippy::cast_precision_loss)]
                 wsv.metrics.tx_amounts.observe(*quantity as f64);
 
@@ -297,10 +297,10 @@ pub mod isi {
                     .asset_definition_entry(&source_asset_id.definition_id)?
                     .definition()
                     .value_type();
-                return Err(Error::Type(TypeError::Asset(AssetTypeError {
+                return Err(TypeError::Asset(AssetTypeError {
                     expected,
                     got,
-                })));
+                }).into());
             }
             assert_asset_type(
                 &source_asset_id.definition_id,
@@ -321,7 +321,7 @@ pub mod isi {
                     .map_err(|e| Error::Conversion(e.to_string()))?;
                 *quantity = quantity
                     .checked_sub(self.object)
-                    .ok_or(Error::Math(MathError::NotEnoughQuantity))?;
+                    .ok_or(MathError::NotEnoughQuantity)?;
 
                 Ok(AssetEvent::Removed(source_asset_id.clone()))
             })?;

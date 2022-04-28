@@ -67,10 +67,10 @@ impl fmt::Display for UnsupportedVersionError {
 pub enum Error {
     /// Query can not be decoded.
     #[error("Query can not be decoded")]
-    Decode(#[source] Box<iroha_version::error::Error>),
+    Decode(#[from] Box<iroha_version::error::Error>),
     /// Query has unsupported version.
     #[error("Query has unsupported version")]
-    Version(#[source] UnsupportedVersionError),
+    Version(#[from] UnsupportedVersionError),
     /// Query has wrong signature.
     #[error("Query has wrong signature: {0}")]
     Signature(String),
@@ -82,7 +82,7 @@ pub enum Error {
     Evaluate(String),
     /// Query found nothing.
     #[error("Query found nothing: {0}")]
-    Find(#[source] Box<FindError>),
+    Find(#[from] Box<FindError>),
     /// Query found wrong type of asset.
     #[error("Query found wrong type of asset: {0}")]
     Conversion(String),
@@ -90,7 +90,7 @@ pub enum Error {
 
 impl From<FindError> for Error {
     fn from(err: FindError) -> Self {
-        Error::Find(Box::new(err))
+        Box::new(err).into()
     }
 }
 

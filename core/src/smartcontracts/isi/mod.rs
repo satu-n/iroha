@@ -48,22 +48,22 @@ pub mod error {
     pub enum Error {
         /// Failed to find some entity
         #[error("Failed to find")]
-        Find(#[source] Box<FindError>),
+        Find(#[from] Box<FindError>),
         /// Failed to assert type
         #[error("Failed to assert type")]
-        Type(#[source] TypeError),
+        Type(#[from] TypeError),
         /// Failed to assert mintability
         #[error("Mintability violation. {0}")]
         Mintability(#[from] MintabilityError),
         /// Failed due to math exception
         #[error("Math error. {0}")]
-        Math(#[source] MathError),
+        Math(#[from] MathError),
         /// Query Error
         #[error("Query failed. {0}")]
-        Query(#[source] query::Error),
+        Query(#[from] query::Error),
         /// Metadata Error.
         #[error("Metadata error: {0}")]
-        Metadata(#[source] metadata::Error),
+        Metadata(#[from] metadata::Error),
         /// Unsupported instruction.
         #[error("Unsupported {0} instruction")]
         Unsupported(InstructionType),
@@ -81,26 +81,9 @@ pub mod error {
         Validate(#[from] ValidationError),
     }
 
-    // The main reason these are needed is because `FromVariant` can
-    // create conflicting implementations if two nodes of the tree of
-    // error types have the same type. For example, if query::Error
-    // and Error::Validate both have `eyre::Report` the
-    // implementations for both will clash.
-    impl From<metadata::Error> for Error {
-        fn from(err: metadata::Error) -> Self {
-            Self::Metadata(err)
-        }
-    }
-
     impl From<FindError> for Error {
         fn from(err: FindError) -> Self {
-            Self::Find(Box::new(err))
-        }
-    }
-
-    impl From<query::Error> for Error {
-        fn from(err: query::Error) -> Self {
-            Self::Query(err)
+            Box::new(err).into()
         }
     }
 
@@ -153,7 +136,7 @@ pub mod error {
         MetadataKey(Name),
         /// Block with supplied parent hash not found. More description in a string.
         #[error("Block not found")]
-        Block(#[source] ParentHashNotFound),
+        Block(#[from] ParentHashNotFound),
         /// Transaction with given hash not found.
         #[error("Transaction not found")]
         Transaction(HashOf<VersionedTransaction>),
@@ -237,21 +220,15 @@ pub mod error {
     impl From<FixedPointOperationError> for Error {
         fn from(err: FixedPointOperationError) -> Self {
             match err {
-                FixedPointOperationError::NegativeValue(_) => Self::Math(MathError::NegativeValue),
+                FixedPointOperationError::NegativeValue(_) => MathError::NegativeValue.into(),
                 FixedPointOperationError::Conversion(e) => {
                     Self::Conversion(format!("Mathematical conversion failed. {}", e))
                 }
-                FixedPointOperationError::Overflow => Self::Math(MathError::Overflow),
-                FixedPointOperationError::DivideByZero => Self::Math(MathError::DivideByZero),
-                FixedPointOperationError::DomainViolation => Self::Math(MathError::DomainViolation),
-                FixedPointOperationError::Arithmetic => Self::Math(MathError::Unknown),
+                FixedPointOperationError::Overflow => MathError::Overflow.into(),
+                FixedPointOperationError::DivideByZero => MathError::DivideByZero.into(),
+                FixedPointOperationError::DomainViolation => MathError::DomainViolation.into(),
+                FixedPointOperationError::Arithmetic => MathError::Unknown.into(),
             }
-        }
-    }
-
-    impl From<MathError> for Error {
-        fn from(err: MathError) -> Self {
-            Self::Math(err)
         }
     }
 

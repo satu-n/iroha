@@ -48,7 +48,7 @@ pub mod isi {
             if new_trigger.action.occurs_exactly_at_time()
                 && !matches!(&new_trigger.action.repeats, Repeats::Exactly(1))
             {
-                return Err(Error::Math(MathError::Overflow));
+                return Err(MathError::Overflow.into());
             }
 
             wsv.modify_triggers(|triggers| {

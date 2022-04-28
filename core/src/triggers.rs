@@ -52,7 +52,7 @@ impl TriggerSet {
     ) -> Result<impl Deref<Target = Action> + '_, smartcontracts::Error> {
         self.0
             .get(id)
-            .ok_or_else(|| smartcontracts::Error::Find(Box::new(FindError::Trigger(id.clone()))))
+            .ok_or_else(|| FindError::Trigger(id.clone()).into())
     }
 
     /// Remove a trigger from the [`TriggerSet`].
@@ -89,12 +89,12 @@ impl TriggerSet {
         f: impl Fn(u32) -> Result<u32, MathError>,
     ) -> Result<(), smartcontracts::Error> {
         let mut trigger = self.0.get_mut(key).ok_or_else(|| {
-            smartcontracts::Error::Find(Box::new(FindError::Trigger(key.clone())))
+            FindError::Trigger(key.clone())
         })?;
 
         let new_repeats = match &trigger.repeats {
-            Repeats::Exactly(n) => f(*n).map_err(Into::into),
-            _ => Err(smartcontracts::Error::Math(MathError::Overflow)),
+            Repeats::Exactly(n) => f(*n),
+            _ => Err(MathError::Overflow),
         }?;
         trigger.repeats = Repeats::Exactly(new_repeats);
 

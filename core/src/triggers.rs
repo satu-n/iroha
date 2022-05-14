@@ -88,9 +88,10 @@ impl TriggerSet {
         key: &trigger::Id,
         f: impl Fn(u32) -> Result<u32, MathError>,
     ) -> Result<(), smartcontracts::Error> {
-        let mut trigger = self.0.get_mut(key).ok_or_else(|| {
-            FindError::Trigger(key.clone())
-        })?;
+        let mut trigger = self
+            .0
+            .get_mut(key)
+            .ok_or_else(|| FindError::Trigger(key.clone()))?;
 
         let new_repeats = match &trigger.repeats {
             Repeats::Exactly(n) => f(*n),

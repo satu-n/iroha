@@ -31,7 +31,8 @@ pub mod isi {
             Err(TypeError::Asset(AssetTypeError {
                 expected: expected_value_type,
                 got: *definition.value_type(),
-            }).into())
+            })
+            .into())
         }
     }
 
@@ -297,10 +298,7 @@ pub mod isi {
                     .asset_definition_entry(&source_asset_id.definition_id)?
                     .definition()
                     .value_type();
-                return Err(TypeError::Asset(AssetTypeError {
-                    expected,
-                    got,
-                }).into());
+                return Err(TypeError::Asset(AssetTypeError { expected, got }).into());
             }
             assert_asset_type(
                 &source_asset_id.definition_id,

@@ -49,8 +49,7 @@ function trusted_peer_entry {
 
 function generate_trusted_peers {
     echo -n "["
-    for iter in {0..2}
-    do
+    for iter in {0..2}; do
         trusted_peer_entry "iroha$iter"
         echo -n ","
     done
@@ -83,19 +82,26 @@ function bulk_export {
     export IROHA2_GENESIS_PATH
 }
 
-function run_peer () {
+function run_peer() {
     TORII_P2P_ADDR="$HOST:${p2p_ports[$1]}"
     TORII_API_URL="$HOST:${api_ports[$1]}"
     TORII_TELEMETRY_URL="$HOST:${telemetry_ports[$1]}"
     IROHA_PUBLIC_KEY=${public_keys[$1]}
     IROHA_PRIVATE_KEY="{ \"digest_function\": \"ed25519\", \"payload\": \"${private_keys[$1]}\" }"
-    exec -a "$1" "$TEST/peers/iroha" "$2" > "$TEST/peers/$1.log" & disown
+    exec -a "$1" "$TEST/peers/iroha" "$2" >"$TEST/peers/$1.log" &
+    disown
 }
 
 function run_4_peers {
     run_peer iroha1
     run_peer iroha2
     run_peer iroha3
+    run_peer iroha0 --submit-genesis
+}
+
+function run_3_peers {
+    run_peer iroha1
+    run_peer iroha2
     run_peer iroha0 --submit-genesis
 }
 
@@ -108,37 +114,52 @@ function clean_up_peers {
 
 case $1 in
 
-    setup)
-        ## Set client up to communicate with the first peer.
-        mkdir "$TEST" || echo "$TEST Already exists"
-        cp ./target/debug/iroha_client_cli "$TEST" || {
-            echo 'Please build `iroha_client_cli` by running'
-            echo '`cargo build --bin iroha_client_cli`'
-            exit
-        }
-        echo '{"comment":{"String": "Hello Meta!"}}' >"$TEST/metadata.json"
-        cp ./configs/client_cli/config.json "$TEST"
-        case $2 in
-            docker)
-                docker-compose up;;
-            *)
-                set_up_peers_common
-                bulk_export
-                run_4_peers
-        esac
+setup)
+    ## Set client up to communicate with the first peer.
+    mkdir "$TEST" || echo "$TEST Already exists"
+    cp ./target/debug/iroha_client_cli "$TEST" || {
+        echo 'Please build `iroha_client_cli` by running'
+        echo '`cargo build --bin iroha_client_cli`'
+        exit
+    }
+    echo '{"comment":{"String": "Hello Meta!"}}' >"$TEST/metadata.json"
+    cp ./configs/client_cli/config.json "$TEST"
+    case $2 in
+    docker)
+        docker-compose up
         ;;
-
-    cleanup)
-        case $2 in
-            docker)
-                docker-compose rm -s -f;;
-            *)
-                clean_up_peers
-        esac
-        rm "$TEST" -r -f
+    2385)
+        set_up_peers_common
+        bulk_export
+        run_3_peers
         ;;
-
     *)
-        echo 'Specify either `setup` or `cleanup`'
-        exit 1
+        set_up_peers_common
+        bulk_export
+        run_4_peers
+        ;;
+    esac
+    ;;
+
+add)
+    bulk_export
+    run_peer iroha3
+    ;;
+
+cleanup)
+    case $2 in
+    docker)
+        docker-compose rm -s -f
+        ;;
+    *)
+        clean_up_peers
+        ;;
+    esac
+    rm "$TEST" -r -f
+    ;;
+
+*)
+    echo 'Specify either `setup` or `cleanup`'
+    exit 1
+    ;;
 esac

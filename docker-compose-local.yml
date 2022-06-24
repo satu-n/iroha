@@ -71,6 +71,7 @@ services:
       - './configs/peer:/config'
       - './:/root/soramitsu/iroha'
     environment:
+      MAX_LOG_LEVEL: "DEBUG"
       TORII_P2P_ADDR: iroha3:1340
       TORII_API_URL: iroha3:8083
       TORII_TELEMETRY_URL: iroha3:8183

@@ -180,16 +180,22 @@ impl<S: SumeragiTrait + Debug> BlockSynchronizer<S> {
                     "Unreachable as doing view changes on valid topology will not raise an error.",
                 );
         }
-        if self.wsv.as_ref().latest_block_hash() == this_block.header().previous_block_hash
-            && network_topology
-                .filter_signatures_by_roles(
-                    &[Role::ValidatingPeer, Role::Leader, Role::ProxyTail],
-                    this_block
-                        .verified_signatures()
-                        .map(SignatureOf::transmute_ref),
-                )
-                .len()
-                >= network_topology.min_votes_for_commit()
+
+        // XXX refactored to debug
+        let last_block_hash_expected = self.wsv.as_ref().latest_block_hash();
+        let last_block_hash_got = this_block.header().previous_block_hash;
+        let n_signatures_got = network_topology
+            .filter_signatures_by_roles(
+                &[Role::ValidatingPeer, Role::Leader, Role::ProxyTail],
+                this_block
+                    .verified_signatures()
+                    .map(SignatureOf::transmute_ref),
+            )
+            .len();
+        let n_signatures_expected = network_topology.min_votes_for_commit();
+        debug!(%last_block_hash_expected, %last_block_hash_got, n_signatures_got, n_signatures_expected);
+        if last_block_hash_expected == last_block_hash_got
+            && n_signatures_got >= n_signatures_expected
         {
             self.state = State::InProgress(remaining_blocks.to_vec(), peer_id);
             self.sumeragi

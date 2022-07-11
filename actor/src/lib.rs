@@ -35,9 +35,9 @@ use tokio::{
     task, time,
 };
 
+pub mod _broker;
 mod actor_id;
 pub mod broker;
-pub mod _broker;
 #[cfg(feature = "deadlock_detection")]
 mod deadlock;
 mod envelope;

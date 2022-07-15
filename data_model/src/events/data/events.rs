@@ -24,10 +24,10 @@ mod asset {
         MetadataRemoved(AssetId),
     }
 
-    impl Identifiable for AssetEvent {
-        type Id = AssetId;
+    impl Origin for AssetEvent {
+        type Origin = AssetId;
 
-        fn id(&self) -> &AssetId {
+        fn origin(&self) -> &AssetId {
             match self {
                 Self::Created(id)
                 | Self::Deleted(id)
@@ -55,10 +55,10 @@ mod asset {
     // AssetDefinitionEventFilter enum and its `impl Filter for
     // AssetDefinitionEventFilter`.
 
-    impl Identifiable for AssetDefinitionEvent {
-        type Id = AssetDefinitionId;
+    impl Origin for AssetDefinitionEvent {
+        type Origin = AssetDefinitionId;
 
-        fn id(&self) -> &AssetDefinitionId {
+        fn origin(&self) -> &AssetDefinitionId {
             match self {
                 Self::Created(id)
                 | Self::Deleted(id)
@@ -85,10 +85,10 @@ mod peer {
         Removed(PeerId),
     }
 
-    impl Identifiable for PeerEvent {
-        type Id = PeerId;
+    impl Origin for PeerEvent {
+        type Origin = PeerId;
 
-        fn id(&self) -> &PeerId {
+        fn origin(&self) -> &PeerId {
             match self {
                 Self::Added(id) | Self::Removed(id) => id,
             }
@@ -111,10 +111,10 @@ mod role {
         Deleted(RoleId),
     }
 
-    impl Identifiable for RoleEvent {
-        type Id = RoleId;
+    impl Origin for RoleEvent {
+        type Origin = RoleId;
 
-        fn id(&self) -> &RoleId {
+        fn origin(&self) -> &RoleId {
             match self {
                 Self::Created(id) | Self::Deleted(id) => id,
             }
@@ -147,12 +147,12 @@ mod account {
         MetadataRemoved(AccountId),
     }
 
-    impl Identifiable for AccountEvent {
-        type Id = AccountId;
+    impl Origin for AccountEvent {
+        type Origin = AccountId;
 
-        fn id(&self) -> &AccountId {
+        fn origin(&self) -> &AccountId {
             match self {
-                Self::Asset(asset) => &asset.id().account_id,
+                Self::Asset(asset) => &asset.origin().account_id,
                 Self::Created(id)
                 | Self::Deleted(id)
                 | Self::AuthenticationAdded(id)
@@ -188,13 +188,13 @@ mod domain {
         MetadataRemoved(DomainId),
     }
 
-    impl Identifiable for DomainEvent {
-        type Id = DomainId;
+    impl Origin for DomainEvent {
+        type Origin = DomainId;
 
-        fn id(&self) -> &DomainId {
+        fn origin(&self) -> &DomainId {
             match self {
-                Self::Account(account) => &account.id().domain_id,
-                Self::AssetDefinition(asset_definition) => &asset_definition.id().domain_id,
+                Self::Account(account) => &account.origin().domain_id,
+                Self::AssetDefinition(asset_definition) => &asset_definition.origin().domain_id,
                 Self::Created(id)
                 | Self::Deleted(id)
                 | Self::MetadataInserted(id)
@@ -222,10 +222,10 @@ mod trigger {
         Shortened(TriggerId),
     }
 
-    impl Identifiable for TriggerEvent {
-        type Id = TriggerId;
+    impl Origin for TriggerEvent {
+        type Origin = TriggerId;
 
-        fn id(&self) -> &TriggerId {
+        fn origin(&self) -> &TriggerId {
             match self {
                 Self::Created(id)
                 | Self::Deleted(id)
@@ -234,6 +234,12 @@ mod trigger {
             }
         }
     }
+}
+
+pub trait Origin {
+    type Origin: Eq + Ord + PartialOrd + IntoSchema;
+
+    fn origin(&self) -> &Self::Origin;
 }
 
 /// World event
@@ -317,6 +323,6 @@ pub mod prelude {
         peer::{PeerEvent, PeerEventFilter, PeerFilter},
         role::{RoleEvent, RoleEventFilter, RoleFilter},
         trigger::{TriggerEvent, TriggerEventFilter, TriggerFilter},
-        Event as DataEvent, WorldEvent,
+        Event as DataEvent, WorldEvent, Origin
     };
 }

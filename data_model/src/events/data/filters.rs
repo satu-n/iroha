@@ -108,28 +108,26 @@ impl Filter for EntityFilter {
     IntoSchema,
     Hash,
 )]
-/// Filter for identifiers
-///
-/// Passes id trough filter, if it equals to the one provided in construction
-pub struct IdFilter<Id: Eq>(Id);
+/// Filter that accepts an data event whose origin matches what this filter specifies.
+pub struct OriginFilter<T: Origin>(T::Origin);
 
-impl<Id: Eq> IdFilter<Id> {
-    /// Construct new `IdFilter`
-    pub fn new(id: Id) -> Self {
-        Self(id)
+impl<T: Origin> OriginFilter<T> {
+    /// Construct [`OriginFilter`]
+    pub fn new(origin: T::Origin) -> Self {
+        Self(origin)
     }
 
-    /// Get `id`
-    pub fn id(&self) -> &Id {
+    /// Get `origin`
+    pub fn origin(&self) -> &T::Origin {
         &self.0
     }
 }
 
-impl<Id: Eq> Filter for IdFilter<Id> {
-    type EventType = Id;
+impl<T: Origin> Filter for OriginFilter<T> {
+    type EventType = T;
 
-    fn matches(&self, id: &Id) -> bool {
-        id == &self.0
+    fn matches(&self, event: &T) -> bool {
+        event.origin() == &self.0
     }
 }
 
@@ -137,7 +135,7 @@ pub mod prelude {
     pub use super::{
         EntityFilter as DataEntityFilter, EventFilter as DataEventFilter,
         FilterOpt::{self, *},
-        IdFilter,
+        OriginFilter,
     };
 }
 
@@ -164,7 +162,7 @@ mod tests {
         let asset_created = AssetEvent::Created(asset_id);
         let account_asset_created = AccountEvent::Asset(asset_created.clone());
         let account_filter = BySome(EntityFilter::ByAccount(BySome(AccountFilter::new(
-            BySome(IdFilter(account_id)),
+            BySome(OriginFilter(account_id)),
             AcceptAll,
         ))));
         assert!(!account_filter.matches(&domain_created.into()));

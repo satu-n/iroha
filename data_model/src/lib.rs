@@ -720,7 +720,9 @@ where
 /// and `PartialCmp` implementations.
 pub trait Identifiable: Debug {
     /// The type of the `Id` of the entity.
-    type Id: Into<IdBox> + fmt::Display + fmt::Debug
+    type Id: Into<IdBox>
+        + fmt::Display
+        + fmt::Debug
         + Clone
         + PartialEq
         + Eq

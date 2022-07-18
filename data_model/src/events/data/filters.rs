@@ -95,18 +95,7 @@ impl Filter for EntityFilter {
 }
 
 #[derive(
-    Clone,
-    PartialOrd,
-    Ord,
-    PartialEq,
-    Eq,
-    Debug,
-    Decode,
-    Encode,
-    Deserialize,
-    Serialize,
-    IntoSchema,
-    Hash,
+    Clone, PartialOrd, Ord, PartialEq, Eq, Debug, Decode, Encode, Serialize, IntoSchema, Hash,
 )]
 /// Filter that accepts an data event whose origin matches what this filter specifies.
 pub struct OriginFilter<T: Origin>(<T::Origin as Identifiable>::Id);
@@ -128,6 +117,19 @@ impl<T: Origin> Filter for OriginFilter<T> {
 
     fn matches(&self, event: &T) -> bool {
         event.origin_id() == self.origin_id()
+    }
+}
+
+impl<'de, T: Origin> Deserialize<'de> for OriginFilter<T>
+where
+    <<T as Origin>::Origin as Identifiable>::Id: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let origin_id = <T::Origin as Identifiable>::Id::deserialize(deserializer)?;
+        Ok(Self::new(origin_id))
     }
 }
 

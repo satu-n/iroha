@@ -11,7 +11,7 @@ mod asset {
     use super::*;
 
     #[derive(
-        Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
+        Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
     )]
     #[non_exhaustive]
     #[allow(missing_docs)]
@@ -40,7 +40,7 @@ mod asset {
     }
 
     #[derive(
-        Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
+        Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
     )]
     #[non_exhaustive]
     #[allow(missing_docs)]
@@ -76,7 +76,7 @@ mod peer {
     use super::*;
 
     #[derive(
-        Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
+        Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
     )]
     #[non_exhaustive]
     #[allow(missing_docs)]
@@ -102,7 +102,7 @@ mod role {
     use super::*;
 
     #[derive(
-        Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
+        Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
     )]
     #[non_exhaustive]
     #[allow(missing_docs)]
@@ -129,7 +129,7 @@ mod account {
 
     /// Account event
     #[derive(
-        Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
+        Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
     )]
     #[non_exhaustive]
     #[allow(missing_docs)]
@@ -175,7 +175,7 @@ mod domain {
 
     /// Domain Event
     #[derive(
-        Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
+        Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
     )]
     #[non_exhaustive]
     #[allow(missing_docs)]
@@ -211,7 +211,7 @@ mod trigger {
 
     /// Trigger Event
     #[derive(
-        Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
+        Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, IntoSchema, Filter,
     )]
     #[non_exhaustive]
     #[allow(missing_docs)]
@@ -246,7 +246,7 @@ pub trait Origin {
 ///
 /// Does not participate in `Event`, but useful for events warranties when modifying `wsv`
 #[derive(
-    Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema,
+    Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema,
 )]
 #[allow(missing_docs)]
 pub enum WorldEvent {
@@ -258,7 +258,7 @@ pub enum WorldEvent {
 
 /// Event
 #[derive(
-    Clone, PartialEq, Eq, Debug, Hash, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema,
+    Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Hash, Decode, Encode, Deserialize, Serialize, FromVariant, IntoSchema,
 )]
 pub enum Event {
     /// Peer event

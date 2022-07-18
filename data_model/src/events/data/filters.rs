@@ -14,8 +14,8 @@ pub type EventFilter = FilterOpt<EntityFilter>;
     Debug,
     Decode,
     Encode,
-    Deserialize,
     Serialize,
+    Deserialize,
     IntoSchema,
     Hash,
 )]

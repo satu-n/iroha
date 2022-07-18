@@ -95,7 +95,7 @@ impl Filter for EntityFilter {
 }
 
 #[derive(
-    Clone, PartialOrd, Ord, PartialEq, Eq, Debug, Decode, Encode, Serialize, IntoSchema, Hash,
+    Clone, PartialOrd, Ord, PartialEq, Eq, Debug, Decode, Encode, Serialize, IntoSchema,
 )]
 /// Filter that accepts an data event whose origin matches what this filter specifies.
 pub struct OriginFilter<T: Origin>(<T::Origin as Identifiable>::Id);
@@ -117,6 +117,12 @@ impl<T: Origin> Filter for OriginFilter<T> {
 
     fn matches(&self, event: &T) -> bool {
         event.origin_id() == self.origin_id()
+    }
+}
+
+impl<T: Origin> core::hash::Hash for OriginFilter<T> {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }
 

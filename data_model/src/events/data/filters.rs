@@ -94,9 +94,7 @@ impl Filter for EntityFilter {
     }
 }
 
-#[derive(
-    Clone, PartialOrd, Ord, PartialEq, Eq, Debug, Decode, Encode, Serialize, IntoSchema,
-)]
+#[derive(Clone, PartialOrd, Ord, Eq, Debug, Decode, Encode, Serialize, IntoSchema)]
 /// Filter that accepts an data event whose origin matches what this filter specifies.
 pub struct OriginFilter<T: Origin>(<T::Origin as Identifiable>::Id);
 
@@ -117,6 +115,12 @@ impl<T: Origin> Filter for OriginFilter<T> {
 
     fn matches(&self, event: &T) -> bool {
         event.origin_id() == self.origin_id()
+    }
+}
+
+impl<T: Origin> PartialEq for OriginFilter<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 == other.0
     }
 }
 

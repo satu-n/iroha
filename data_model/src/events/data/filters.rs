@@ -109,16 +109,16 @@ impl Filter for EntityFilter {
     Hash,
 )]
 /// Filter that accepts an data event whose origin matches what this filter specifies.
-pub struct OriginFilter<T: Origin>(T::Origin);
+pub struct OriginFilter<T: Origin>(<T::Origin as Identifiable>::Id);
 
 impl<T: Origin> OriginFilter<T> {
-    /// Construct [`OriginFilter`]
-    pub fn new(origin: T::Origin) -> Self {
-        Self(origin)
+    /// Construct [`OriginFilter`].
+    pub fn new(origin_id: <T::Origin as Identifiable>::Id) -> Self {
+        Self(origin_id)
     }
 
-    /// Get `origin`
-    pub fn origin(&self) -> &T::Origin {
+    /// Get the id of the origin of the data event that this filter accepts.
+    pub fn origin_id(&self) -> &<T::Origin as Identifiable>::Id {
         &self.0
     }
 }
@@ -127,7 +127,7 @@ impl<T: Origin> Filter for OriginFilter<T> {
     type EventType = T;
 
     fn matches(&self, event: &T) -> bool {
-        event.origin() == &self.0
+        event.origin_id() == self.origin_id()
     }
 }
 

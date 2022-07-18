@@ -193,13 +193,13 @@ pub enum IdBox {
     RoleId(<role::Role as Identifiable>::Id),
 }
 
-impl Identifiable for IdBox {
-    type Id = Self;
+// impl Identifiable for IdBox {
+//     type Id = Self;
 
-    fn id(&self) -> &Self::Id {
-        self
-    }
-}
+//     fn id(&self) -> &Self::Id {
+//         self
+//     }
+// }
 
 /// Sized container for constructors of all [`Identifiable`]s that can be registered via transaction
 #[derive(
@@ -720,7 +720,7 @@ where
 /// and `PartialCmp` implementations.
 pub trait Identifiable: Debug {
     /// The type of the `Id` of the entity.
-    type Id: Into<IdBox> + fmt::Display + fmt::Debug + Clone + Eq + Ord;
+    type Id: Into<IdBox> + fmt::Display + fmt::Debug + Clone + PartialEq + Eq + PartialOrd + Ord + core::hash::Hash + IntoSchema;
 
     /// Get reference to the type's `Id`. There should be no other
     /// inherent `impl` with the same name (e.g. `getset`).

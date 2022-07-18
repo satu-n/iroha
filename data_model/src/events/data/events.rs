@@ -25,9 +25,9 @@ mod asset {
     }
 
     impl Origin for AssetEvent {
-        type Origin = AssetId;
+        type Origin = Asset;
 
-        fn origin(&self) -> &AssetId {
+        fn origin_id(&self) -> &<Asset as Identifiable>::Id {
             match self {
                 Self::Created(id)
                 | Self::Deleted(id)
@@ -56,9 +56,9 @@ mod asset {
     // AssetDefinitionEventFilter`.
 
     impl Origin for AssetDefinitionEvent {
-        type Origin = AssetDefinitionId;
+        type Origin = AssetDefinition;
 
-        fn origin(&self) -> &AssetDefinitionId {
+        fn origin_id(&self) -> &<AssetDefinition as Identifiable>::Id {
             match self {
                 Self::Created(id)
                 | Self::Deleted(id)
@@ -86,9 +86,9 @@ mod peer {
     }
 
     impl Origin for PeerEvent {
-        type Origin = PeerId;
+        type Origin = Peer;
 
-        fn origin(&self) -> &PeerId {
+        fn origin_id(&self) -> &<Peer as Identifiable>::Id {
             match self {
                 Self::Added(id) | Self::Removed(id) => id,
             }
@@ -112,9 +112,9 @@ mod role {
     }
 
     impl Origin for RoleEvent {
-        type Origin = RoleId;
+        type Origin = Role;
 
-        fn origin(&self) -> &RoleId {
+        fn origin_id(&self) -> &<Role as Identifiable>::Id {
             match self {
                 Self::Created(id) | Self::Deleted(id) => id,
             }
@@ -148,11 +148,11 @@ mod account {
     }
 
     impl Origin for AccountEvent {
-        type Origin = AccountId;
+        type Origin = Account;
 
-        fn origin(&self) -> &AccountId {
+        fn origin_id(&self) -> &<Account as Identifiable>::Id {
             match self {
-                Self::Asset(asset) => &asset.origin().account_id,
+                Self::Asset(asset) => &asset.origin_id().account_id,
                 Self::Created(id)
                 | Self::Deleted(id)
                 | Self::AuthenticationAdded(id)
@@ -189,12 +189,12 @@ mod domain {
     }
 
     impl Origin for DomainEvent {
-        type Origin = DomainId;
+        type Origin = Domain;
 
-        fn origin(&self) -> &DomainId {
+        fn origin_id(&self) -> &<Domain as Identifiable>::Id {
             match self {
-                Self::Account(account) => &account.origin().domain_id,
-                Self::AssetDefinition(asset_definition) => &asset_definition.origin().domain_id,
+                Self::Account(account) => &account.origin_id().domain_id,
+                Self::AssetDefinition(asset_definition) => &asset_definition.origin_id().domain_id,
                 Self::Created(id)
                 | Self::Deleted(id)
                 | Self::MetadataInserted(id)
@@ -223,9 +223,9 @@ mod trigger {
     }
 
     impl Origin for TriggerEvent {
-        type Origin = TriggerId;
+        type Origin = Trigger<FilterBox>;
 
-        fn origin(&self) -> &TriggerId {
+        fn origin_id(&self) -> &<Trigger<FilterBox> as Identifiable>::Id {
             match self {
                 Self::Created(id)
                 | Self::Deleted(id)
@@ -237,9 +237,21 @@ mod trigger {
 }
 
 pub trait Origin {
-    type Origin: Eq + Ord + PartialOrd + IntoSchema;
+    type Origin: Identifiable;
+        // Clone +
+        // PartialOrd +
+        // Ord +
+        // PartialEq +
+        // Eq +
+        // core::fmt::Debug +
+        // Decode +
+        // Encode +
+        // // Deserialize +
+        // Serialize +
+        // IntoSchema +
+        // core::hash::Hash;
 
-    fn origin(&self) -> &Self::Origin;
+    fn origin_id(&self) -> &<Self::Origin as Identifiable>::Id;
 }
 
 /// World event

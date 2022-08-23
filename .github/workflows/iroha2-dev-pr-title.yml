@@ -1,94 +1,79 @@
 name: I2::Dev::Title
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [iroha2-dev]
     types: [opened, edited, reopened]
 
 jobs:
-  check:
+  check_to_label:
     runs-on: ubuntu-latest
-    # TODO: Add labels when https://github.com/actions/first-interaction/issues/10 is fixed.
     steps:
-      - name: Feature
+      - id: feature-match
         uses: actions-ecosystem/action-regex-match@v2
-        id: feature-match
         with:
           text: ${{ github.event.pull_request.title }}
           regex: '^\[feature\] #\d+(, #\d+)*: .+$'
-      # - name: Add feature label
-      #   uses: actions-ecosystem/action-add-labels@v1
-      #   if: ${{ steps.feature-match.outputs.match != '' }}
-      #   continue-on-error: true
-      #   with:
-      #     github_token: ${{ secrets.github_token }}
-      #     labels: |
-      #       Enhancement
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ steps.feature-match.outputs.match != '' }}
+        with:
+          github_token: ${{ secrets.github_token }}
+          labels: |
+            Enhancement
+        continue-on-error: true
 
-      - name: Refactor
+      - id: refactor-match
         uses: actions-ecosystem/action-regex-match@v2
-        id: refactor-match
-        if: ${{ steps.feature-match.outputs.match == '' }}
         with:
           text: ${{ github.event.pull_request.title }}
           regex: '^\[refactor\]( #\d+(, #\d+)*)?: .+$'
-      # - name: Add Refactor label
-      #   uses: actions-ecosystem/action-add-labels@v1
-      #   if: ${{ steps.refactor-match.outputs.match != '' }}
-      #   continue-on-error: true
-      #   with:
-      #     github_token: ${{ secrets.github_token }}
-      #     labels: |
-      #       Refactor
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ steps.refactor-match.outputs.match != '' }}
+        with:
+          github_token: ${{ secrets.github_token }}
+          labels: |
+            Refactor
+        continue-on-error: true
 
-      - name: Fix
+      - id: fix-match
         uses: actions-ecosystem/action-regex-match@v2
-        id: fix-match
-        if: ${{ steps.refactor-match.outputs.match == '' }}
         with:
           text: ${{ github.event.pull_request.title }}
-          regex: '\[fix\] #\d+(, #\d+)*: .+$'
-      # - name: Add fix label
-      #   uses: actions-ecosystem/action-add-labels@v1
-      #   if: ${{ steps.fix-match.outputs.match != '' }}
-      #   continue-on-error: true
-      #   with:
-      #     github_token: ${{ secrets.github_token }}
-      #     labels: |
-      #       Bug
+          regex: '^\[fix\] #\d+(, #\d+)*: .+$'
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ steps.fix-match.outputs.match != '' }}
+        with:
+          github_token: ${{ secrets.github_token }}
+          labels: |
+            Bug
+        continue-on-error: true
 
-      - name: Documentation
+      - id: docs-match
         uses: actions-ecosystem/action-regex-match@v2
-        id: docs-match
-        if: ${{ steps.feature-match.outputs.match == '' }}
         with:
           text: ${{ github.event.pull_request.title }}
           regex: '^\[documentation\]( #\d+(, #\d+)*)?: .+$'
-      # - name: Add Documentation label
-      #   uses: actions-ecosystem/action-add-labels@v1
-      #   if: ${{ steps.docs-match.outputs.match != '' }}
-      #   continue-on-error: true
-      #   with:
-      #     github_token: ${{ secrets.github_token }}
-      #     labels: |
-      #       Documentation
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ steps.docs-match.outputs.match != '' }}
+        with:
+          github_token: ${{ secrets.github_token }}
+          labels: |
+            Documentation
+        continue-on-error: true
 
-      - name: CI
+      - id: ci-match
         uses: actions-ecosystem/action-regex-match@v2
-        id: ci-match
-        if: ${{ steps.feature-match.outputs.match == '' }}
         with:
           text: ${{ github.event.pull_request.title }}
           regex: '^\[ci\]( #\d+(, #\d+)*)?: .+$'
-      # - name: Add CI label
-      #   uses: actions-ecosystem/action-add-labels@v1
-      #   if: ${{ steps.ci-match.outputs.match != '' }}
-      #   continue-on-error: true
-      #   with:
-      #     github_token: ${{ secrets.github_token }}
-      #     labels: |
-      #       CI
+      - uses: actions-ecosystem/action-add-labels@v1
+        if: ${{ steps.ci-match.outputs.match != '' }}
+        with:
+          github_token: ${{ secrets.github_token }}
+          labels: |
+            CI
+        continue-on-error: true
 
-      - name: None of the above
+      - name: Mismatch
         if: ${{ steps.fix-match.outputs.match == '' && steps.refactor-match.outputs.match == '' && steps.feature-match.outputs.match == '' && steps.docs-match.outputs.match == '' && steps.ci-match.outputs.match == '' }}
         run: exit 1

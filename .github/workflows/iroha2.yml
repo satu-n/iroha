@@ -1,0 +1,30 @@
+name: I2
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: 'Also update the base image'
+        required: false
+        type: boolean
+  push:
+    branches:
+      - iroha2-dev
+      - iroha2-stable
+      - iroha2-lts
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - uses: tj-actions/changed-files@v29.0.1
+        id: changed-files
+      - uses: ./.github/workflows/iroha2-base.yml
+        if: inputs.base || contains(steps.changed-files.outputs.modified_files, 'Dockerfile.base')
+      - uses: ./.github/workflows/iroha2-dev.yml
+        if: github.ref == 'refs/heads/iroha2-dev'
+      - uses: ./.github/workflows/iroha2-release.yml
+        if: github.ref == 'refs/heads/iroha2-stable' || github.ref == 'refs/heads/iroha2-lts'

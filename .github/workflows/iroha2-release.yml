@@ -1,10 +1,7 @@
 name: I2::Release::Publish
 
 on:
-  push:
-    branches:
-      - iroha2-stable
-      - iroha2-lts
+  workflow_call:
 
 env:
   CARGO_TERM_COLOR: always

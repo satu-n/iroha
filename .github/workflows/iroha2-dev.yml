@@ -1,8 +1,7 @@
 name: I2::Dev::Publish
 
 on:
-  push:
-    branches: [iroha2-dev]
+  workflow_call:
 
 env:
   CARGO_TERM_COLOR: always

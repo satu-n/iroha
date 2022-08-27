@@ -1,7 +1,14 @@
 name: I2::Base::Publish
 
 on:
-  workflow_call:
+  workflow_dispatch:
+  push:
+    branches:
+      - iroha2-dev
+      - iroha2-stable
+      - iroha2-lts
+    paths:
+      - "Dockerfile.base"
 
 jobs:
   dockerhub:

@@ -3,7 +3,7 @@ name: I2::Dev::Title
 on:
   pull_request:
     branches: [iroha2-dev]
-    types: [opened]
+    types: [opened, edited, reopened]
 
 jobs:
   match:

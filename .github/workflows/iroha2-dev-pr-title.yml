@@ -8,9 +8,9 @@ on:
 jobs:
   match:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        category: [ci, documentation, feature, fix, refactor]
+    # strategy:
+    #   matrix:
+    #     category: [ci, documentation, feature, fix, refactor]
         # include:
         #   - category: ci
         #     label: CI

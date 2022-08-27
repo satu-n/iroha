@@ -27,19 +27,17 @@ jobs:
           - category: refactor
             label: Refactor
             regex: '^\[refactor\]( #\d+(, #\d+)*)?: .+$'
-    env:
-      MATCH_ID: ${{ matrix.category }}-match
     outputs:
       is_match: ${{ steps.match_result.outputs.is_match }}
       label: ${{ matrix.label }}
     steps:
-      - id: ${{ env.MATCH_ID }}
+      - id: ${{ matrix.category }}-match
         uses: actions-ecosystem/action-regex-match@v2
         with:
           text: ${{ github.event.pull_request.title }}
           regex: ${{ matrix.regex }}
       - id: match_result
-        if: steps.${{ env.MATCH_ID }}.outputs.match != ''
+        if: steps.${{ matrix.category }}-match.outputs.match != ''
         run: ｜
           echo "::set-output name=is_match::true"
 

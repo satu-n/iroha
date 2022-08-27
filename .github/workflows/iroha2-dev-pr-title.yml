@@ -31,7 +31,8 @@ jobs:
     #   is_match: ${{ steps.match_result.outputs.is_match }}
     #   label: ${{ matrix.label }}
     steps:
-      - id: ${{ matrix.category }}-match
+      - name: Category match
+        id: ${{ matrix.category }}-match
         uses: actions-ecosystem/action-regex-match@v2
         with:
           text: ${{ github.event.pull_request.title }}

@@ -61,5 +61,5 @@ jobs:
     steps:
       - name: Assert
         # if: ! needs.match.outputs.is_match
-        if: ! false
+        if: false == 'false'
         run: exit 1

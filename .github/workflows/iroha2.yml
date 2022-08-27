@@ -22,7 +22,6 @@ jobs:
           fetch-depth: 2
       - uses: tj-actions/changed-files@v29.0.1
         id: changed-files
-      - uses: actions/checkout@v3
       - uses: ./.github/workflows/iroha2-base.yml
         if: inputs.base || contains(steps.changed-files.outputs.modified_files, 'Dockerfile.base')
       - uses: ./.github/workflows/iroha2-dev.yml

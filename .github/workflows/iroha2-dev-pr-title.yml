@@ -6,8 +6,8 @@ on:
     types: [opened, edited, reopened]
 
 jobs:
-  # match:
-  #   runs-on: ubuntu-latest
+  match:
+    runs-on: ubuntu-latest
     # strategy:
     #   matrix:
     #     category: [ci, documentation, feature, fix, refactor]
@@ -35,13 +35,13 @@ jobs:
     # outputs:
     #   is_match: ${{ steps.match_result.outputs.is_match }}
     #   label: ${{ matrix.label }}
-    # steps:
-    #   - name: Category match
-    #     id: ${{ matrix.category }}-match
-    #     uses: actions-ecosystem/action-regex-match@v2
-    #     with:
-    #       text: ${{ github.event.pull_request.title }}
-    #       regex: '^\[ci\]( #\d+(, #\d+)*)?: .+$'
+    steps:
+      - name: Category match
+        id: ${{ matrix.category }}-match
+        uses: actions-ecosystem/action-regex-match@v2
+        with:
+          text: ${{ github.event.pull_request.title }}
+          regex: '^\[ci\]( #\d+(, #\d+)*)?: .+$'
       # - id: match_result
       #   if: steps.${{ matrix.category }}-match.outputs.match != ''
       #   run: ｜

@@ -48,17 +48,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions-ecosystem/action-add-labels@v1
-        if: needs.match.outputs.is_match
+        # if: needs.match.outputs.is_match
         with:
           github_token: ${{ secrets.github_token }}
           labels: |
             CI
             # ${{ needs.match.outputs.label }}
 
-  # assert_valid:
-  #   needs: match
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Assert
-  #       if: ! needs.match.outputs.is_match
-  #       run: exit 1
+  assert_valid:
+    # needs: match
+    runs-on: ubuntu-latest
+    steps:
+      - name: Assert
+        # if: ! needs.match.outputs.is_match
+        if: ! false
+        run: exit 1

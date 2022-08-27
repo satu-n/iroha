@@ -11,27 +11,27 @@ jobs:
     strategy:
       matrix:
         category: [ci, documentation, feature, fix, refactor]
-        include:
-          - category: ci
-            label: CI
-          - category: ci
-            regex: '^\[ci\]( #\d+(, #\d+)*)?: .+$'
-          - category: documentation
-            label: Documentation
-          - category: documentation
-            regex: '^\[documentation\]( #\d+(, #\d+)*)?: .+$'
-          - category: feature
-            label: Enhancement
-          - category: feature
-            regex: '^\[feature\] #\d+(, #\d+)*: .+$'
-          - category: fix
-            label: Bug
-          - category: fix
-            regex: '^\[fix\] #\d+(, #\d+)*: .+$'
-          - category: refactor
-            label: Refactor
-          - category: refactor
-            regex: '^\[refactor\]( #\d+(, #\d+)*)?: .+$'
+        # include:
+        #   - category: ci
+        #     label: CI
+        #   - category: ci
+        #     regex: '^\[ci\]( #\d+(, #\d+)*)?: .+$'
+        #   - category: documentation
+        #     label: Documentation
+        #   - category: documentation
+        #     regex: '^\[documentation\]( #\d+(, #\d+)*)?: .+$'
+        #   - category: feature
+        #     label: Enhancement
+        #   - category: feature
+        #     regex: '^\[feature\] #\d+(, #\d+)*: .+$'
+        #   - category: fix
+        #     label: Bug
+        #   - category: fix
+        #     regex: '^\[fix\] #\d+(, #\d+)*: .+$'
+        #   - category: refactor
+        #     label: Refactor
+        #   - category: refactor
+        #     regex: '^\[refactor\]( #\d+(, #\d+)*)?: .+$'
     # outputs:
     #   is_match: ${{ steps.match_result.outputs.is_match }}
     #   label: ${{ matrix.label }}

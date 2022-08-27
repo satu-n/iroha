@@ -6,45 +6,45 @@ on:
     types: [opened, edited, reopened]
 
 jobs:
-  match:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        category: [ci, documentation, feature, fix, refactor]
-        include:
-          - category: ci
-            label: CI
-            regex: '^\[ci\]( #\d+(, #\d+)*)?: .+$'
-          - category: documentation
-            label: Documentation
-            regex: '^\[documentation\]( #\d+(, #\d+)*)?: .+$'
-          - category: feature
-            label: Enhancement
-            regex: '^\[feature\] #\d+(, #\d+)*: .+$'
-          - category: fix
-            label: Bug
-            regex: '^\[fix\] #\d+(, #\d+)*: .+$'
-          - category: refactor
-            label: Refactor
-            regex: '^\[refactor\]( #\d+(, #\d+)*)?: .+$'
-    env:
-      MATCH_ID: ${{ matrix.category }}-match
-    outputs:
-      is_match: ${{ steps.match_result.outputs.is_match }}
-      label: ${{ matrix.label }}
-    steps:
-      - id: ${{ env.MATCH_ID }}
-        uses: actions-ecosystem/action-regex-match@v2
-        with:
-          text: ${{ github.event.pull_request.title }}
-          regex: ${{ matrix.regex }}
-      - id: match_result
-        if: steps.${{ env.MATCH_ID }}.outputs.match != ''
-        run: ｜
-          echo "::set-output name=is_match::true"
+  # match:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       category: [ci, documentation, feature, fix, refactor]
+  #       include:
+  #         - category: ci
+  #           label: CI
+  #           regex: '^\[ci\]( #\d+(, #\d+)*)?: .+$'
+  #         - category: documentation
+  #           label: Documentation
+  #           regex: '^\[documentation\]( #\d+(, #\d+)*)?: .+$'
+  #         - category: feature
+  #           label: Enhancement
+  #           regex: '^\[feature\] #\d+(, #\d+)*: .+$'
+  #         - category: fix
+  #           label: Bug
+  #           regex: '^\[fix\] #\d+(, #\d+)*: .+$'
+  #         - category: refactor
+  #           label: Refactor
+  #           regex: '^\[refactor\]( #\d+(, #\d+)*)?: .+$'
+  #   env:
+  #     MATCH_ID: ${{ matrix.category }}-match
+  #   outputs:
+  #     is_match: ${{ steps.match_result.outputs.is_match }}
+  #     label: ${{ matrix.label }}
+  #   steps:
+  #     - id: ${{ env.MATCH_ID }}
+  #       uses: actions-ecosystem/action-regex-match@v2
+  #       with:
+  #         text: ${{ github.event.pull_request.title }}
+  #         regex: ${{ matrix.regex }}
+  #     - id: match_result
+  #       if: steps.${{ env.MATCH_ID }}.outputs.match != ''
+  #       run: ｜
+  #         echo "::set-output name=is_match::true"
 
   label:
-    needs: match
+    # needs: match
     runs-on: ubuntu-latest
     steps:
       - uses: actions-ecosystem/action-add-labels@v1
@@ -52,12 +52,13 @@ jobs:
         with:
           github_token: ${{ secrets.github_token }}
           labels: |
-            ${{ needs.match.outputs.label }}
+            CI
+            # ${{ needs.match.outputs.label }}
 
-  assert_valid:
-    needs: match
-    runs-on: ubuntu-latest
-    steps:
-      - name: Assert
-        if: ! needs.match.outputs.is_match
-        run: exit 1
+  # assert_valid:
+  #   needs: match
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Assert
+  #       if: ! needs.match.outputs.is_match
+  #       run: exit 1

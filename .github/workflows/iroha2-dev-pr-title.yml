@@ -41,7 +41,7 @@ jobs:
         uses: actions-ecosystem/action-regex-match@v2
         with:
           text: ${{ github.event.pull_request.title }}
-          regex: ${{ matrix.regex }}
+          regex: '^\[ci\]( #\d+(, #\d+)*)?: .+$'
       # - id: match_result
       #   if: steps.${{ matrix.category }}-match.outputs.match != ''
       #   run: ｜

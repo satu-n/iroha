@@ -4,9 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - iroha2-dev
-      - iroha2-stable
-      - iroha2-lts
+      - test/workflow_run/base
     paths:
       - "Dockerfile.base"
 

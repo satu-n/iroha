@@ -3,6 +3,7 @@ name: I2::Dev::Publish
 on:
   workflow_run:
     workflows: [I2::Base::Publish]
+    # I'd inspect `completed` behavior!
     types: [completed]
     branches: [test/workflow_run/base]
 

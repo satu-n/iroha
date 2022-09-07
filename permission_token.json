@@ -1,0 +1,24 @@
+{
+    "name": "can_transfer_user_assets",
+    "params": {
+      "asset_id": {
+        "Id": {
+          "AssetId": {
+            "definition_id": {
+              "name": "tea",
+              "domain_id": {
+                "name": "looking_glass"
+              }
+            },
+            "account_id": {
+              "name": "mad_hatter",
+              "domain_id": {
+                "name": "looking_glass"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  

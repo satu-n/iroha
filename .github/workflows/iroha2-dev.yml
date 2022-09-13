@@ -36,3 +36,5 @@ jobs:
           tags: s8sato/iroha2:dev
           labels: commit=${{ github.sha }}
           build-args: TAG=dev
+          context: .
+          file: Dockerfile

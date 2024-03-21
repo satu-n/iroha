@@ -3,10 +3,10 @@ use std::{path::Path, str::FromStr as _};
 use eyre::Result;
 use iroha_client::{
     client::{self, Client, QueryResult},
-    crypto::KeyPair,
     data_model::prelude::*,
 };
 use iroha_logger::info;
+use iroha_sample_params::{alias::Alias, SampleParams};
 use serde_json::json;
 use test_network::*;
 
@@ -22,15 +22,16 @@ fn executor_upgrade_should_work() -> Result<()> {
     let register_admin_domain = Register::domain(admin_domain);
     client.submit_blocking(register_admin_domain)?;
 
-    let admin_id: AccountId = "admin@admin".parse()?;
-    let admin_keypair = KeyPair::random();
-    let admin_account = Account::new(admin_id.clone(), admin_keypair.public_key().clone());
+    let admin_id: AccountId = "admin@admin".parse_alias();
+    let sp = SampleParams::default();
+    let admin_keypair = sp.signatory["admin"].make_key_pair();
+    let admin_account = Account::new(admin_id.clone());
     let register_admin_account = Register::account(admin_account);
     client.submit_blocking(register_admin_account)?;
 
     // Check that admin isn't allowed to transfer alice's rose by default
-    let alice_rose: AssetId = "rose##alice@wonderland".parse()?;
-    let admin_rose: AccountId = "admin@admin".parse()?;
+    let alice_rose: AssetId = "rose##alice@wonderland".parse_alias();
+    let admin_rose: AccountId = "admin@admin".parse_alias();
     let transfer_alice_rose = Transfer::asset_numeric(alice_rose, 1u32, admin_rose);
     let transfer_rose_tx = TransactionBuilder::new(chain_id.clone(), admin_id.clone())
         .with_instructions([transfer_alice_rose.clone()])
@@ -71,7 +72,7 @@ fn executor_upgrade_should_run_migration() -> Result<()> {
         .any(|id| id == &can_unregister_domain_token_id));
 
     // Check that Alice has permission to unregister Wonderland
-    let alice_id: AccountId = "alice@wonderland".parse().unwrap();
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
     let alice_tokens = client
         .request(FindPermissionTokensByAccountId::new(alice_id.clone()))?
         .collect::<QueryResult<Vec<_>>>()

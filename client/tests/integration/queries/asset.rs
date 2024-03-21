@@ -1,7 +1,6 @@
 use eyre::Result;
 use iroha_client::{
     client::{Client, ClientQueryError},
-    crypto::KeyPair,
     data_model::{
         asset::AssetValue,
         isi::Instruction,
@@ -9,6 +8,7 @@ use iroha_client::{
         query::{asset::FindTotalAssetQuantityByAssetDefinitionId, error::QueryExecutionFail},
     },
 };
+use iroha_sample_params::alias::Alias;
 use test_network::*;
 
 #[test]
@@ -23,24 +23,19 @@ fn find_asset_total_quantity() -> Result<()> {
     test_client.submit_blocking(Register::domain(domain))?;
 
     let accounts: [AccountId; 5] = [
-        "alice@wonderland".parse()?,
-        "mad_hatter@wonderland".parse()?,
-        "cheshire_cat@wonderland".parse()?,
-        "caterpillar@wonderland".parse()?,
-        "white_rabbit@looking_glass".parse()?,
+        "alice@wonderland".parse_alias(),
+        "mad_hatter@wonderland".parse_alias(),
+        "cheshire_cat@wonderland".parse_alias(),
+        "caterpillar@wonderland".parse_alias(),
+        "white_rabbit@looking_glass".parse_alias(),
     ];
-
-    let keys = core::iter::repeat_with(KeyPair::random)
-        .take(accounts.len() - 1)
-        .collect::<Vec<_>>();
 
     // Registering accounts
     let register_accounts = accounts
         .iter()
         .skip(1) // Alice has already been registered in genesis
         .cloned()
-        .zip(keys.iter().map(KeyPair::public_key).cloned())
-        .map(|(account_id, public_key)| Register::account(Account::new(account_id, public_key)))
+        .map(|account_id| Register::account(Account::new(account_id)))
         .collect::<Vec<_>>();
     test_client.submit_all_blocking(register_accounts)?;
 

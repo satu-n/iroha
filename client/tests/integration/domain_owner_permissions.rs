@@ -1,12 +1,8 @@
 use eyre::Result;
-use iroha_client::{
-    crypto::KeyPair,
-    data_model::{account::SignatureCheckCondition, prelude::*},
-};
+use iroha_client::data_model::prelude::*;
+use iroha_sample_params::{alias::Alias, SampleParams};
 use serde_json::json;
 use test_network::*;
-
-use super::new_account_with_random_public_key;
 
 #[test]
 fn domain_owner_domain_permissions() -> Result<()> {
@@ -16,7 +12,7 @@ fn domain_owner_domain_permissions() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let bob_id: AccountId = "bob@kingdom".parse()?;
+    let bob_id: AccountId = "bob@kingdom".parse_alias();
     let coin_id: AssetDefinitionId = "coin#kingdom".parse()?;
     let coin = AssetDefinition::numeric(coin_id.clone());
 
@@ -24,8 +20,9 @@ fn domain_owner_domain_permissions() -> Result<()> {
     let kingdom = Domain::new(kingdom_id.clone());
     test_client.submit_blocking(Register::domain(kingdom))?;
 
-    let bob_keypair = KeyPair::random();
-    let bob = Account::new(bob_id.clone(), bob_keypair.public_key().clone());
+    let sp = SampleParams::default();
+    let bob_keypair = sp.signatory["bob"].make_key_pair();
+    let bob = Account::new(bob_id.clone());
     test_client.submit_blocking(Register::account(bob))?;
 
     // Asset definitions can't be registered by "bob@kingdom" by default
@@ -89,35 +86,14 @@ fn domain_owner_account_permissions() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let mad_hatter_id: AccountId = "mad_hatter@kingdom".parse()?;
+    let mad_hatter_id: AccountId = "mad_hatter@kingdom".parse_alias();
 
     // "alice@wonderland" is owner of "kingdom" domain
     let kingdom = Domain::new(kingdom_id);
     test_client.submit_blocking(Register::domain(kingdom))?;
 
-    let mad_hatter_keypair = KeyPair::random();
-    let mad_hatter = Account::new(
-        mad_hatter_id.clone(),
-        mad_hatter_keypair.public_key().clone(),
-    );
+    let mad_hatter = Account::new(mad_hatter_id.clone());
     test_client.submit_blocking(Register::account(mad_hatter))?;
-
-    // check that "alice@wonderland" as owner of domain can burn and mint public keys for accounts in her domain
-    let mad_hatter_new_keypair = KeyPair::random();
-    test_client.submit_blocking(Mint::account_public_key(
-        mad_hatter_new_keypair.public_key().clone(),
-        mad_hatter_id.clone(),
-    ))?;
-    test_client.submit_blocking(Burn::account_public_key(
-        mad_hatter_new_keypair.public_key().clone(),
-        mad_hatter_id.clone(),
-    ))?;
-
-    // check that "alice@wonderland" as owner of domain can change signature check condition for accounts in her domain
-    test_client.submit_blocking(Mint::account_signature_check_condition(
-        SignatureCheckCondition::AnyAccountSignatureOr(Vec::new().into()),
-        mad_hatter_id.clone(),
-    ))?;
 
     // check that "alice@wonderland" as owner of domain can edit metadata of account in her domain
     let key: Name = "key".parse()?;
@@ -130,7 +106,7 @@ fn domain_owner_account_permissions() -> Result<()> {
     test_client.submit_blocking(RemoveKeyValue::account(mad_hatter_id.clone(), key))?;
 
     // check that "alice@wonderland" as owner of domain can grant and revoke account related permission tokens in her domain
-    let bob_id: AccountId = "bob@wonderland".parse()?;
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
     let token = PermissionToken::new(
         "CanUnregisterAccount".parse().unwrap(),
         &json!({ "account_id": mad_hatter_id }),
@@ -151,19 +127,20 @@ fn domain_owner_asset_definition_permissions() -> Result<()> {
 
     let chain_id = ChainId::from("0");
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let bob_id: AccountId = "bob@kingdom".parse()?;
-    let rabbit_id: AccountId = "rabbit@kingdom".parse()?;
+    let bob_id: AccountId = "bob@kingdom".parse_alias();
+    let rabbit_id: AccountId = "white_rabbit@kingdom".parse_alias();
     let coin_id: AssetDefinitionId = "coin#kingdom".parse()?;
 
     // "alice@wonderland" is owner of "kingdom" domain
     let kingdom = Domain::new(kingdom_id.clone());
     test_client.submit_blocking(Register::domain(kingdom))?;
 
-    let bob_keypair = KeyPair::random();
-    let bob = Account::new(bob_id.clone(), bob_keypair.public_key().clone());
+    let sp = SampleParams::default();
+    let bob_keypair = sp.signatory["bob"].make_key_pair();
+    let bob = Account::new(bob_id.clone());
     test_client.submit_blocking(Register::account(bob))?;
 
-    let rabbit = new_account_with_random_public_key(rabbit_id.clone());
+    let rabbit = Account::new(rabbit_id.clone());
     test_client.submit_blocking(Register::account(rabbit))?;
 
     // Grant permission to register asset definitions to "bob@kingdom"
@@ -198,7 +175,7 @@ fn domain_owner_asset_definition_permissions() -> Result<()> {
     test_client.submit_blocking(RemoveKeyValue::asset_definition(coin_id.clone(), key))?;
 
     // check that "alice@wonderland" as owner of domain can grant and revoke asset definition related permission tokens in her domain
-    let bob_id: AccountId = "bob@wonderland".parse()?;
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
     let token = PermissionToken::new(
         "CanUnregisterAssetDefinition".parse().unwrap(),
         &json!({ "asset_definition_id": coin_id }),
@@ -219,9 +196,9 @@ fn domain_owner_asset_permissions() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_090).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id: AccountId = "alice@wonderland".parse()?;
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let bob_id: AccountId = "bob@kingdom".parse()?;
+    let bob_id: AccountId = "bob@kingdom".parse_alias();
     let coin_id: AssetDefinitionId = "coin#kingdom".parse()?;
     let store_id: AssetDefinitionId = "store#kingdom".parse()?;
 
@@ -229,8 +206,9 @@ fn domain_owner_asset_permissions() -> Result<()> {
     let kingdom = Domain::new(kingdom_id.clone());
     test_client.submit_blocking(Register::domain(kingdom))?;
 
-    let bob_keypair = KeyPair::random();
-    let bob = Account::new(bob_id.clone(), bob_keypair.public_key().clone());
+    let sp = SampleParams::default();
+    let bob_keypair = sp.signatory["bob"].make_key_pair();
+    let bob = Account::new(bob_id.clone());
     test_client.submit_blocking(Register::account(bob))?;
 
     // Grant permission to register asset definitions to "bob@kingdom"
@@ -270,7 +248,7 @@ fn domain_owner_asset_permissions() -> Result<()> {
     test_client.submit_blocking(RemoveKeyValue::asset(bob_store_id.clone(), key))?;
 
     // check that "alice@wonderland" as owner of domain can grant and revoke asset related permission tokens in her domain
-    let bob_id: AccountId = "bob@wonderland".parse()?;
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
     let token = PermissionToken::new(
         "CanUnregisterUserAsset".parse().unwrap(),
         &json!({ "asset_id": bob_store_id }),
@@ -286,16 +264,15 @@ fn domain_owner_trigger_permissions() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_095).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id: AccountId = "alice@wonderland".parse()?;
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let bob_id: AccountId = "bob@kingdom".parse()?;
+    let bob_id: AccountId = "bob@kingdom".parse_alias();
 
     // "alice@wonderland" is owner of "kingdom" domain
     let kingdom = Domain::new(kingdom_id);
     test_client.submit_blocking(Register::domain(kingdom))?;
 
-    let bob_keypair = KeyPair::random();
-    let bob = Account::new(bob_id.clone(), bob_keypair.public_key().clone());
+    let bob = Account::new(bob_id.clone());
     test_client.submit_blocking(Register::account(bob))?;
 
     let asset_definition_id = "rose#wonderland".parse()?;
@@ -323,7 +300,7 @@ fn domain_owner_trigger_permissions() -> Result<()> {
     let _result = test_client.submit_blocking(execute_trigger)?;
 
     // check that "alice@wonderland" as owner of domain can grant and revoke trigger related permission tokens in her domain
-    let bob_id: AccountId = "bob@wonderland".parse()?;
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
     let token = PermissionToken::new(
         "CanUnregisterUserTrigger".parse().unwrap(),
         &json!({ "trigger_id": trigger_id }),
@@ -343,16 +320,15 @@ fn domain_owner_transfer() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_100).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id: AccountId = "alice@wonderland".parse()?;
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let bob_id: AccountId = "bob@kingdom".parse()?;
+    let bob_id: AccountId = "bob@kingdom".parse_alias();
 
     // "alice@wonderland" is owner of "kingdom" domain
     let kingdom = Domain::new(kingdom_id.clone());
     test_client.submit_blocking(Register::domain(kingdom))?;
 
-    let bob_keypair = KeyPair::random();
-    let bob = Account::new(bob_id.clone(), bob_keypair.public_key().clone());
+    let bob = Account::new(bob_id.clone());
     test_client.submit_blocking(Register::account(bob))?;
 
     let domain = test_client.request(FindDomainById::new(kingdom_id.clone()))?;
@@ -366,8 +342,8 @@ fn domain_owner_transfer() -> Result<()> {
         ))
         .expect("Failed to submit transaction");
 
-    let asset_definition = test_client.request(FindDomainById::new(kingdom_id))?;
-    assert_eq!(asset_definition.owned_by(), &bob_id);
+    let domain = test_client.request(FindDomainById::new(kingdom_id))?;
+    assert_eq!(domain.owned_by(), &bob_id);
 
     Ok(())
 }

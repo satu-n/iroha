@@ -72,6 +72,8 @@ uuid = { version = "1.4.1", features = ["v4"] }
 indexmap = "2.1.0"
 
 [dev-dependencies]
+iroha_sample_params = { workspace = true }
+
 criterion = { workspace = true }
 hex = { workspace = true }
 once_cell = { workspace = true }

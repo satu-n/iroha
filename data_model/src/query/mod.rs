@@ -155,7 +155,6 @@ pub mod model {
         FindAllAccounts(FindAllAccounts),
         FindAccountById(FindAccountById),
         FindAccountKeyValueByIdAndKey(FindAccountKeyValueByIdAndKey),
-        FindAccountsByName(FindAccountsByName),
         FindAccountsByDomainId(FindAccountsByDomainId),
         FindAccountsWithAsset(FindAccountsWithAsset),
         FindAllAssets(FindAllAssets),
@@ -342,7 +341,6 @@ impl_query! {
     FindAllAccounts => Vec<crate::account::Account>,
     FindAccountById => crate::account::Account,
     FindAccountKeyValueByIdAndKey => MetadataValueBox,
-    FindAccountsByName => Vec<crate::account::Account>,
     FindAccountsByDomainId => Vec<crate::account::Account>,
     FindAccountsWithAsset => Vec<crate::account::Account>,
     FindAllAssets => Vec<crate::asset::Asset>,
@@ -671,19 +669,6 @@ pub mod account {
             pub key: Name,
         }
 
-        /// [`FindAccountsByName`] Iroha Query gets [`Account`]s name as input and
-        /// finds all [`Account`]s with this name.
-        #[derive(Display)]
-        #[display(fmt = "Find accounts with `{name}` name")]
-        #[repr(transparent)]
-        // SAFETY: `FindAccountsByName` has no trap representation in `EvaluatesTo<Name>`
-        #[ffi_type(unsafe {robust})]
-        pub struct FindAccountsByName {
-            /// `name` of accounts to find.
-            pub name: Name,
-        }
-
-
         /// [`FindAccountsByDomainId`] Iroha Query gets [`Domain`]s id as input and
         /// finds all [`Account`]s under this [`Domain`].
         #[derive(Display)]
@@ -713,7 +698,7 @@ pub mod account {
     pub mod prelude {
         pub use super::{
             FindAccountById, FindAccountKeyValueByIdAndKey, FindAccountsByDomainId,
-            FindAccountsByName, FindAccountsWithAsset, FindAllAccounts,
+            FindAccountsWithAsset, FindAllAccounts,
         };
     }
 }

@@ -17,7 +17,7 @@ iroha_data_model = { workspace = true }
 iroha_primitives = { workspace = true }
 iroha_logger = { workspace = true }
 iroha_genesis = { workspace = true }
-
+iroha_sample_params = { workspace = true }
 
 eyre = { workspace = true }
 futures = { workspace = true, features = ["std", "async-await"] }

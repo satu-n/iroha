@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use iroha_client::{
     client::{self, QueryResult},
-    crypto::KeyPair,
     data_model::{isi::Instruction, prelude::*, Registered},
 };
 use iroha_data_model::{
@@ -11,6 +10,7 @@ use iroha_data_model::{
     isi::InstructionBox,
     name::Name,
 };
+use iroha_sample_params::alias::Alias;
 use test_network::*;
 
 #[test]
@@ -135,12 +135,11 @@ fn simulate_transfer<T>(
 }
 
 fn generate_two_ids() -> (AccountId, AccountId) {
-    let alice_id: AccountId = "alice@wonderland".parse().unwrap();
-    let mouse_id: AccountId = "mouse@wonderland".parse().unwrap();
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
     (alice_id, mouse_id)
 }
 
 fn create_mouse(mouse_id: AccountId) -> Register<Account> {
-    let (mouse_public_key, _) = KeyPair::random().into_parts();
-    Register::account(Account::new(mouse_id, mouse_public_key))
+    Register::account(Account::new(mouse_id))
 }

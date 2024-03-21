@@ -1166,6 +1166,7 @@ fn handle_block_sync<'state>(
 #[cfg(test)]
 mod tests {
     use iroha_primitives::{unique_vec, unique_vec::UniqueVec};
+    use iroha_sample_params::{alias::Alias, SampleParams};
     use tokio::test;
 
     use super::*;
@@ -1183,10 +1184,10 @@ mod tests {
         leader_key_pair: &KeyPair,
     ) -> (State, Arc<Kura>, SignedBlock) {
         // Predefined world state
-        let alice_id: AccountId = "alice@wonderland".parse().expect("Valid");
-        let alice_keys = KeyPair::random();
-        let account =
-            Account::new(alice_id.clone(), alice_keys.public_key().clone()).build(&alice_id);
+        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let sp = SampleParams::default();
+        let alice_keypair = sp.signatory["alice"].make_key_pair();
+        let account = Account::new(alice_id.clone()).build(&alice_id);
         let domain_id = "wonderland".parse().expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(domain.add_account(account).is_none());
@@ -1203,7 +1204,7 @@ mod tests {
         // Making two transactions that have the same instruction
         let tx = TransactionBuilder::new(chain_id.clone(), alice_id.clone())
             .with_instructions([fail_box])
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
         let tx = AcceptedTransaction::accept(
             tx,
             chain_id,
@@ -1233,7 +1234,7 @@ mod tests {
 
             let tx1 = TransactionBuilder::new(chain_id.clone(), alice_id.clone())
                 .with_instructions([create_asset_definition1])
-                .sign(&alice_keys);
+                .sign(&alice_keypair);
             let tx1 = AcceptedTransaction::accept(
                 tx1,
                 chain_id,
@@ -1243,7 +1244,7 @@ mod tests {
             .expect("Valid");
             let tx2 = TransactionBuilder::new(chain_id.clone(), alice_id)
                 .with_instructions([create_asset_definition2])
-                .sign(&alice_keys);
+                .sign(&alice_keypair);
             let tx2 = AcceptedTransaction::accept(
                 tx2,
                 chain_id,

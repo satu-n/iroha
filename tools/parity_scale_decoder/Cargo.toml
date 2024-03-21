@@ -23,6 +23,7 @@ iroha_schema_gen = { workspace = true }
 iroha_crypto = { workspace = true }
 iroha_version = { workspace = true }
 iroha_genesis = { workspace = true }
+iroha_sample_params = { workspace = true }
 
 clap = { workspace = true, features = ["derive", "cargo"] }
 eyre = { workspace = true }

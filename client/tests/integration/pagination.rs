@@ -17,12 +17,12 @@ fn limits_should_work() -> Result<()> {
     let vec = &client
         .build_query(asset::all_definitions())
         .with_pagination(Pagination {
-            limit: NonZeroU32::new(5),
-            start: NonZeroU64::new(5),
+            limit: NonZeroU32::new(7),
+            start: NonZeroU64::new(1),
         })
         .execute()?
         .collect::<QueryResult<Vec<_>>>()?;
-    assert_eq!(vec.len(), 5);
+    assert_eq!(vec.len(), 7);
     Ok(())
 }
 
@@ -36,17 +36,18 @@ fn fetch_size_should_work() -> Result<()> {
     let iter = client
         .build_query(asset::all_definitions())
         .with_pagination(Pagination {
-            limit: NonZeroU32::new(20),
-            start: NonZeroU64::new(0),
+            limit: NonZeroU32::new(7),
+            start: NonZeroU64::new(1),
         })
-        .with_fetch_size(FetchSize::new(Some(NonZeroU32::new(12).expect("Valid"))))
+        .with_fetch_size(FetchSize::new(Some(NonZeroU32::new(3).expect("Valid"))))
         .execute()?;
-    assert_eq!(iter.batch_len(), 12);
+    assert_eq!(iter.batch_len(), 3);
     Ok(())
 }
 
 fn register_assets(client: &Client) -> Result<()> {
-    let register: Vec<InstructionBox> = ('a'..='z')
+    // FIXME transaction is rejected for more than a certain number of instructions
+    let register: Vec<InstructionBox> = ('a'..='j')
         .map(|c| c.to_string())
         .map(|name| (name + "#wonderland").parse().expect("Valid"))
         .map(|asset_definition_id| {

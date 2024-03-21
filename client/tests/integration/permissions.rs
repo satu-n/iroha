@@ -8,6 +8,7 @@ use iroha_client::{
 };
 use iroha_data_model::permission::PermissionToken;
 use iroha_genesis::GenesisNetwork;
+use iroha_sample_params::{alias::Alias, SampleParams};
 use serde_json::json;
 use test_network::{PeerBuilder, *};
 
@@ -20,7 +21,7 @@ fn genesis_transactions_are_validated() {
 
     let genesis = GenesisNetwork::test_with_instructions([Grant::permission(
         PermissionToken::new("InvalidToken".parse().unwrap(), &json!(null)),
-        AccountId::from_str("alice@wonderland").unwrap(),
+        "alice@wonderland".parse_alias(),
     )
     .into()]);
 
@@ -69,9 +70,9 @@ fn permissions_disallow_asset_transfer() {
     wait_for_genesis_committed(&[iroha_client.clone()], 0);
 
     // Given
-    let alice_id = "alice@wonderland".parse().expect("Valid");
-    let bob_id: AccountId = "bob@wonderland".parse().expect("Valid");
-    let mouse_id: AccountId = "mouse@wonderland".parse().expect("Valid");
+    let alice_id = "alice@wonderland".parse_alias();
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
+    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
     let asset_definition_id: AssetDefinitionId = "xor#wonderland".parse().expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));
@@ -124,9 +125,9 @@ fn permissions_disallow_asset_burn() {
 
     let (_rt, _peer, iroha_client) = <PeerBuilder>::new().with_port(10_735).start_with_runtime();
 
-    let alice_id = "alice@wonderland".parse().expect("Valid");
-    let bob_id: AccountId = "bob@wonderland".parse().expect("Valid");
-    let mouse_id: AccountId = "mouse@wonderland".parse().expect("Valid");
+    let alice_id = "alice@wonderland".parse_alias();
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
+    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));
@@ -199,14 +200,15 @@ fn permissions_differ_not_only_by_names() {
 
     let (_rt, _not_drop, client) = <PeerBuilder>::new().with_port(10_745).start_with_runtime();
 
-    let alice_id: AccountId = "alice@wonderland".parse().expect("Valid");
-    let mouse_id: AccountId = "mouse@outfit".parse().expect("Valid");
-    let mouse_keypair = KeyPair::random();
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let mouse_id: AccountId = "mouse@outfit".parse_alias();
+    let sp = SampleParams::default();
+    let mouse_keypair = sp.signatory["mouse"].make_key_pair();
 
     // Registering mouse
     let outfit_domain: DomainId = "outfit".parse().unwrap();
     let create_outfit_domain = Register::domain(Domain::new(outfit_domain.clone()));
-    let new_mouse_account = Account::new(mouse_id.clone(), mouse_keypair.public_key().clone());
+    let new_mouse_account = Account::new(mouse_id.clone());
     client
         .submit_all_blocking([
             InstructionBox::from(create_outfit_domain),
@@ -298,15 +300,16 @@ fn stored_vs_granted_token_payload() -> Result<()> {
     wait_for_genesis_committed(&[iroha_client.clone()], 0);
 
     // Given
-    let alice_id = AccountId::from_str("alice@wonderland").expect("Valid");
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
 
     // Registering mouse and asset definition
     let asset_definition_id: AssetDefinitionId = "xor#wonderland".parse().expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::store(asset_definition_id.clone()));
-    let mouse_id: AccountId = "mouse@wonderland".parse().expect("Valid");
-    let mouse_keypair = KeyPair::random();
-    let new_mouse_account = Account::new(mouse_id.clone(), mouse_keypair.public_key().clone());
+    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
+    let sp = SampleParams::default();
+    let mouse_keypair = sp.signatory["mouse"].make_key_pair();
+    let new_mouse_account = Account::new(mouse_id.clone());
     let instructions: [InstructionBox; 2] = [
         Register::account(new_mouse_account).into(),
         create_asset.into(),
@@ -321,7 +324,7 @@ fn stored_vs_granted_token_payload() -> Result<()> {
         PermissionToken::from_str_unchecked(
             "CanSetKeyValueInUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            "{ \"asset_id\" : \"xor#wonderland#mouse@wonderland\" }",
+            "{ \"asset_id\" : \"xor#wonderland#ed012014A2900349A8CB6250D8CE5399D1964766B559A37F48E8C98C1EA83F365D8A72@wonderland\" }",
         ),
         alice_id,
     );
@@ -349,13 +352,13 @@ fn permission_tokens_are_unified() {
     wait_for_genesis_committed(&[iroha_client.clone()], 0);
 
     // Given
-    let alice_id = AccountId::from_str("alice@wonderland").expect("Valid");
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
 
     let allow_alice_to_transfer_rose_1 = Grant::permission(
         PermissionToken::from_str_unchecked(
             "CanTransferUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            "{ \"asset_id\" : \"rose#wonderland#alice@wonderland\" }",
+            "{ \"asset_id\" : \"rose#wonderland#ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland\" }",
         ),
         alice_id.clone(),
     );
@@ -364,7 +367,7 @@ fn permission_tokens_are_unified() {
         PermissionToken::from_str_unchecked(
             "CanTransferUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            "{ \"asset_id\" : \"rose##alice@wonderland\" }",
+            "{ \"asset_id\" : \"rose##ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland\" }",
         ),
         alice_id,
     );
@@ -383,7 +386,7 @@ fn associated_permission_tokens_removed_on_unregister() {
     let (_rt, _peer, iroha_client) = <PeerBuilder>::new().with_port(11_240).start_with_runtime();
     wait_for_genesis_committed(&[iroha_client.clone()], 0);
 
-    let bob_id: AccountId = "bob@wonderland".parse().expect("Valid");
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
     let kingdom_id: DomainId = "kingdom".parse().expect("Valid");
     let kingdom = Domain::new(kingdom_id.clone());
 

@@ -15,7 +15,7 @@ fn validate_blocks(c: &mut Criterion) {
     group.significance_level(0.1).sample_size(10);
     group.bench_function("validate_blocks", |b| {
         b.iter_batched(
-            || StateValidateBlocks::setup(rt.handle()).expect("Failed to setup benchmark"),
+            || StateValidateBlocks::setup(rt.handle()),
             |bench| {
                 StateValidateBlocks::measure(bench).expect("Failed to execute benchmark");
             },

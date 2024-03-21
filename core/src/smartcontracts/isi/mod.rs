@@ -107,22 +107,8 @@ impl Execute for MintBox {
         state_transaction: &mut StateTransaction<'_, '_>,
     ) -> Result<(), Error> {
         match self {
-            Self::Account(isi) => isi.execute(authority, state_transaction),
             Self::Asset(isi) => isi.execute(authority, state_transaction),
             Self::TriggerRepetitions(isi) => isi.execute(authority, state_transaction),
-        }
-    }
-}
-
-impl Execute for AccountMintBox {
-    fn execute(
-        self,
-        authority: &AccountId,
-        state_transaction: &mut StateTransaction<'_, '_>,
-    ) -> std::prelude::v1::Result<(), Error> {
-        match self {
-            Self::PublicKey(isi) => isi.execute(authority, state_transaction),
-            Self::SignatureCheckCondition(isi) => isi.execute(authority, state_transaction),
         }
     }
 }
@@ -135,7 +121,6 @@ impl Execute for BurnBox {
         state_transaction: &mut StateTransaction<'_, '_>,
     ) -> Result<(), Error> {
         match self {
-            Self::AccountPublicKey(isi) => isi.execute(authority, state_transaction),
             Self::Asset(isi) => isi.execute(authority, state_transaction),
             Self::TriggerRepetitions(isi) => isi.execute(authority, state_transaction),
         }
@@ -252,8 +237,8 @@ mod tests {
     use core::str::FromStr as _;
     use std::sync::Arc;
 
-    use iroha_crypto::KeyPair;
     use iroha_data_model::metadata::MetadataValueBox;
+    use iroha_sample_params::alias::Alias;
     use tokio::test;
 
     use super::*;
@@ -268,15 +253,14 @@ mod tests {
         let world = World::with([], PeersIds::new());
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world, kura.clone(), query_handle);
-        let genesis_account_id = AccountId::from_str("genesis@genesis")?;
-        let account_id = AccountId::from_str("alice@wonderland")?;
-        let (public_key, _) = KeyPair::random().into_parts();
+        let genesis_account_id: AccountId = "genesis@genesis".parse_alias();
+        let account_id: AccountId = "alice@wonderland".parse_alias();
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         Register::domain(Domain::new(DomainId::from_str("wonderland")?))
             .execute(&genesis_account_id, &mut state_transaction)?;
-        Register::account(Account::new(account_id, public_key))
+        Register::account(Account::new(account_id))
             .execute(&genesis_account_id, &mut state_transaction)?;
         Register::asset_definition(AssetDefinition::store(asset_definition_id))
             .execute(&genesis_account_id, &mut state_transaction)?;
@@ -291,7 +275,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut staet_block = state.block();
         let mut state_transaction = staet_block.transaction();
-        let account_id = AccountId::from_str("alice@wonderland")?;
+        let account_id: AccountId = "alice@wonderland".parse_alias();
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
         let asset_id = AssetId::new(asset_definition_id, account_id.clone());
         SetKeyValue::asset(
@@ -322,7 +306,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let account_id = AccountId::from_str("alice@wonderland")?;
+        let account_id: AccountId = "alice@wonderland".parse_alias();
         SetKeyValue::account(
             account_id.clone(),
             Name::from_str("Bytes")?,
@@ -355,7 +339,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
-        let account_id = AccountId::from_str("alice@wonderland")?;
+        let account_id: AccountId = "alice@wonderland".parse_alias();
         SetKeyValue::asset_definition(
             definition_id.clone(),
             Name::from_str("Bytes")?,
@@ -386,7 +370,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let domain_id = DomainId::from_str("wonderland")?;
-        let account_id = AccountId::from_str("alice@wonderland")?;
+        let account_id: AccountId = "alice@wonderland".parse_alias();
         SetKeyValue::domain(
             domain_id.clone(),
             Name::from_str("Bytes")?,
@@ -416,7 +400,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let account_id = AccountId::from_str("alice@wonderland")?;
+        let account_id: AccountId = "alice@wonderland".parse_alias();
         let trigger_id = TriggerId::from_str("test_trigger_id")?;
 
         assert!(matches!(
@@ -435,13 +419,12 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let account_id = AccountId::from_str("alice@wonderland")?;
-        let fake_account_id = AccountId::from_str("fake@wonderland")?;
+        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let fake_account_id: AccountId = "john_doe@wonderland".parse_alias();
         let trigger_id = TriggerId::from_str("test_trigger_id")?;
 
         // register fake account
-        let (public_key, _) = KeyPair::random().into_parts();
-        let register_account = Register::account(Account::new(fake_account_id.clone(), public_key));
+        let register_account = Register::account(Account::new(fake_account_id.clone()));
         register_account.execute(&account_id, &mut state_transaction)?;
 
         // register the trigger

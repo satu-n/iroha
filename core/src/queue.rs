@@ -10,7 +10,6 @@ use iroha_config::parameters::actual::Queue as Config;
 use iroha_crypto::HashOf;
 use iroha_data_model::{account::AccountId, transaction::prelude::*};
 use iroha_logger::{trace, warn};
-use iroha_primitives::must_use::MustUse;
 use rand::seq::IteratorRandom;
 use thiserror::Error;
 
@@ -18,23 +17,10 @@ use crate::prelude::*;
 
 impl AcceptedTransaction {
     // TODO: We should have another type of transaction like `CheckedTransaction` in the type system?
-    fn check_signature_condition(&self, state_view: &StateView<'_>) -> MustUse<bool> {
+    fn is_signatory_consistent(&self) -> bool {
         let authority = self.as_ref().authority();
-
-        let transaction_signatories = self
-            .as_ref()
-            .signatures()
-            .iter()
-            .map(|signature| signature.public_key())
-            .cloned()
-            .collect();
-
-        state_view
-            .world
-            .map_account(authority, |account| {
-                account.check_signature_check_condition(&transaction_signatories)
-            })
-            .unwrap_or(MustUse(false))
+        let signatory = self.as_ref().signature().public_key();
+        authority.signatory_matches(signatory)
     }
 
     /// Check if [`self`] is committed or rejected.
@@ -81,8 +67,8 @@ pub enum Error {
     MaximumTransactionsPerUser,
     /// The transaction is already in the queue
     IsInQueue,
-    /// Failure during signature condition execution
-    SignatureCondition,
+    /// Signatories in signature and payload mismatch
+    SignatoryInconsistent,
 }
 
 /// Failure that can pop up when pushing transaction into the queue
@@ -167,8 +153,8 @@ impl Queue {
             Err(Error::Expired)
         } else if tx.is_in_blockchain(state_view) {
             Err(Error::InBlockchain)
-        } else if !tx.check_signature_condition(state_view).into_inner() {
-            Err(Error::SignatureCondition)
+        } else if !tx.is_signatory_consistent() {
+            Err(Error::SignatoryInconsistent)
         } else {
             Ok(())
         }
@@ -368,7 +354,7 @@ pub mod tests {
     use std::{str::FromStr, sync::Arc, thread, time::Duration};
 
     use iroha_data_model::{prelude::*, transaction::TransactionLimits};
-    use iroha_primitives::must_use::MustUse;
+    use iroha_sample_params::{alias::Alias, SampleParams};
     use rand::Rng as _;
     use tokio::test;
 
@@ -381,19 +367,22 @@ pub mod tests {
         PeersIds,
     };
 
-    fn accepted_tx(account_id: &str, key: &KeyPair) -> AcceptedTransaction {
+    fn accepted_tx(account_alias: &str) -> AcceptedTransaction {
+        let account_name = account_alias
+            .rsplit_once('@')
+            .expect("account_alias should be name@domain format")
+            .0;
+        let account_id = account_alias.parse_alias();
+        let sp = SampleParams::default();
+        let key_pair = sp.signatory[account_name].make_key_pair();
         let chain_id = ChainId::from("0");
-
         let message = std::iter::repeat_with(rand::random::<char>)
             .take(16)
             .collect();
         let instructions = [Fail { message }];
-        let tx = TransactionBuilder::new(
-            chain_id.clone(),
-            AccountId::from_str(account_id).expect("Valid"),
-        )
-        .with_instructions(instructions)
-        .sign(key);
+        let tx = TransactionBuilder::new(chain_id.clone(), account_id)
+            .with_instructions(instructions)
+            .sign(&key_pair);
         let limits = TransactionLimits {
             max_instruction_number: 4096,
             max_wasm_size_bytes: 0,
@@ -401,18 +390,11 @@ pub mod tests {
         AcceptedTransaction::accept(tx, &chain_id, &limits).expect("Failed to accept Transaction.")
     }
 
-    pub fn world_with_test_domains(
-        signatories: impl IntoIterator<Item = iroha_crypto::PublicKey>,
-    ) -> World {
+    pub fn world_with_test_domains() -> World {
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
-        let account_id = AccountId::from_str("alice@wonderland").expect("Valid");
+        let account_id: AccountId = "alice@wonderland".parse_alias();
         let mut domain = Domain::new(domain_id).build(&account_id);
-        let mut signatories = signatories.into_iter();
-        let mut account = Account::new(account_id.clone(), signatories.next().unwrap());
-        for signatory in signatories {
-            account = account.add_signatory(signatory);
-        }
-        let account = account.build(&account_id);
+        let account = Account::new(account_id.clone()).build(&account_id);
         assert!(domain.add_account(account).is_none());
         World::with([domain], PeersIds::new())
     }
@@ -427,20 +409,15 @@ pub mod tests {
 
     #[test]
     async fn push_tx() {
-        let key_pair = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = Arc::new(State::new(
-            world_with_test_domains([key_pair.public_key().clone()]),
-            kura,
-            query_handle,
-        ));
+        let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
         let state_view = state.view();
 
         let queue = Queue::from_config(config_factory());
 
         queue
-            .push(accepted_tx("alice@wonderland", &key_pair), &state_view)
+            .push(accepted_tx("alice@wonderland"), &state_view)
             .expect("Failed to push tx into queue");
     }
 
@@ -448,14 +425,9 @@ pub mod tests {
     async fn push_tx_overflow() {
         let capacity = NonZeroUsize::new(10).unwrap();
 
-        let key_pair = KeyPair::random();
-        let kura = Kura::blank_kura_for_testing();
+        let kura: Arc<Kura> = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = Arc::new(State::new(
-            world_with_test_domains([key_pair.public_key().clone()]),
-            kura,
-            query_handle,
-        ));
+        let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
         let state_view = state.view();
 
         let queue = Queue::from_config(Config {
@@ -466,13 +438,13 @@ pub mod tests {
 
         for _ in 0..capacity.get() {
             queue
-                .push(accepted_tx("alice@wonderland", &key_pair), &state_view)
+                .push(accepted_tx("alice@wonderland"), &state_view)
                 .expect("Failed to push tx into queue");
             thread::sleep(Duration::from_millis(10));
         }
 
         assert!(matches!(
-            queue.push(accepted_tx("alice@wonderland", &key_pair), &state_view),
+            queue.push(accepted_tx("alice@wonderland"), &state_view),
             Err(Failure {
                 err: Error::Full,
                 ..
@@ -481,84 +453,11 @@ pub mod tests {
     }
 
     #[test]
-    async fn push_multisignature_tx() {
-        let chain_id = ChainId::from("0");
-
-        let key_pairs = [KeyPair::random(), KeyPair::random()];
-        let kura = Kura::blank_kura_for_testing();
-        let state = {
-            let domain_id = DomainId::from_str("wonderland").expect("Valid");
-            let account_id = AccountId::from_str("alice@wonderland").expect("Valid");
-            let mut domain = Domain::new(domain_id).build(&account_id);
-            let mut account = Account::new(account_id.clone(), key_pairs[0].public_key().clone())
-                .add_signatory(key_pairs[1].public_key().clone())
-                .build(&account_id);
-            account.signature_check_condition = SignatureCheckCondition::all_account_signatures();
-            assert!(domain.add_account(account).is_none());
-            let query_handle = LiveQueryStore::test().start();
-            Arc::new(State::new(
-                World::with([domain], PeersIds::new()),
-                kura,
-                query_handle,
-            ))
-        };
-        let state_view = state.view();
-
-        let queue = Queue::from_config(config_factory());
-        let instructions: [InstructionBox; 0] = [];
-        let tx =
-            TransactionBuilder::new(chain_id.clone(), "alice@wonderland".parse().expect("Valid"))
-                .with_instructions(instructions);
-        let tx_limits = TransactionLimits {
-            max_instruction_number: 4096,
-            max_wasm_size_bytes: 0,
-        };
-        let fully_signed_tx: AcceptedTransaction = {
-            let mut signed_tx = tx.clone().sign(&key_pairs[0]);
-            for key_pair in &key_pairs[1..] {
-                signed_tx = signed_tx.sign(key_pair);
-            }
-            AcceptedTransaction::accept(signed_tx, &chain_id, &tx_limits)
-                .expect("Failed to accept Transaction.")
-        };
-        // Check that fully signed transaction passes signature check
-        assert!(matches!(
-            fully_signed_tx.check_signature_condition(&state_view),
-            MustUse(true)
-        ));
-
-        let get_tx = |key_pair| {
-            AcceptedTransaction::accept(tx.clone().sign(&key_pair), &chain_id, &tx_limits)
-                .expect("Failed to accept Transaction.")
-        };
-        for key_pair in key_pairs {
-            let partially_signed_tx: AcceptedTransaction = get_tx(key_pair);
-            // Check that none of partially signed txs passes signature check
-            assert_eq!(
-                partially_signed_tx.check_signature_condition(&state_view),
-                MustUse(false)
-            );
-            assert!(matches!(
-                queue
-                    .push(partially_signed_tx, &state_view)
-                    .unwrap_err()
-                    .err,
-                Error::SignatureCondition
-            ))
-        }
-    }
-
-    #[test]
     async fn get_available_txs() {
         let max_txs_in_block = 2;
-        let alice_key = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = Arc::new(State::new(
-            world_with_test_domains([alice_key.public_key().clone()]),
-            kura,
-            query_handle,
-        ));
+        let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
         let state_view = state.view();
         let queue = Queue::from_config(Config {
             transaction_time_to_live: Duration::from_secs(100),
@@ -566,7 +465,7 @@ pub mod tests {
         });
         for _ in 0..5 {
             queue
-                .push(accepted_tx("alice@wonderland", &alice_key), &state_view)
+                .push(accepted_tx("alice@wonderland"), &state_view)
                 .expect("Failed to push tx into queue");
             thread::sleep(Duration::from_millis(10));
         }
@@ -577,15 +476,10 @@ pub mod tests {
 
     #[test]
     async fn push_tx_already_in_blockchain() {
-        let alice_key = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = State::new(
-            world_with_test_domains([alice_key.public_key().clone()]),
-            kura,
-            query_handle,
-        );
-        let tx = accepted_tx("alice@wonderland", &alice_key);
+        let state = State::new(world_with_test_domains(), kura, query_handle);
+        let tx = accepted_tx("alice@wonderland");
         let mut state_block = state.block();
         state_block.transactions.insert(tx.as_ref().hash(), 1);
         state_block.commit();
@@ -604,15 +498,10 @@ pub mod tests {
     #[test]
     async fn get_tx_drop_if_in_blockchain() {
         let max_txs_in_block = 2;
-        let alice_key = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = State::new(
-            world_with_test_domains([alice_key.public_key().clone()]),
-            kura,
-            query_handle,
-        );
-        let tx = accepted_tx("alice@wonderland", &alice_key);
+        let state = State::new(world_with_test_domains(), kura, query_handle);
+        let tx = accepted_tx("alice@wonderland");
         let queue = Queue::from_config(config_factory());
         queue.push(tx.clone(), &state.view()).unwrap();
         let mut state_block = state.block();
@@ -630,14 +519,9 @@ pub mod tests {
     #[test]
     async fn get_available_txs_with_timeout() {
         let max_txs_in_block = 6;
-        let alice_key = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = Arc::new(State::new(
-            world_with_test_domains([alice_key.public_key().clone()]),
-            kura,
-            query_handle,
-        ));
+        let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
         let state_view = state.view();
         let queue = Queue::from_config(Config {
             transaction_time_to_live: Duration::from_millis(300),
@@ -645,13 +529,13 @@ pub mod tests {
         });
         for _ in 0..(max_txs_in_block - 1) {
             queue
-                .push(accepted_tx("alice@wonderland", &alice_key), &state_view)
+                .push(accepted_tx("alice@wonderland"), &state_view)
                 .expect("Failed to push tx into queue");
             thread::sleep(Duration::from_millis(100));
         }
 
         queue
-            .push(accepted_tx("alice@wonderland", &alice_key), &state_view)
+            .push(accepted_tx("alice@wonderland"), &state_view)
             .expect("Failed to push tx into queue");
         std::thread::sleep(Duration::from_millis(201));
         assert_eq!(
@@ -662,7 +546,7 @@ pub mod tests {
         );
 
         queue
-            .push(accepted_tx("alice@wonderland", &alice_key), &state_view)
+            .push(accepted_tx("alice@wonderland"), &state_view)
             .expect("Failed to push tx into queue");
         std::thread::sleep(Duration::from_millis(310));
         assert_eq!(
@@ -678,18 +562,13 @@ pub mod tests {
     #[test]
     async fn transactions_available_after_pop() {
         let max_txs_in_block = 2;
-        let alice_key = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = Arc::new(State::new(
-            world_with_test_domains([alice_key.public_key().clone()]),
-            kura,
-            query_handle,
-        ));
+        let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
         let state_view = state.view();
         let queue = Queue::from_config(config_factory());
         queue
-            .push(accepted_tx("alice@wonderland", &alice_key), &state_view)
+            .push(accepted_tx("alice@wonderland"), &state_view)
             .expect("Failed to push tx into queue");
 
         let a = queue
@@ -713,24 +592,18 @@ pub mod tests {
         let chain_id = ChainId::from("0");
 
         let max_txs_in_block = 2;
-        let alice_key = KeyPair::random();
+        let sp = SampleParams::default();
+        let alice_key = sp.signatory["alice"].make_key_pair();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = Arc::new(State::new(
-            world_with_test_domains([alice_key.public_key().clone()]),
-            kura,
-            query_handle,
-        ));
+        let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
         let state_view = state.view();
         let queue = Queue::from_config(config_factory());
         let instructions = [Fail {
             message: "expired".to_owned(),
         }];
-        let mut tx = TransactionBuilder::new(
-            chain_id.clone(),
-            AccountId::from_str("alice@wonderland").expect("Valid"),
-        )
-        .with_instructions(instructions);
+        let mut tx = TransactionBuilder::new(chain_id.clone(), "alice@wonderland".parse_alias())
+            .with_instructions(instructions);
         tx.set_ttl(Duration::from_millis(TTL_MS));
         let tx = tx.sign(&alice_key);
         let limits = TransactionLimits {
@@ -754,14 +627,9 @@ pub mod tests {
     #[test]
     async fn concurrent_stress_test() {
         let max_txs_in_block = 10;
-        let alice_key = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = Arc::new(State::new(
-            world_with_test_domains([alice_key.public_key().clone()]),
-            kura,
-            query_handle,
-        ));
+        let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
 
         let queue = Arc::new(Queue::from_config(Config {
             transaction_time_to_live: Duration::from_secs(100),
@@ -779,7 +647,7 @@ pub mod tests {
             // Spawn a thread where we push transactions
             thread::spawn(move || {
                 while start_time.elapsed() < run_for {
-                    let tx = accepted_tx("alice@wonderland", &alice_key);
+                    let tx = accepted_tx("alice@wonderland");
                     match queue_arc_clone.push(tx, &state.view()) {
                         Ok(())
                         | Err(Failure {
@@ -826,15 +694,11 @@ pub mod tests {
     async fn push_tx_in_future() {
         let future_threshold = Duration::from_secs(1);
 
-        let alice_id = "alice@wonderland";
+        let alice_alias = "alice@wonderland";
         let alice_key = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
-        let state = Arc::new(State::new(
-            world_with_test_domains([alice_key.public_key().clone()]),
-            kura,
-            query_handle,
-        ));
+        let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
         let state_view = state.view();
 
         let queue = Queue::from_config(Config {
@@ -842,16 +706,13 @@ pub mod tests {
             ..Config::default()
         });
 
-        let tx = accepted_tx(alice_id, &alice_key);
+        let tx = accepted_tx(alice_alias);
         assert!(queue.push(tx.clone(), &state_view).is_ok());
         // create the same tx but with timestamp in the future
         let tx = {
             let chain_id = ChainId::from("0");
-            let mut new_tx = TransactionBuilder::new(
-                chain_id.clone(),
-                AccountId::from_str(alice_id).expect("Valid"),
-            )
-            .with_executable(tx.0.instructions().clone());
+            let mut new_tx = TransactionBuilder::new(chain_id.clone(), alice_alias.parse_alias())
+                .with_executable(tx.0.instructions().clone());
 
             new_tx.set_creation_time(tx.0.creation_time() + future_threshold * 2);
 
@@ -875,22 +736,14 @@ pub mod tests {
 
     #[test]
     async fn queue_throttling() {
-        let alice_key_pair = KeyPair::random();
-        let bob_key_pair = KeyPair::random();
         let kura = Kura::blank_kura_for_testing();
         let world = {
             let domain_id = DomainId::from_str("wonderland").expect("Valid");
-            let alice_account_id = AccountId::from_str("alice@wonderland").expect("Valid");
-            let bob_account_id = AccountId::from_str("bob@wonderland").expect("Valid");
+            let alice_account_id: AccountId = "alice@wonderland".parse_alias();
+            let bob_account_id: AccountId = "bob@wonderland".parse_alias();
             let mut domain = Domain::new(domain_id).build(&alice_account_id);
-            let alice_account = Account::new(
-                alice_account_id.clone(),
-                alice_key_pair.public_key().clone(),
-            )
-            .build(&alice_account_id);
-            let bob_account =
-                Account::new(bob_account_id.clone(), bob_key_pair.public_key().clone())
-                    .build(&bob_account_id);
+            let alice_account = Account::new(alice_account_id.clone()).build(&alice_account_id);
+            let bob_account = Account::new(bob_account_id.clone()).build(&bob_account_id);
             assert!(domain.add_account(alice_account).is_none());
             assert!(domain.add_account(bob_account).is_none());
             World::with([domain], PeersIds::new())
@@ -907,17 +760,11 @@ pub mod tests {
 
         // First push by Alice should be fine
         queue
-            .push(
-                accepted_tx("alice@wonderland", &alice_key_pair),
-                &state.view(),
-            )
+            .push(accepted_tx("alice@wonderland"), &state.view())
             .expect("Failed to push tx into queue");
 
         // Second push by Alice excide limit and will be rejected
-        let result = queue.push(
-            accepted_tx("alice@wonderland", &alice_key_pair),
-            &state.view(),
-        );
+        let result = queue.push(accepted_tx("alice@wonderland"), &state.view());
         assert!(
             matches!(
                 result,
@@ -931,7 +778,7 @@ pub mod tests {
 
         // First push by Bob should be fine despite previous Alice error
         queue
-            .push(accepted_tx("bob@wonderland", &bob_key_pair), &state.view())
+            .push(accepted_tx("bob@wonderland"), &state.view())
             .expect("Failed to push tx into queue");
 
         let transactions = queue.collect_transactions_for_block(&state.view(), 10);
@@ -950,14 +797,11 @@ pub mod tests {
 
         // After cleanup Alice and Bob pushes should work fine
         queue
-            .push(
-                accepted_tx("alice@wonderland", &alice_key_pair),
-                &state.view(),
-            )
+            .push(accepted_tx("alice@wonderland"), &state.view())
             .expect("Failed to push tx into queue");
 
         queue
-            .push(accepted_tx("bob@wonderland", &bob_key_pair), &state.view())
+            .push(accepted_tx("bob@wonderland"), &state.view())
             .expect("Failed to push tx into queue");
     }
 }

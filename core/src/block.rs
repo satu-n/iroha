@@ -679,6 +679,7 @@ mod tests {
     use std::str::FromStr as _;
 
     use iroha_data_model::prelude::*;
+    use iroha_sample_params::{alias::Alias, SampleParams};
 
     use super::*;
     use crate::{
@@ -703,10 +704,10 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let alice_id = AccountId::from_str("alice@wonderland").expect("Valid");
-        let alice_keys = KeyPair::random();
-        let account =
-            Account::new(alice_id.clone(), alice_keys.public_key().clone()).build(&alice_id);
+        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let sp = SampleParams::default();
+        let alice_keypair = sp.signatory["alice"].make_key_pair();
+        let account = Account::new(alice_id.clone()).build(&alice_id);
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(domain.add_account(account).is_none());
@@ -725,7 +726,7 @@ mod tests {
         let transaction_limits = &state_block.transaction_executor().transaction_limits;
         let tx = TransactionBuilder::new(chain_id.clone(), alice_id)
             .with_instructions([create_asset_definition])
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
         let tx = AcceptedTransaction::accept(tx, &chain_id, transaction_limits).expect("Valid");
 
         // Creating a block of two identical transactions and validating it
@@ -733,7 +734,7 @@ mod tests {
         let topology = Topology::new(UniqueVec::new());
         let valid_block = BlockBuilder::new(transactions, topology, Vec::new())
             .chain(0, &mut state_block)
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
 
         // The first transaction should be confirmed
         assert!(valid_block.0.transactions().next().unwrap().error.is_none());
@@ -747,10 +748,10 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let alice_id = AccountId::from_str("alice@wonderland").expect("Valid");
-        let alice_keys = KeyPair::random();
-        let account =
-            Account::new(alice_id.clone(), alice_keys.public_key().clone()).build(&alice_id);
+        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let sp = SampleParams::default();
+        let alice_keypair = sp.signatory["alice"].make_key_pair();
+        let account = Account::new(alice_id.clone()).build(&alice_id);
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(domain.add_account(account).is_none());
@@ -769,7 +770,7 @@ mod tests {
         let transaction_limits = &state_block.transaction_executor().transaction_limits;
         let tx = TransactionBuilder::new(chain_id.clone(), alice_id.clone())
             .with_instructions([create_asset_definition])
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
         let tx = AcceptedTransaction::accept(tx, &chain_id, transaction_limits).expect("Valid");
 
         let fail_mint = Mint::asset_numeric(
@@ -782,12 +783,12 @@ mod tests {
 
         let tx0 = TransactionBuilder::new(chain_id.clone(), alice_id.clone())
             .with_instructions([fail_mint])
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
         let tx0 = AcceptedTransaction::accept(tx0, &chain_id, transaction_limits).expect("Valid");
 
         let tx2 = TransactionBuilder::new(chain_id.clone(), alice_id)
             .with_instructions([succeed_mint])
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
         let tx2 = AcceptedTransaction::accept(tx2, &chain_id, transaction_limits).expect("Valid");
 
         // Creating a block of two identical transactions and validating it
@@ -795,7 +796,7 @@ mod tests {
         let topology = Topology::new(UniqueVec::new());
         let valid_block = BlockBuilder::new(transactions, topology, Vec::new())
             .chain(0, &mut state_block)
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
 
         // The first transaction should fail
         assert!(valid_block.0.transactions().next().unwrap().error.is_some());
@@ -809,10 +810,10 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let alice_id = AccountId::from_str("alice@wonderland").expect("Valid");
-        let alice_keys = KeyPair::random();
-        let account =
-            Account::new(alice_id.clone(), alice_keys.public_key().clone()).build(&alice_id);
+        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let sp = SampleParams::default();
+        let alice_keypair = sp.signatory["alice"].make_key_pair();
+        let account = Account::new(alice_id.clone()).build(&alice_id);
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(
@@ -838,12 +839,12 @@ mod tests {
         let instructions_accept: [InstructionBox; 2] = [create_domain.into(), create_asset.into()];
         let tx_fail = TransactionBuilder::new(chain_id.clone(), alice_id.clone())
             .with_instructions(instructions_fail)
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
         let tx_fail =
             AcceptedTransaction::accept(tx_fail, &chain_id, transaction_limits).expect("Valid");
         let tx_accept = TransactionBuilder::new(chain_id.clone(), alice_id)
             .with_instructions(instructions_accept)
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
         let tx_accept =
             AcceptedTransaction::accept(tx_accept, &chain_id, transaction_limits).expect("Valid");
 
@@ -852,7 +853,7 @@ mod tests {
         let topology = Topology::new(UniqueVec::new());
         let valid_block = BlockBuilder::new(transactions, topology, Vec::new())
             .chain(0, &mut state_block)
-            .sign(&alice_keys);
+            .sign(&alice_keypair);
 
         // The first transaction should be rejected
         assert!(

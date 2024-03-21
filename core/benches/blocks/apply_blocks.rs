@@ -1,6 +1,7 @@
 use eyre::Result;
 use iroha_core::{block::CommittedBlock, prelude::*, state::State};
 use iroha_data_model::prelude::*;
+use iroha_sample_params::{alias::Alias, SampleParams};
 
 #[path = "./common.rs"]
 mod common;
@@ -23,20 +24,21 @@ impl StateApplyBlocks {
         let domains = 100;
         let accounts_per_domain = 1000;
         let assets_per_domain = 1000;
-        let account_id: AccountId = "alice@wonderland".parse()?;
-        let key_pair = KeyPair::random();
-        let state = build_state(rt, &account_id, &key_pair);
+        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let sp = SampleParams::default();
+        let alice_keypair = sp.signatory["alice"].make_key_pair();
+        let state = build_state(rt, &alice_id);
 
         let nth = 100;
         let instructions = [
-            populate_state(domains, accounts_per_domain, assets_per_domain, &account_id),
+            populate_state(domains, accounts_per_domain, assets_per_domain, &alice_id),
             delete_every_nth(domains, accounts_per_domain, assets_per_domain, nth),
             restore_every_nth(domains, accounts_per_domain, assets_per_domain, nth),
         ];
 
         let blocks = {
             // Create empty state because it will be changed during creation of block
-            let state = build_state(rt, &account_id, &key_pair);
+            let state = build_state(rt, &alice_id);
             instructions
                 .into_iter()
                 .map(|instructions| -> Result<_> {
@@ -44,8 +46,8 @@ impl StateApplyBlocks {
                     let block = create_block(
                         &mut state_block,
                         instructions,
-                        account_id.clone(),
-                        &key_pair,
+                        alice_id.clone(),
+                        &alice_keypair,
                     );
                     state_block.apply_without_execution(&block)?;
                     state_block.commit();

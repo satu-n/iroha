@@ -4,7 +4,6 @@ use std::{
     io::BufReader,
     num::NonZeroU32,
     path::Path,
-    str::FromStr as _,
     sync::mpsc,
     thread::{self, JoinHandle},
     time,
@@ -18,6 +17,8 @@ use iroha_client::{
         prelude::*,
     },
 };
+use iroha_crypto::KeyPair;
+use iroha_sample_params::alias::Alias;
 use serde::Deserialize;
 use test_network::*;
 
@@ -76,6 +77,7 @@ impl Config {
                     config: self,
                     client,
                     name,
+                    signatory: KeyPair::random().into_parts().0,
                 };
                 unit.ready()
             })
@@ -144,6 +146,7 @@ struct MeasurerUnit {
     pub config: Config,
     pub client: Client,
     pub name: UnitName,
+    pub signatory: PublicKey,
 }
 
 type UnitName = u32;
@@ -154,15 +157,10 @@ impl MeasurerUnit {
 
     /// Submit initial transactions for measurement
     fn ready(self) -> Result<Self> {
-        let keypair = iroha_client::crypto::KeyPair::random();
-
-        let account_id = account_id(self.name);
-        let asset_id = asset_id(self.name);
-
-        let register_me = Register::account(Account::new(account_id, keypair.public_key().clone()));
+        let register_me = Register::account(Account::new(self.account_id()));
         self.client.submit_blocking(register_me)?;
 
-        let mint_a_rose = Mint::asset_numeric(1u32, asset_id);
+        let mint_a_rose = Mint::asset_numeric(1u32, self.asset_id());
         self.client.submit_blocking(mint_a_rose)?;
 
         Ok(self)
@@ -200,7 +198,7 @@ impl MeasurerUnit {
         let submitter = self.client.clone();
         let interval_us_per_tx = self.config.interval_us_per_tx;
         let instructions = self.instructions();
-        let alice_id = AccountId::from_str("alice@wonderland").expect("Failed to parse account id");
+        let alice_id: AccountId = "alice@wonderland".parse_alias();
 
         let mut nonce = NonZeroU32::new(1).expect("Valid");
 
@@ -238,17 +236,14 @@ impl MeasurerUnit {
     }
 
     fn mint(&self) -> InstructionBox {
-        Mint::asset_numeric(1u32, asset_id(self.name)).into()
+        Mint::asset_numeric(1u32, self.asset_id()).into()
     }
-}
 
-fn asset_id(account_name: UnitName) -> AssetId {
-    AssetId::new(
-        "rose#wonderland".parse().expect("Valid"),
-        account_id(account_name),
-    )
-}
+    fn account_id(&self) -> AccountId {
+        AccountId::new("wonderland".parse().expect("Valid"), self.signatory.clone())
+    }
 
-fn account_id(name: UnitName) -> AccountId {
-    format!("{name}@wonderland").parse().expect("Valid")
+    fn asset_id(&self) -> AssetId {
+        AssetId::new("rose#wonderland".parse().expect("Valid"), self.account_id())
+    }
 }

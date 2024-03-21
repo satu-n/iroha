@@ -76,13 +76,16 @@ fn domain_registration_test(config: Config) -> Result<(), Error> {
 fn account_definition_test() -> Result<(), Error> {
     // #region account_definition_comparison
     use iroha_client::data_model::prelude::AccountId;
+    use iroha_crypto::KeyPair;
 
-    // Create an `iroha_client::data_model::AccountId` instance
-    // with a DomainId instance and a Domain ID for an account
-    let longhand_account_id = AccountId::new("white_rabbit".parse()?, "looking_glass".parse()?);
-    let account_id: AccountId = "white_rabbit@looking_glass"
+    // Generate a new public key for a new account
+    let (public_key, _) = KeyPair::random().into_parts();
+    // Create an AccountId instance by providing a DomainId instance and the public key
+    let longhand_account_id = AccountId::new("looking_glass".parse()?, public_key.clone());
+    // Create an AccountId instance by parsing the serialized format "signatory@domain"
+    let account_id: AccountId = format!("{public_key}@looking_glass")
         .parse()
-        .expect("Valid, because the string contains no whitespace, has a single '@' character and is not empty after");
+        .expect("Valid, because before @ is a valid public key and after @ is a valid name i.e. a string with no spaces or forbidden chars");
 
     // Check that two ways to define an account match
     assert_eq!(account_id, longhand_account_id);
@@ -109,19 +112,17 @@ fn account_registration_test(config: Config) -> Result<(), Error> {
     let iroha_client = Client::new(config);
 
     // #region register_account_create
-    // Create an AccountId instance by providing the account and domain name
-    let account_id: AccountId = "white_rabbit@looking_glass"
-        .parse()
-        .expect("Valid, because the string contains no whitespace, has a single '@' character and is not empty after");
-    // #endregion register_account_create
-
-    // TODO: consider getting a key from white_rabbit
     // Generate a new public key for a new account
     let (public_key, _) = KeyPair::random().into_parts();
+    // Create an AccountId instance by parsing the serialized format "signatory@domain"
+    let account_id: AccountId = format!("{public_key}@looking_glass")
+        .parse()
+        .expect("Valid, because before @ is a valid public key and after @ is a valid name i.e. a string with no spaces or forbidden chars");
+    // #endregion register_account_create
 
     // #region register_account_generate
     // Generate a new account
-    let create_account = Register::account(Account::new(account_id, public_key));
+    let create_account = Register::account(Account::new(account_id));
     // #endregion register_account_generate
 
     // #region register_account_prepare_tx
@@ -151,6 +152,7 @@ fn asset_registration_test(config: Config) -> Result<(), Error> {
             numeric, AccountId, AssetDefinition, AssetDefinitionId, AssetId, Mint, Register,
         },
     };
+    use iroha_crypto::KeyPair;
     // #endregion register_asset_crates
 
     // Create an Iroha client
@@ -171,10 +173,12 @@ fn asset_registration_test(config: Config) -> Result<(), Error> {
     iroha_client.submit(register_time)?;
     // #endregion register_asset_init_submit
 
-    // Create an account using the previously defined asset
-    let account_id: AccountId = "white_rabbit@looking_glass"
+    // Generate a new public key for a new account
+    let (public_key, _) = KeyPair::random().into_parts();
+    // Create an AccountId instance by parsing the serialized format "signatory@domain"
+    let account_id: AccountId = format!("{public_key}@looking_glass")
         .parse()
-        .expect("Valid, because the string contains no whitespace, has a single '@' character and is not empty after");
+        .expect("Valid, because before @ is a valid public key and after @ is a valid name i.e. a string with no spaces or forbidden chars");
 
     // #region register_asset_mint_submit
     // Create a MintBox using a previous asset and account

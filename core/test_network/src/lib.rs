@@ -23,6 +23,7 @@ use iroha_primitives::{
     unique_vec,
     unique_vec::UniqueVec,
 };
+use iroha_sample_params::{alias::Alias, SampleParams};
 use rand::{seq::IteratorRandom, thread_rng};
 use serde_json::json;
 use tempfile::TempDir;
@@ -51,17 +52,22 @@ pub fn get_chain_id() -> ChainId {
     ChainId::from("0")
 }
 
-/// Get a standardised key-pair from the hard-coded literals.
-pub fn get_key_pair() -> KeyPair {
-    KeyPair::new(
-        PublicKey::from_str(
-            "ed01207233BFC89DCBD68C19FDE6CE6158225298EC1131B6A130D1AEB454C1AB5183C0",
-        ).unwrap(),
-        PrivateKey::from_hex(
-            Algorithm::Ed25519,
-            "9AC47ABF59B356E0BD7DCBBBB4DEC080E302156A48CA907E47CB6AEA1D32719E7233BFC89DCBD68C19FDE6CE6158225298EC1131B6A130D1AEB454C1AB5183C0"
-        ).unwrap()
-    ).unwrap()
+/// Get a key pair of a common signatory in the test network
+pub fn get_key_pair(signatory: Signatory) -> KeyPair {
+    let sp = SampleParams::default();
+    let name = match signatory {
+        Signatory::Peer => "peer",
+        Signatory::Genesis => "genesis",
+        Signatory::Alice => "alice",
+    };
+    sp.signatory[name].make_key_pair()
+}
+
+/// A common signatory in the test network
+pub enum Signatory {
+    Peer,
+    Genesis,
+    Alice,
 }
 
 /// Trait used to differentiate a test instance of `genesis`.
@@ -87,7 +93,7 @@ impl TestGenesis for GenesisNetwork {
 
         let rose_definition_id =
             AssetDefinitionId::from_str("rose#wonderland").expect("valid names");
-        let alice_id = AccountId::from_str("alice@wonderland").expect("valid names");
+        let alice_id: AccountId = "alice@wonderland".parse_alias();
 
         let mint_rose_permission = PermissionToken::new(
             "CanMintAssetWithDefinition".parse().unwrap(),
@@ -772,7 +778,8 @@ impl TestConfig for Config {
         let mut layer = iroha::samples::get_user_config(
             &UniqueVec::new(),
             Some(get_chain_id()),
-            Some(get_key_pair()),
+            Some(get_key_pair(Signatory::Peer)),
+            Some(get_key_pair(Signatory::Genesis)),
         )
         .merge(RootPartial::from_env(&StdEnv).expect("test env variables should parse properly"));
 
@@ -802,7 +809,7 @@ impl TestClientConfig for ClientConfig {
     fn test(api_address: &SocketAddr) -> Self {
         iroha_client::samples::get_client_config(
             get_chain_id(),
-            get_key_pair().clone(),
+            get_key_pair(Signatory::Alice),
             format!("http://{api_address}")
                 .parse()
                 .expect("should be valid url"),

@@ -1,6 +1,7 @@
 use eyre::Result;
 use iroha_core::{prelude::*, state::State};
 use iroha_data_model::{isi::InstructionBox, prelude::*};
+use iroha_sample_params::{alias::Alias, SampleParams};
 
 #[path = "./common.rs"]
 mod common;
@@ -17,17 +18,19 @@ pub struct StateValidateBlocks {
 impl StateValidateBlocks {
     /// Create [`State`] and blocks for benchmarking
     ///
-    /// # Errors
+    /// # Panics
+    ///
     /// - Failed to parse [`AccountId`]
     /// - Failed to generate [`KeyPair`]
     /// - Failed to create instructions for block
-    pub fn setup(rt: &tokio::runtime::Handle) -> Result<Self> {
+    pub fn setup(rt: &tokio::runtime::Handle) -> Self {
         let domains = 100;
         let accounts_per_domain = 1000;
         let assets_per_domain = 1000;
-        let account_id: AccountId = "alice@wonderland".parse()?;
-        let key_pair = KeyPair::random();
-        let state = build_state(rt, &account_id, &key_pair);
+        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let sp = SampleParams::default();
+        let alice_keypair = sp.signatory["alice"].make_key_pair();
+        let state = build_state(rt, &account_id);
 
         let nth = 100;
         let instructions = [
@@ -38,12 +41,12 @@ impl StateValidateBlocks {
         .into_iter()
         .collect::<Vec<_>>();
 
-        Ok(Self {
+        Self {
             state,
             instructions,
-            key_pair,
+            key_pair: alice_keypair,
             account_id,
-        })
+        }
     }
 
     /// Run benchmark body.

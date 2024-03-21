@@ -72,13 +72,10 @@ impl ValidQueryRequest {
         query: SignedQuery,
         state_ro: &impl StateReadOnly,
     ) -> Result<Self, ValidationFail> {
-        let account_has_public_key = state_ro
-            .world()
-            .map_account(query.authority(), |account| {
-                account.contains_signatory(query.signature().public_key())
-            })
-            .map_err(Error::from)?;
-        if !account_has_public_key {
+        if !query
+            .authority()
+            .signatory_matches(query.signature().public_key())
+        {
             return Err(Error::Signature(String::from(
                 "Signature public key doesn't correspond to the account.",
             ))
@@ -155,7 +152,6 @@ impl ValidQuery for QueryBox {
             }
 
             FindAllAccounts,
-            FindAccountsByName,
             FindAccountsByDomainId,
             FindAccountsWithAsset,
             FindAllAssets,
@@ -191,6 +187,7 @@ mod tests {
         metadata::MetadataValueBox, query::error::FindError, transaction::TransactionLimits,
     };
     use iroha_primitives::unique_vec::UniqueVec;
+    use iroha_sample_params::{alias::Alias, SampleParams};
     use once_cell::sync::Lazy;
     use tokio::test;
 
@@ -206,15 +203,16 @@ mod tests {
         PeersIds,
     };
 
-    static ALICE_KEYS: Lazy<KeyPair> = Lazy::new(KeyPair::random);
-    static ALICE_ID: Lazy<AccountId> =
-        Lazy::new(|| AccountId::from_str("alice@wonderland").expect("Valid"));
+    static ALICE_KEYS: Lazy<KeyPair> = Lazy::new(|| {
+        let sp = SampleParams::default();
+        sp.signatory["alice"].make_key_pair()
+    });
+    static ALICE_ID: Lazy<AccountId> = Lazy::new(|| "alice@wonderland".parse_alias());
 
     fn world_with_test_domains() -> World {
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&ALICE_ID);
-        let account =
-            Account::new(ALICE_ID.clone(), ALICE_KEYS.public_key().clone()).build(&ALICE_ID);
+        let account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
         assert!(domain.add_account(account).is_none());
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland").expect("Valid");
         assert!(domain
@@ -227,8 +225,7 @@ mod tests {
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland").expect("Valid");
         let mut domain =
             Domain::new(DomainId::from_str("wonderland").expect("Valid")).build(&ALICE_ID);
-        let mut account =
-            Account::new(ALICE_ID.clone(), ALICE_KEYS.public_key().clone()).build(&ALICE_ID);
+        let mut account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
         assert!(domain
             .add_asset_definition(
                 AssetDefinition::numeric(asset_definition_id.clone()).build(&ALICE_ID)
@@ -260,7 +257,7 @@ mod tests {
         )?;
 
         let mut domain = Domain::new(DomainId::from_str("wonderland")?).build(&ALICE_ID);
-        let account = Account::new(ALICE_ID.clone(), ALICE_KEYS.public_key().clone())
+        let account = Account::new(ALICE_ID.clone())
             .with_metadata(metadata)
             .build(&ALICE_ID);
         assert!(domain.add_account(account).is_none());
@@ -476,7 +473,7 @@ mod tests {
         let state_view = state.view();
 
         let unapplied_tx = TransactionBuilder::new(chain_id, ALICE_ID.clone())
-            .with_instructions([Unregister::account("account@domain".parse().unwrap())])
+            .with_instructions([Unregister::account("account@domain".parse_alias())])
             .sign(&ALICE_KEYS);
         let wrong_hash = unapplied_tx.hash();
         let not_found = FindTransactionByHash::new(wrong_hash).execute(&state_view);
@@ -509,8 +506,7 @@ mod tests {
             let mut domain = Domain::new(DomainId::from_str("wonderland")?)
                 .with_metadata(metadata)
                 .build(&ALICE_ID);
-            let account =
-                Account::new(ALICE_ID.clone(), ALICE_KEYS.public_key().clone()).build(&ALICE_ID);
+            let account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
             assert!(domain.add_account(account).is_none());
             let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
             assert!(domain

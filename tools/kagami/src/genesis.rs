@@ -6,6 +6,7 @@ use iroha_config::parameters::defaults::chain_wide::{
     DEFAULT_METADATA_LIMITS, DEFAULT_TRANSACTION_LIMITS, DEFAULT_WASM_FUEL_LIMIT,
     DEFAULT_WASM_MAX_MEMORY_BYTES,
 };
+use iroha_crypto::KeyPair;
 use iroha_data_model::{
     asset::{AssetDefinitionId, AssetValueType},
     metadata::Limits,
@@ -13,6 +14,7 @@ use iroha_data_model::{
     prelude::AssetId,
 };
 use iroha_genesis::{executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile};
+use iroha_sample_params::{alias::Alias, SampleParams};
 use serde_json::json;
 
 use super::*;
@@ -79,21 +81,18 @@ pub fn generate_default(
     let mut meta = Metadata::new();
     meta.insert_with_limits("key".parse()?, "value".to_owned(), Limits::new(1024, 1024))?;
 
+    let sp = SampleParams::default();
     let mut genesis = builder
         .domain_with_metadata("wonderland".parse()?, meta.clone())
-        .account_with_metadata(
-            "alice".parse()?,
-            crate::DEFAULT_PUBLIC_KEY.parse()?,
-            meta.clone(),
-        )
-        .account_with_metadata("bob".parse()?, crate::DEFAULT_PUBLIC_KEY.parse()?, meta)
+        .account_with_metadata(sp.signatory["alice"].make_public_key(), meta.clone())
+        .account_with_metadata(sp.signatory["bob"].make_public_key(), meta)
         .asset(
             "rose".parse()?,
             AssetValueType::Numeric(NumericSpec::default()),
         )
         .finish_domain()
         .domain("garden_of_live_flowers".parse()?)
-        .account("carpenter".parse()?, crate::DEFAULT_PUBLIC_KEY.parse()?)
+        .account(sp.signatory["carpenter"].make_public_key())
         .asset(
             "cabbage".parse()?,
             AssetValueType::Numeric(NumericSpec::default()),
@@ -101,7 +100,7 @@ pub fn generate_default(
         .finish_domain()
         .build();
 
-    let alice_id = AccountId::from_str("alice@wonderland")?;
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
     let mint = Mint::asset_numeric(
         13u32,
         AssetId::new("rose#wonderland".parse()?, alice_id.clone()),
@@ -115,7 +114,7 @@ pub fn generate_default(
         alice_id.clone(),
     );
     let transfer_domain_ownerhip = Transfer::domain(
-        "genesis@genesis".parse()?,
+        "genesis@genesis".parse_alias(),
         "wonderland".parse()?,
         alice_id.clone(),
     );
@@ -206,12 +205,11 @@ fn generate_synthetic(
         first_transaction
             .append_instruction(Register::domain(Domain::new(domain_id.clone())).into());
 
-        for account in 0..accounts_per_domain {
-            let (public_key, _) = iroha_crypto::KeyPair::random().into_parts();
-            let account_id: AccountId = format!("account_{account}@{domain_id}").parse()?;
-            first_transaction.append_instruction(
-                Register::account(Account::new(account_id.clone(), public_key)).into(),
-            );
+        for _ in 0..accounts_per_domain {
+            let account_id: AccountId =
+                format!("{}@{domain_id}", KeyPair::random().into_parts().0).parse()?;
+            first_transaction
+                .append_instruction(Register::account(Account::new(account_id.clone())).into());
         }
 
         for asset in 0..assets_per_domain {

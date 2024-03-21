@@ -3,7 +3,7 @@ use std::{str::FromStr as _, thread};
 use eyre::Result;
 use iroha_client::{
     client::{self, QueryResult},
-    crypto::{KeyPair, PublicKey},
+    crypto::KeyPair,
     data_model::prelude::*,
 };
 use iroha_config::parameters::actual::Root as Config;
@@ -11,6 +11,7 @@ use iroha_data_model::{
     asset::{AssetId, AssetValue, AssetValueType},
     isi::error::{InstructionEvaluationError, InstructionExecutionError, Mismatch, TypeError},
 };
+use iroha_sample_params::{alias::Alias, SampleParams};
 use serde_json::json;
 use test_network::*;
 
@@ -22,7 +23,7 @@ fn client_register_asset_should_add_asset_once_but_not_twice() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let account_id = AccountId::from_str("alice@wonderland").expect("Valid");
+    let account_id: AccountId = "alice@wonderland".parse_alias();
 
     let asset_definition_id = AssetDefinitionId::from_str("test_asset#wonderland").expect("Valid");
     let create_asset: InstructionBox =
@@ -58,7 +59,7 @@ fn unregister_asset_should_remove_asset_from_account() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let account_id = AccountId::from_str("alice@wonderland").expect("Valid");
+    let account_id: AccountId = "alice@wonderland".parse_alias();
 
     let asset_definition_id = AssetDefinitionId::from_str("test_asset#wonderland").expect("Valid");
     let asset_id = AssetId::new(asset_definition_id.clone(), account_id.clone());
@@ -100,7 +101,7 @@ fn client_add_asset_quantity_to_existing_asset_should_increase_asset_amount() ->
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let account_id = AccountId::from_str("alice@wonderland").expect("Valid");
+    let account_id: AccountId = "alice@wonderland".parse_alias();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));
@@ -131,7 +132,7 @@ fn client_add_big_asset_quantity_to_existing_asset_should_increase_asset_amount(
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let account_id = AccountId::from_str("alice@wonderland").expect("Valid");
+    let account_id: AccountId = "alice@wonderland".parse_alias();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));
@@ -162,7 +163,7 @@ fn client_add_asset_with_decimal_should_increase_asset_amount() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let account_id = AccountId::from_str("alice@wonderland").expect("Valid");
+    let account_id: AccountId = "alice@wonderland".parse_alias();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let asset_definition = AssetDefinition::numeric(asset_definition_id.clone());
     let create_asset = Register::asset_definition(asset_definition);
@@ -261,135 +262,92 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_675).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id: AccountId = "alice@wonderland".parse().expect("Valid.");
-    let seller_id: AccountId = "seller@company".parse().expect("Valid.");
-    let buyer_id: AccountId = "buyer@company".parse().expect("Valid.");
+    // before: 10btc@seller & 200eth@buyer
+    let rate: AssetId = "btc/eth##dex@exchange".parse_alias();
+    let instructions: [InstructionBox; 12] = [
+        register::domain("exchange").into(),
+        register::domain("company").into(),
+        register::domain("crypto").into(),
+        register::account("seller@company").into(),
+        register::account("buyer@company").into(),
+        register::account("dex@exchange").into(),
+        register::asset_definition_numeric("btc#crypto").into(),
+        register::asset_definition_numeric("eth#crypto").into(),
+        register::asset_definition_numeric("btc/eth#exchange").into(),
+        Mint::asset_numeric(10_u32, "btc#crypto#seller@company".parse_alias()).into(),
+        Mint::asset_numeric(200_u32, "eth#crypto#buyer@company".parse_alias()).into(),
+        Mint::asset_numeric(20_u32, rate.clone()).into(),
+    ];
+    test_client
+        .submit_all_blocking(instructions)
+        .expect("transaction should be committed");
 
-    let seller_btc: AssetId = "btc#crypto#seller@company".parse().expect("Valid.");
-    let buyer_eth: AssetId = "eth#crypto#buyer@company".parse().expect("Valid.");
-
-    let seller_keypair = KeyPair::random();
-    let buyer_keypair = KeyPair::random();
-
-    let register_account = |account_id: AccountId, signature: PublicKey| {
-        Register::account(Account::new(account_id, signature))
-    };
-
-    let grant_alice_asset_transfer_permission = |asset_id: AssetId, owner_keypair: KeyPair| {
-        let allow_alice_to_transfer_asset = Grant::permission(
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let alice_can_transfer_asset = |asset_id: AssetId, owner_key_pair: KeyPair| {
+        let instruction = Grant::permission(
             PermissionToken::new(
                 "CanTransferUserAsset".parse().unwrap(),
                 &json!({ "asset_id": asset_id }),
             ),
             alice_id.clone(),
         );
-
-        let chain_id = ChainId::from("0");
-        let grant_asset_transfer_tx =
-            TransactionBuilder::new(chain_id, asset_id.account_id().clone())
-                .with_instructions([allow_alice_to_transfer_asset])
-                .sign(&owner_keypair);
+        let transaction =
+            TransactionBuilder::new(ChainId::from("0"), asset_id.account_id().clone())
+                .with_instructions([instruction])
+                .sign(&owner_key_pair);
 
         test_client
-            .submit_transaction_blocking(&grant_asset_transfer_tx)
-            .expect(&format!(
-                "Failed to grant permission alice to transfer {asset_id}",
-            ));
+            .submit_transaction_blocking(&transaction)
+            .expect("transaction should be committed");
     };
+    let seller_btc: AssetId = "btc#crypto#seller@company".parse_alias();
+    let buyer_eth: AssetId = "eth#crypto#buyer@company".parse_alias();
+    let sp = SampleParams::default();
+    let seller_keypair = sp.signatory["seller"].make_key_pair();
+    let buyer_keypair = sp.signatory["buyer"].make_key_pair();
+    alice_can_transfer_asset(seller_btc, seller_keypair);
+    alice_can_transfer_asset(buyer_eth, buyer_keypair);
 
-    let buyer_account_id = account_id_new("buyer", "company");
-    let seller_account_id = account_id_new("seller", "company");
-    let asset_id = asset_id_new(
-        "btc2eth_rate",
-        "exchange",
-        account_id_new("dex", "exchange"),
-    );
-    let instructions: [InstructionBox; 12] = [
-        register::domain("exchange").into(),
-        register::domain("company").into(),
-        register::domain("crypto").into(),
-        register_account(seller_id, seller_keypair.public_key().clone()).into(),
-        register_account(buyer_id, buyer_keypair.public_key().clone()).into(),
-        register::account("dex", "exchange").into(),
-        register::asset_definition("btc", "crypto").into(),
-        register::asset_definition("eth", "crypto").into(),
-        register::asset_definition("btc2eth_rate", "exchange").into(),
-        Mint::asset_numeric(
-            200u32,
-            asset_id_new("eth", "crypto", buyer_account_id.clone()),
-        )
-        .into(),
-        Mint::asset_numeric(
-            20u32,
-            asset_id_new("btc", "crypto", seller_account_id.clone()),
-        )
-        .into(),
-        Mint::asset_numeric(20u32, asset_id.clone()).into(),
-    ];
-    test_client
-        .submit_all_blocking(instructions)
-        .expect("Failed to prepare accounts.");
-
-    grant_alice_asset_transfer_permission(seller_btc, seller_keypair);
-    grant_alice_asset_transfer_permission(buyer_eth, buyer_keypair);
-
-    let to_transfer = test_client
-        .request(FindAssetQuantityById::new(asset_id))
-        .expect("Failed to execute query to find asset quantity by id.");
+    let rate: u32 = test_client
+        .request(FindAssetQuantityById::new(rate))
+        .expect("query should succeed")
+        .try_into()
+        .expect("numeric should be u32 originally");
     test_client
         .submit_all_blocking([
             Transfer::asset_numeric(
-                asset_id_new("btc", "crypto", seller_account_id.clone()),
-                to_transfer,
-                buyer_account_id.clone(),
+                "btc#crypto#seller@company".parse_alias(),
+                10_u32,
+                "buyer@company".parse_alias(),
             ),
             Transfer::asset_numeric(
-                asset_id_new("eth", "crypto", buyer_account_id),
-                to_transfer,
-                seller_account_id,
+                "eth#crypto#buyer@company".parse_alias(),
+                10_u32 * rate,
+                "seller@company".parse_alias(),
             ),
         ])
-        .expect("Failed to exchange eth for btc.");
+        .expect("transaction should be committed");
 
-    let expected_seller_eth = numeric!(20);
-    let expected_buyer_eth = numeric!(180);
-    let expected_buyer_btc = numeric!(20);
-
-    let eth_quantity = test_client
-        .request(FindAssetQuantityById::new(asset_id_new(
-            "eth",
-            "crypto",
-            account_id_new("seller", "company"),
-        )))
-        .expect("Failed to execute Iroha Query");
-    assert_eq!(expected_seller_eth, eth_quantity);
-
-    // For the btc amount we expect an error, as zero assets are purged from accounts
-    test_client
-        .request(FindAssetQuantityById::new(asset_id_new(
-            "btc",
-            "crypto",
-            account_id_new("seller", "company"),
-        )))
-        .expect_err("Query must fail");
-
-    let buyer_eth_quantity = test_client
-        .request(FindAssetQuantityById::new(asset_id_new(
-            "eth",
-            "crypto",
-            account_id_new("buyer", "company"),
-        )))
-        .expect("Failed to execute Iroha Query");
-    assert_eq!(expected_buyer_eth, buyer_eth_quantity);
-
-    let buyer_btc_quantity = test_client
-        .request(FindAssetQuantityById::new(asset_id_new(
-            "btc",
-            "crypto",
-            account_id_new("buyer", "company"),
-        )))
-        .expect("Failed to execute Iroha Query");
-    assert_eq!(expected_buyer_btc, buyer_btc_quantity);
+    let assert_balance = |expected: Numeric, asset_name: &str, signatory_alias: &str| {
+        let got = test_client
+            .request(FindAssetQuantityById::new(
+                format!("{asset_name}#crypto#{signatory_alias}@company").parse_alias(),
+            ))
+            .expect("query should succeed");
+        assert_eq!(got, expected);
+    };
+    let assert_purged = |asset_name: &str, signatory_alias: &str| {
+        let _err = test_client
+            .request(FindAssetQuantityById::new(
+                format!("{asset_name}#crypto#{signatory_alias}@company").parse_alias(),
+            ))
+            .expect_err("query should fail, as zero assets are purged from accounts");
+    };
+    // after: 200eth@seller & 10btc@buyer
+    assert_balance(numeric!(200), "eth", "seller");
+    assert_balance(numeric!(10), "btc", "buyer");
+    assert_purged("btc", "seller");
+    assert_purged("eth", "buyer");
 }
 
 #[test]
@@ -397,8 +355,8 @@ fn transfer_asset_definition() {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_060).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id: AccountId = "alice@wonderland".parse().expect("Valid.");
-    let bob_id: AccountId = "bob@wonderland".parse().expect("Valid.");
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
     let asset_definition_id: AssetDefinitionId = "asset#wonderland".parse().expect("Valid");
 
     test_client
@@ -431,8 +389,8 @@ fn fail_if_dont_satisfy_spec() {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_125).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id: AccountId = "alice@wonderland".parse().expect("Valid.");
-    let bob_id: AccountId = "bob@wonderland".parse().expect("Valid.");
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let bob_id: AccountId = "bob@wonderland".parse_alias();
     let asset_definition_id: AssetDefinitionId = "asset#wonderland".parse().expect("Valid");
     let asset_id: AssetId = AssetId::new(asset_definition_id.clone(), alice_id.clone());
     // Create asset definition which accepts only integers
@@ -489,46 +447,20 @@ fn fail_if_dont_satisfy_spec() {
     }
 }
 
-fn account_id_new(account_name: &str, account_domain: &str) -> AccountId {
-    AccountId::new(
-        account_domain.parse().expect("Valid"),
-        account_name.parse().expect("Valid"),
-    )
-}
-
-pub fn asset_id_new(
-    definition_name: &str,
-    definition_domain: &str,
-    account_id: AccountId,
-) -> AssetId {
-    AssetId::new(
-        AssetDefinitionId::new(
-            definition_domain.parse().expect("Valid"),
-            definition_name.parse().expect("Valid"),
-        ),
-        account_id,
-    )
-}
-
 mod register {
     use super::*;
-    use crate::integration::new_account_with_random_public_key;
 
-    pub fn domain(name: &str) -> Register<Domain> {
-        Register::domain(Domain::new(DomainId::from_str(name).expect("Valid")))
+    pub fn domain(id: &str) -> Register<Domain> {
+        Register::domain(Domain::new(id.parse().expect("should parse to DomainId")))
     }
 
-    pub fn account(account_name: &str, domain_name: &str) -> Register<Account> {
-        Register::account(new_account_with_random_public_key(AccountId::new(
-            domain_name.parse().expect("Valid"),
-            account_name.parse().expect("Valid"),
-        )))
+    pub fn account(alias: &str) -> Register<Account> {
+        Register::account(Account::new(alias.parse_alias()))
     }
 
-    pub fn asset_definition(asset_name: &str, domain_name: &str) -> Register<AssetDefinition> {
-        Register::asset_definition(AssetDefinition::numeric(AssetDefinitionId::new(
-            domain_name.parse().expect("Valid"),
-            asset_name.parse().expect("Valid"),
-        )))
+    pub fn asset_definition_numeric(id: &str) -> Register<AssetDefinition> {
+        Register::asset_definition(AssetDefinition::numeric(
+            id.parse().expect("should parse to AssetDefinitionId"),
+        ))
     }
 }

@@ -50,11 +50,6 @@ pub mod isi {
             let account: Account = self.object.build(authority);
             let account_id = account.id().clone();
 
-            account_id
-                .name
-                .validate_len(state_transaction.config.ident_length_limits)
-                .map_err(Error::from)?;
-
             let domain = state_transaction.world.domain_mut(&account_id.domain_id)?;
             if domain.accounts.get(&account_id).is_some() {
                 return Err(RepetitionError {

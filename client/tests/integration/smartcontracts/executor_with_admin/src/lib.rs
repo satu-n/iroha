@@ -22,7 +22,10 @@ struct Executor {
 }
 
 fn visit_instruction(executor: &mut Executor, authority: &AccountId, isi: &InstructionBox) {
-    if parse!("admin@admin" as AccountId) == *authority {
+    if parse!(
+        "ed012076E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC@admin" as AccountId
+    ) == *authority
+    {
         execute!(executor, isi);
     }
 

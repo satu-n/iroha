@@ -3,14 +3,12 @@ use std::str::FromStr as _;
 use eyre::Result;
 use iroha_client::{
     client::{self, QueryResult},
-    crypto::KeyPair,
     data_model::prelude::*,
 };
 use iroha_data_model::transaction::error::TransactionRejectionReason;
+use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
 use serde_json::json;
 use test_network::*;
-
-use crate::integration::new_account_with_random_public_key;
 
 #[test]
 fn register_empty_role() -> Result<()> {
@@ -54,15 +52,13 @@ fn register_and_grant_role_for_metadata_access() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_700).start_with_runtime();
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
-    let alice_id = AccountId::from_str("alice@wonderland")?;
-    let mouse_id = AccountId::from_str("mouse@wonderland")?;
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
 
     // Registering Mouse
-    let mouse_key_pair = KeyPair::random();
-    let register_mouse = Register::account(Account::new(
-        mouse_id.clone(),
-        mouse_key_pair.public_key().clone(),
-    ));
+    let sp = &SAMPLE_PARAMS;
+    let mouse_keypair = sp.signatory["mouse"].make_key_pair();
+    let register_mouse = Register::account(Account::new(mouse_id.clone()));
     test_client.submit_blocking(register_mouse)?;
 
     // Registering role
@@ -83,7 +79,7 @@ fn register_and_grant_role_for_metadata_access() -> Result<()> {
     let grant_role = Grant::role(role_id.clone(), alice_id.clone());
     let grant_role_tx = TransactionBuilder::new(chain_id, mouse_id.clone())
         .with_instructions([grant_role])
-        .sign(&mouse_key_pair);
+        .sign(&mouse_keypair);
     test_client.submit_transaction_blocking(&grant_role_tx)?;
 
     // Alice modifies Mouse's metadata
@@ -109,11 +105,11 @@ fn unregistered_role_removed_from_account() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let role_id: RoleId = "root".parse().expect("Valid");
-    let alice_id: AccountId = "alice@wonderland".parse().expect("Valid");
-    let mouse_id: AccountId = "mouse@wonderland".parse().expect("Valid");
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
 
     // Registering Mouse
-    let register_mouse = Register::account(new_account_with_random_public_key(mouse_id.clone()));
+    let register_mouse = Register::account(Account::new(mouse_id.clone()));
     test_client.submit_blocking(register_mouse)?;
 
     // Register root role
@@ -154,7 +150,7 @@ fn role_with_invalid_permissions_is_not_accepted() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let role_id = RoleId::from_str("ACCESS_TO_ACCOUNT_METADATA")?;
-    let rose_asset_id = AssetId::from_str("rose##alice@wonderland")?;
+    let rose_asset_id: AssetId = "rose##alice@wonderland".parse_alias();
     let role = Role::new(role_id).add_permission(PermissionToken::new(
         "CanSetKeyValueInAccount".parse()?,
         &json!({ "account_id": rose_asset_id }),
@@ -185,13 +181,13 @@ fn role_permissions_unified() {
     let allow_alice_to_transfer_rose_1 = PermissionToken::from_str_unchecked(
         "CanTransferUserAsset".parse().unwrap(),
         // NOTE: Introduced additional whitespaces in the serialized form
-        "{ \"asset_id\" : \"rose#wonderland#alice@wonderland\" }",
+        "{ \"asset_id\" : \"rose#wonderland#ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland\" }",
     );
 
     let allow_alice_to_transfer_rose_2 = PermissionToken::from_str_unchecked(
         "CanTransferUserAsset".parse().unwrap(),
         // NOTE: Introduced additional whitespaces in the serialized form
-        "{ \"asset_id\" : \"rose##alice@wonderland\" }",
+        "{ \"asset_id\" : \"rose##ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland\" }",
     );
 
     let role_id: RoleId = "role_id".parse().expect("Valid");
@@ -222,15 +218,13 @@ fn grant_revoke_role_permissions() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_245).start_with_runtime();
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
-    let alice_id = AccountId::from_str("alice@wonderland")?;
-    let mouse_id = AccountId::from_str("mouse@wonderland")?;
+    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
 
     // Registering Mouse
-    let mouse_key_pair = KeyPair::random();
-    let register_mouse = Register::account(Account::new(
-        mouse_id.clone(),
-        mouse_key_pair.public_key().clone(),
-    ));
+    let sp = &SAMPLE_PARAMS;
+    let mouse_keypair = sp.signatory["mouse"].make_key_pair();
+    let register_mouse = Register::account(Account::new(mouse_id.clone()));
     test_client.submit_blocking(register_mouse)?;
 
     // Registering role
@@ -248,7 +242,7 @@ fn grant_revoke_role_permissions() -> Result<()> {
     let grant_role = Grant::role(role_id.clone(), alice_id.clone());
     let grant_role_tx = TransactionBuilder::new(chain_id.clone(), mouse_id.clone())
         .with_instructions([grant_role])
-        .sign(&mouse_key_pair);
+        .sign(&mouse_keypair);
     test_client.submit_transaction_blocking(&grant_role_tx)?;
 
     let set_key_value = SetKeyValue::account(
@@ -275,7 +269,7 @@ fn grant_revoke_role_permissions() -> Result<()> {
     // Alice can modify Mouse's metadata after permission token is granted to role
     let grant_role_permission_tx = TransactionBuilder::new(chain_id.clone(), mouse_id.clone())
         .with_instructions([grant_role_permission])
-        .sign(&mouse_key_pair);
+        .sign(&mouse_keypair);
     test_client.submit_transaction_blocking(&grant_role_permission_tx)?;
     let found_permissions = test_client
         .request(FindPermissionTokensByAccountId::new(alice_id.clone()))?
@@ -286,7 +280,7 @@ fn grant_revoke_role_permissions() -> Result<()> {
     // Alice can't modify Mouse's metadata after permission token is removed from role
     let revoke_role_permission_tx = TransactionBuilder::new(chain_id.clone(), mouse_id.clone())
         .with_instructions([revoke_role_permission])
-        .sign(&mouse_key_pair);
+        .sign(&mouse_keypair);
     test_client.submit_transaction_blocking(&revoke_role_permission_tx)?;
     let found_permissions = test_client
         .request(FindPermissionTokensByAccountId::new(alice_id.clone()))?

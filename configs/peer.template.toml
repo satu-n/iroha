@@ -15,6 +15,7 @@
 
 [genesis]
 # file =
+# TODO remove "genesis account" #4409
 # public_key =
 # private_key = { algorithm = "", payload = "" }
 

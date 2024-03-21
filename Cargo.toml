@@ -30,6 +30,7 @@ iroha_data_model_derive = { version = "=2.0.0-pre-rc.21", path = "data_model/der
 iroha_client = { version = "=2.0.0-pre-rc.21", path = "client" }
 iroha_config = { version = "=2.0.0-pre-rc.21", path = "config" }
 iroha_config_base = { version = "=2.0.0-pre-rc.21", path = "config/base" }
+iroha_sample_params = { version = "=2.0.0-pre-rc.21", path = "sample_params" }
 iroha_schema_gen = { version = "=2.0.0-pre-rc.21", path = "schema/gen" }
 iroha_schema = { version = "=2.0.0-pre-rc.21", path = "schema", default-features = false }
 iroha_schema_derive = { version = "=2.0.0-pre-rc.21", path = "schema/derive" }
@@ -217,6 +218,7 @@ members = [
     "macro/derive",
     "macro/utils",
     "p2p",
+    "sample_params",
     "schema",
     "schema/derive",
     "schema/gen",

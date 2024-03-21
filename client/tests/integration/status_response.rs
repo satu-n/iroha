@@ -2,6 +2,7 @@ use std::str::FromStr as _;
 
 use eyre::Result;
 use iroha_client::{data_model::prelude::*, samples::get_status_json};
+use iroha_sample_params::alias::Alias;
 use iroha_telemetry::metrics::Status;
 use test_network::*;
 
@@ -29,8 +30,7 @@ fn json_and_scale_statuses_equality() -> Result<()> {
 
     let coins = ["xor", "btc", "eth", "doge"];
 
-    let domain_id: DomainId = "test_domain".parse().expect("Should be valid");
-    let account_id = AccountId::new(domain_id, "test_account".parse().expect("Should be valid"));
+    let account_id: AccountId = "account@domain".parse_alias();
 
     for coin in coins {
         let asset_definition_id = AssetDefinitionId::from_str(&format!("{coin}#wonderland"))?;

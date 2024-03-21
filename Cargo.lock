@@ -2827,6 +2827,7 @@ dependencies = [
  "iroha_genesis",
  "iroha_logger",
  "iroha_primitives",
+ "iroha_sample_params",
  "iroha_telemetry",
  "iroha_torii_const",
  "iroha_version",
@@ -2941,6 +2942,7 @@ dependencies = [
  "iroha_macro",
  "iroha_p2p",
  "iroha_primitives",
+ "iroha_sample_params",
  "iroha_telemetry",
  "iroha_version",
  "iroha_wasm_codec",
@@ -3027,6 +3029,7 @@ dependencies = [
  "iroha_ffi",
  "iroha_macro",
  "iroha_primitives",
+ "iroha_sample_params",
  "iroha_schema",
  "iroha_version",
  "nonzero_ext",
@@ -3049,6 +3052,7 @@ dependencies = [
  "derive_more",
  "iroha_data_model",
  "iroha_macro_utils",
+ "iroha_sample_params",
  "iroha_schema",
  "manyhow",
  "parity-scale-codec",
@@ -3158,6 +3162,7 @@ dependencies = [
  "eyre",
  "iroha_crypto",
  "iroha_data_model",
+ "iroha_sample_params",
  "iroha_schema",
  "once_cell",
  "serde",
@@ -3275,6 +3280,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.60",
+]
+
+[[package]]
+name = "iroha_sample_params"
+version = "2.0.0-pre-rc.21"
+dependencies = [
+ "iroha_crypto",
+ "iroha_data_model",
+ "once_cell",
+ "serde",
+ "toml 0.8.12",
 ]
 
 [[package]]
@@ -3663,6 +3679,7 @@ dependencies = [
  "iroha_data_model",
  "iroha_genesis",
  "iroha_primitives",
+ "iroha_sample_params",
  "iroha_schema_gen",
  "parity-scale-codec",
  "serde",
@@ -4230,6 +4247,7 @@ dependencies = [
  "iroha_data_model",
  "iroha_genesis",
  "iroha_primitives",
+ "iroha_sample_params",
  "iroha_schema",
  "iroha_schema_gen",
  "iroha_version",
@@ -5724,6 +5742,7 @@ dependencies = [
  "iroha_genesis",
  "iroha_logger",
  "iroha_primitives",
+ "iroha_sample_params",
  "parity-scale-codec",
  "rand",
  "serde_json",

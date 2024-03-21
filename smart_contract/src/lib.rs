@@ -489,14 +489,16 @@ mod tests {
     const ISI_RESULT: Result<(), ValidationFail> = Ok(());
 
     fn get_test_instruction() -> InstructionBox {
-        let new_asset_id = "tulip##alice@wonderland".parse().unwrap();
+        // Equivalent to "tulip##alice@wonderland".parse_alias() in std
+        let new_asset_id = "tulip##ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland".parse().unwrap();
         let register_isi = Register::asset(Asset::new(new_asset_id, 1_u32));
 
         register_isi.into()
     }
 
     fn get_test_query() -> QueryBox {
-        let asset_id: AssetId = "rose##alice@wonderland".parse().expect("Valid");
+        // Equivalent to "rose##alice@wonderland".parse_alias() in std
+        let asset_id: AssetId = "rose##ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland".parse().expect("Valid");
         FindAssetQuantityById::new(asset_id).into()
     }
 

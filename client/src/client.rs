@@ -1575,6 +1575,7 @@ mod tests {
     use std::str::FromStr;
 
     use iroha_primitives::small::SmallStr;
+    use iroha_sample_params::alias::Alias;
 
     use super::*;
     use crate::config::{BasicAuth, Config, WebLogin};
@@ -1588,9 +1589,7 @@ mod tests {
         Config {
             chain_id: ChainId::from("0"),
             key_pair: KeyPair::random(),
-            account_id: "alice@wonderland"
-                .parse()
-                .expect("This account ID should be valid"),
+            account_id: "alice@wonderland".parse_alias(),
             torii_api_url: "http://127.0.0.1:8080".parse().unwrap(),
             basic_auth: None,
             transaction_add_nonce: false,

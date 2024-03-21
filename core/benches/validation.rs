@@ -14,6 +14,7 @@ use iroha_core::{
 };
 use iroha_data_model::{isi::InstructionBox, prelude::*, transaction::TransactionLimits};
 use iroha_primitives::unique_vec::UniqueVec;
+use iroha_sample_params::alias::Alias;
 
 const START_DOMAIN: &str = "start";
 const START_ACCOUNT: &str = "starter";
@@ -24,33 +25,17 @@ const TRANSACTION_LIMITS: TransactionLimits = TransactionLimits {
 };
 
 fn build_test_transaction(keys: &KeyPair, chain_id: ChainId) -> SignedTransaction {
-    let domain_name = "domain";
-    let domain_id = DomainId::from_str(domain_name).expect("does not panic");
+    let domain_id = "domain".parse().expect("Valid");
     let create_domain: InstructionBox = Register::domain(Domain::new(domain_id)).into();
-    let account_name = "account";
-    let (public_key, _) = KeyPair::random().into_parts();
-    let create_account = Register::account(Account::new(
-        AccountId::new(
-            domain_name.parse().expect("Valid"),
-            account_name.parse().expect("Valid"),
-        ),
-        public_key,
-    ))
-    .into();
-    let asset_definition_id = AssetDefinitionId::new(
-        "xor".parse().expect("Valid"),
-        domain_name.parse().expect("Valid"),
-    );
+    let create_account = Register::account(Account::new("account@domain".parse_alias())).into();
+    let asset_definition_id = "xor#domain".parse().expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id)).into();
     let instructions = [create_domain, create_account, create_asset];
 
     TransactionBuilder::new(
         chain_id,
-        AccountId::new(
-            START_DOMAIN.parse().expect("Valid"),
-            START_ACCOUNT.parse().expect("Valid"),
-        ),
+        format!("{START_ACCOUNT}@{START_DOMAIN}").parse_alias(),
     )
     .with_instructions(instructions)
     .sign(keys)
@@ -64,12 +49,9 @@ fn build_test_and_transient_state(keys: KeyPair) -> State {
     let state = State::new(
         {
             let domain_id = DomainId::from_str(START_DOMAIN).expect("Valid");
-            let account_id = AccountId::new(
-                domain_id.clone(),
-                Name::from_str(START_ACCOUNT).expect("Valid"),
-            );
+            let account_id = AccountId::new(domain_id.clone(), public_key.clone());
             let mut domain = Domain::new(domain_id).build(&account_id);
-            let account = Account::new(account_id.clone(), public_key).build(&account_id);
+            let account = Account::new(account_id.clone()).build(&account_id);
             assert!(domain.add_account(account).is_none());
             World::with([domain], UniqueVec::new())
         },
@@ -85,7 +67,7 @@ fn build_test_and_transient_state(keys: KeyPair) -> State {
         let wasm = std::fs::read(&path_to_executor)
             .unwrap_or_else(|_| panic!("Failed to read file: {}", path_to_executor.display()));
         let executor = Executor::new(WasmSmartContract::from_compiled(wasm));
-        let authority = "genesis@genesis".parse().expect("Valid");
+        let authority = "genesis@genesis".parse_alias();
         Upgrade::new(executor)
             .execute(&authority, &mut state_transaction)
             .expect("Failed to load executor");

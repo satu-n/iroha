@@ -210,10 +210,7 @@ impl Iroha {
             .wrap_err("Unable to start P2P-network")?;
 
         let (events_sender, _) = broadcast::channel(10000);
-        let world = World::with(
-            [genesis_domain(config.genesis.public_key().clone())],
-            config.sumeragi.trusted_peers.clone(),
-        );
+        let world = World::with([genesis_domain()], config.sumeragi.trusted_peers.clone());
 
         let kura = Kura::new(&config.kura)?;
         let kura_thread_handler = Kura::start(Arc::clone(&kura));
@@ -485,19 +482,18 @@ impl Iroha {
     }
 }
 
-fn genesis_account(public_key: PublicKey) -> Account {
-    Account::new(iroha_genesis::GENESIS_ACCOUNT_ID.clone(), public_key)
+fn genesis_account() -> Account {
+    Account::new(iroha_genesis::GENESIS_ACCOUNT_ID.clone())
         .build(&iroha_genesis::GENESIS_ACCOUNT_ID)
 }
 
-fn genesis_domain(public_key: PublicKey) -> Domain {
+fn genesis_domain() -> Domain {
     let mut domain = Domain::new(iroha_genesis::GENESIS_DOMAIN_ID.clone())
         .build(&iroha_genesis::GENESIS_ACCOUNT_ID);
 
-    domain.accounts.insert(
-        iroha_genesis::GENESIS_ACCOUNT_ID.clone(),
-        genesis_account(public_key),
-    );
+    domain
+        .accounts
+        .insert(iroha_genesis::GENESIS_ACCOUNT_ID.clone(), genesis_account());
 
     domain
 }

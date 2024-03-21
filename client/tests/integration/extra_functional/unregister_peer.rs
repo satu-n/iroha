@@ -3,13 +3,13 @@ use std::thread;
 use eyre::Result;
 use iroha_client::{
     client::{self, QueryResult},
-    crypto::KeyPair,
     data_model::{
         parameter::{default::MAX_TRANSACTIONS_IN_BLOCK, ParametersBuilder},
         prelude::*,
     },
 };
 use iroha_config::parameters::actual::Root as Config;
+use iroha_sample_params::alias::Alias;
 use test_network::*;
 
 // Note the test is marked as `unstable`,  not the network.
@@ -121,9 +121,8 @@ fn init() -> Result<(
         .add_parameter(MAX_TRANSACTIONS_IN_BLOCK, 1u32)?
         .into_set_parameters();
     let create_domain = Register::domain(Domain::new("domain".parse()?));
-    let account_id: AccountId = "account@domain".parse()?;
-    let (public_key, _) = KeyPair::random().into_parts();
-    let create_account = Register::account(Account::new(account_id.clone(), public_key));
+    let account_id: AccountId = "account@domain".parse_alias();
+    let create_account = Register::account(Account::new(account_id.clone()));
     let asset_definition_id: AssetDefinitionId = "xor#domain".parse()?;
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));

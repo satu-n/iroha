@@ -57,6 +57,7 @@ nonzero_ext = { workspace = true }
 
 [dev-dependencies]
 iroha_crypto = { workspace = true, features = ["rand"] }
+iroha_sample_params = { workspace = true }
 
 trybuild = { workspace = true }
 criterion = { workspace = true }

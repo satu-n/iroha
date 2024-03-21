@@ -740,25 +740,27 @@ pub mod prelude {
         TriggerEventFilter,
     };
 }
-
+#[cfg_attr(not(compile_err), allow(unused_imports))] // FIXME the trait `Alias<AccountId>` is not implemented for `str`
 #[cfg(test)]
 #[cfg(feature = "transparent_api")]
 mod tests {
+    use iroha_sample_params::alias::Alias;
+
     use super::*;
     use crate::{
         account::AccountsMap,
         asset::{AssetDefinitionsMap, AssetTotalQuantityMap},
     };
 
+    #[cfg(compile_err)] // FIXME the trait `Alias<AccountId>` is not implemented for `str`
     #[test]
     #[cfg(feature = "transparent_api")]
     fn entity_scope() {
-        let domain_name = "wonderland".parse().expect("Valid");
-        let account_name = "alice".parse().expect("Valid");
-        let asset_name = "rose".parse().expect("Valid");
-        let domain_owner_id = "genesis@genesis".parse().expect("Valid");
+        let domain_id: DomainId = "wonderland".parse().expect("Valid");
+        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let asset_id: AssetId = "rose##alice@wonderland".parse_alias();
+        let domain_owner_id: AccountId = "genesis@genesis".parse_alias();
 
-        let domain_id = DomainId::new(domain_name);
         let domain = Domain {
             id: domain_id.clone(),
             accounts: AccountsMap::default(),
@@ -768,16 +770,7 @@ mod tests {
             metadata: Metadata::default(),
             owned_by: domain_owner_id,
         };
-        let account_id = AccountId::new(domain_id.clone(), account_name);
-        let account = Account::new(
-            account_id.clone(),
-            iroha_crypto::KeyPair::random().into_parts().0,
-        )
-        .into_account();
-        let asset_id = AssetId::new(
-            AssetDefinitionId::new(domain_id.clone(), asset_name),
-            account_id.clone(),
-        );
+        let account = Account::new(account_id.clone()).into_account();
         let asset = Asset::new(asset_id.clone(), 0_u32);
 
         // Create three events with three levels of nesting

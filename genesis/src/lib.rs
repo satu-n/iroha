@@ -24,8 +24,16 @@ use serde::{Deserialize, Serialize};
 pub static GENESIS_DOMAIN_ID: Lazy<DomainId> = Lazy::new(|| "genesis".parse().expect("Valid"));
 
 /// [`AccountId`] of the genesis account.
-pub static GENESIS_ACCOUNT_ID: Lazy<AccountId> =
-    Lazy::new(|| AccountId::new(GENESIS_DOMAIN_ID.clone(), "genesis".parse().expect("Valid")));
+/// TODO remove "genesis account" #4409
+pub static GENESIS_ACCOUNT_ID: Lazy<AccountId> = Lazy::new(|| {
+    AccountId::new(
+        GENESIS_DOMAIN_ID.clone(),
+        // FIXME An associated private key can exist and sign transactions even after genesis. Consider removing "genesis account" notion altogether
+        "ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B"
+            .parse()
+            .expect("Valid"),
+    )
+});
 
 /// Genesis transaction
 #[derive(Debug, Clone)]
@@ -310,31 +318,15 @@ impl<S> RawGenesisDomainBuilder<S> {
         }
     }
 
-    /// Add an account to this domain with random public key.
-    #[cfg(test)]
-    fn account_with_random_public_key(mut self, account_name: Name) -> Self {
-        let account_id = AccountId::new(self.domain_id.clone(), account_name);
-        self.transaction.isi.push(
-            Register::account(Account::new(account_id, KeyPair::random().into_parts().0)).into(),
-        );
-        self
-    }
-
     /// Add an account to this domain
-    pub fn account(self, account_name: Name, public_key: PublicKey) -> Self {
-        self.account_with_metadata(account_name, public_key, Metadata::default())
+    pub fn account(self, signatory: PublicKey) -> Self {
+        self.account_with_metadata(signatory, Metadata::default())
     }
 
     /// Add an account (having provided `metadata`) to this domain.
-    pub fn account_with_metadata(
-        mut self,
-        account_name: Name,
-        public_key: PublicKey,
-        metadata: Metadata,
-    ) -> Self {
-        let account_id = AccountId::new(self.domain_id.clone(), account_name);
-        let register =
-            Register::account(Account::new(account_id, public_key).with_metadata(metadata));
+    pub fn account_with_metadata(mut self, signatory: PublicKey, metadata: Metadata) -> Self {
+        let account_id = AccountId::new(self.domain_id.clone(), signatory);
+        let register = Register::account(Account::new(account_id).with_metadata(metadata));
         self.transaction.isi.push(register.into());
         self
     }
@@ -352,6 +344,8 @@ impl<S> RawGenesisDomainBuilder<S> {
 
 #[cfg(test)]
 mod tests {
+    use iroha_sample_params::SAMPLE_PARAMS;
+
     use super::*;
 
     fn dummy_executor() -> Executor {
@@ -367,7 +361,7 @@ mod tests {
         let _genesis_block = GenesisNetwork::new(
             RawGenesisBlockBuilder::default()
                 .domain("wonderland".parse()?)
-                .account("alice".parse()?, alice_public_key)
+                .account(alice_public_key)
                 .finish_domain()
                 .executor_blob(dummy_executor())
                 .build(),
@@ -379,19 +373,29 @@ mod tests {
 
     #[test]
     fn genesis_block_builder_example() {
-        let public_key = "ed0120204E9593C3FFAF4464A6189233811C297DD4CE73ABA167867E4FBD4F8C450ACB";
+        let sp = &SAMPLE_PARAMS;
+        let public_key: std::collections::HashMap<&'static str, PublicKey> =
+            ["alice", "bob", "cheshire_cat", "mad_hatter"]
+                .into_iter()
+                .map(|signatory_alias| {
+                    (
+                        signatory_alias,
+                        sp.signatory[signatory_alias].make_public_key(),
+                    )
+                })
+                .collect();
         let mut genesis_builder = RawGenesisBlockBuilder::default();
 
         genesis_builder = genesis_builder
             .domain("wonderland".parse().unwrap())
-            .account_with_random_public_key("alice".parse().unwrap())
-            .account_with_random_public_key("bob".parse().unwrap())
+            .account(public_key["alice"].clone())
+            .account(public_key["bob"].clone())
             .finish_domain()
             .domain("tulgey_wood".parse().unwrap())
-            .account_with_random_public_key("Cheshire_Cat".parse().unwrap())
+            .account(public_key["cheshire_cat"].clone())
             .finish_domain()
             .domain("meadow".parse().unwrap())
-            .account("Mad_Hatter".parse().unwrap(), public_key.parse().unwrap())
+            .account(public_key["mad_hatter"].clone())
             .asset(
                 "hats".parse().unwrap(),
                 AssetValueType::Numeric(NumericSpec::default()),
@@ -408,18 +412,18 @@ mod tests {
             );
             assert_eq!(
                 finished_genesis_block.transactions[0].isi[1],
-                Register::account(Account::new(
-                    AccountId::new(domain_id.clone(), "alice".parse().unwrap()),
-                    KeyPair::random().into_parts().0,
-                ))
+                Register::account(Account::new(AccountId::new(
+                    domain_id.clone(),
+                    public_key["alice"].clone()
+                ),))
                 .into()
             );
             assert_eq!(
                 finished_genesis_block.transactions[0].isi[2],
-                Register::account(Account::new(
-                    AccountId::new(domain_id, "bob".parse().unwrap()),
-                    KeyPair::random().into_parts().0,
-                ))
+                Register::account(Account::new(AccountId::new(
+                    domain_id,
+                    public_key["bob"].clone()
+                ),))
                 .into()
             );
         }
@@ -431,10 +435,10 @@ mod tests {
             );
             assert_eq!(
                 finished_genesis_block.transactions[0].isi[4],
-                Register::account(Account::new(
-                    AccountId::new(domain_id, "Cheshire_Cat".parse().unwrap()),
-                    KeyPair::random().into_parts().0,
-                ))
+                Register::account(Account::new(AccountId::new(
+                    domain_id,
+                    public_key["cheshire_cat"].clone()
+                ),))
                 .into()
             );
         }
@@ -446,10 +450,10 @@ mod tests {
             );
             assert_eq!(
                 finished_genesis_block.transactions[0].isi[6],
-                Register::account(Account::new(
-                    AccountId::new(domain_id, "Mad_Hatter".parse().unwrap()),
-                    public_key.parse().unwrap(),
-                ))
+                Register::account(Account::new(AccountId::new(
+                    domain_id,
+                    public_key["mad_hatter"].clone()
+                ),))
                 .into()
             );
             assert_eq!(

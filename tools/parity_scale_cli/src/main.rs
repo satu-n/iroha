@@ -322,6 +322,7 @@ mod tests {
     use std::str::FromStr as _;
 
     use iroha_data_model::{ipfs::IpfsPath, prelude::*};
+    use iroha_sample_params::alias::Alias;
 
     use super::*;
 
@@ -336,12 +337,7 @@ mod tests {
                 limits,
             )
             .expect("Valid");
-        let signature = PublicKey::from_str(
-            "ed0120EDF6D7B52C7032D03AEC696F2068BD53101528F3C7B6081BFF05A1662D7FC245",
-        )
-        .unwrap();
-        let account =
-            Account::new("alice@wonderland".parse().unwrap(), signature).with_metadata(metadata);
+        let account = Account::new("alice@wonderland".parse_alias()).with_metadata(metadata);
 
         decode_sample("account.bin", String::from("NewAccount"), &account);
     }
@@ -365,7 +361,7 @@ mod tests {
 
     #[test]
     fn decode_trigger_sample() {
-        let account_id = AccountId::from_str("alice@wonderland").expect("Valid");
+        let account_id: AccountId = "alice@wonderland".parse_alias();
         let rose_definition_id = AssetDefinitionId::new(
             "wonderland".parse().expect("Valid"),
             "rose".parse().expect("Valid"),

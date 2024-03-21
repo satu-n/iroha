@@ -63,14 +63,13 @@ impl AcceptedTransaction {
             }));
         }
 
-        for signature in tx.0.signatures() {
-            if signature.public_key() != genesis_public_key {
-                return Err(SignatureVerificationFail {
-                    signature: signature.clone().into(),
-                    reason: "Signature doesn't correspond to genesis public key".to_string(),
-                }
-                .into());
+        let signature = tx.0.signature();
+        if signature.public_key() != genesis_public_key {
+            return Err(SignatureVerificationFail {
+                signature: signature.clone().into(),
+                reason: "Signature doesn't correspond to genesis public key".to_string(),
             }
+            .into());
         }
 
         Ok(Self(tx.0))

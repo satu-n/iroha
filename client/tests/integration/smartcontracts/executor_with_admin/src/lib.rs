@@ -1,5 +1,5 @@
-//! Runtime Executor which allows any instruction executed by `admin@admin` account.
-//! If authority is not `admin@admin` then default validation is used as a backup.
+//! Runtime Executor which allows any instruction executed by [admin](crate::integration::upgrade::ADMIN_ID) account.
+//! If authority is not admin then default validation is used as a backup.
 
 #![no_std]
 
@@ -22,7 +22,13 @@ struct Executor {
 }
 
 fn visit_instruction(executor: &mut Executor, authority: &AccountId, isi: &InstructionBox) {
-    if parse!("admin@admin" as AccountId) == *authority {
+    // crate::integration::upgrade::ADMIN_ID
+    if *authority
+        == parse!(
+            AccountId,
+            "ed012076E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC@admin"
+        )
+    {
         execute!(executor, isi);
     }
 

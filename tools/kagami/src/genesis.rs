@@ -113,7 +113,12 @@ pub fn generate_default(
         PermissionToken::new("CanSetParameters".parse()?, &json!(null)),
         alice_id.clone(),
     );
-    let transfer_domain_ownerhip = Transfer::domain(
+    let transfer_rose_ownership = Transfer::asset_definition(
+        "genesis@genesis".parse_alias(),
+        "rose#wonderland".parse()?,
+        alice_id.clone(),
+    );
+    let transfer_wonderland_ownership = Transfer::domain(
         "genesis@genesis".parse_alias(),
         "wonderland".parse()?,
         alice_id.clone(),
@@ -174,7 +179,8 @@ pub fn generate_default(
     for isi in [
         mint.into(),
         mint_cabbage.into(),
-        transfer_domain_ownerhip.into(),
+        transfer_rose_ownership.into(),
+        transfer_wonderland_ownership.into(),
         grant_permission_to_set_parameters.into(),
     ]
     .into_iter()

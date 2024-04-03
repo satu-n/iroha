@@ -10,10 +10,13 @@ pub mod triggers;
 pub mod tx;
 pub mod world;
 
+use std::fmt::Display;
+
 use eyre::Result;
 use iroha_data_model::{
     isi::{error::InstructionExecutionError as Error, *},
     prelude::*,
+    ValidationFail,
 };
 use iroha_logger::prelude::*;
 use storage::storage::StorageReadOnly;
@@ -31,6 +34,51 @@ pub trait Registrable {
 
     /// Construct [`Self::Target`]
     fn build(self, authority: &AccountId) -> Self::Target;
+}
+
+/// Validate and execute an additional instruction `T` during `Self` execution.
+/// FIXME This means going backwards from execution phase to validation phase, which is contrary to current design principles
+trait BackValidate<T>
+where
+    Self: Execute + Display,
+    T: Into<InstructionBox>,
+{
+    /// Validate and execute an additional `instruction` during `self` execution.
+    ///
+    /// # Errors
+    ///
+    /// - Fails if `instruction` fails for validation. This case returns an opaque [`Error::Fail`] that contains detailed string
+    /// - Fails if `instruction` fails for execution
+    fn back_validate(
+        &self,
+        instruction: T,
+        authority: &AccountId,
+        state_transaction: &mut StateTransaction<'_, '_>,
+    ) -> Result<(), Error> {
+        let Err(validation_err) = state_transaction
+            .world
+            .executor
+            .clone()
+            .validate_instruction(state_transaction, authority, instruction.into())
+        else {
+            return Ok(());
+        };
+        let ValidationFail::InstructionFailed(execution_err) = validation_err else {
+            return Err(Error::Fail(format!(
+                "During execution of {self},\nadditional validation failed: {validation_err}"
+            )));
+        };
+        Err(execution_err)
+    }
+}
+
+impl<S, O> BackValidate<Register<Account>> for Transfer<S, O, Account>
+where
+    Self: Execute,
+    S: Identifiable,
+    <S as Identifiable>::Id: Display,
+    O: Display,
+{
 }
 
 impl Execute for InstructionBox {

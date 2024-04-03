@@ -134,9 +134,19 @@ pub mod isi {
         #[metrics(+"transfer_store")]
         fn execute(
             self,
-            _authority: &AccountId,
+            authority: &AccountId,
             state_transaction: &mut StateTransaction<'_, '_>,
         ) -> Result<(), Error> {
+            if state_transaction
+                .world
+                .account(&self.destination_id)
+                .is_err()
+            {
+                let register_destination =
+                    Register::account(Account::new(self.destination_id.clone()));
+                self.back_validate(register_destination, authority, state_transaction)?
+            }
+
             let asset_id = self.source_id;
             assert_asset_type(
                 &asset_id.definition_id,
@@ -277,9 +287,19 @@ pub mod isi {
     impl Execute for Transfer<Asset, Numeric, Account> {
         fn execute(
             self,
-            _authority: &AccountId,
+            authority: &AccountId,
             state_transaction: &mut StateTransaction<'_, '_>,
         ) -> Result<(), Error> {
+            if state_transaction
+                .world
+                .account(&self.destination_id)
+                .is_err()
+            {
+                let register_destination =
+                    Register::account(Account::new(self.destination_id.clone()));
+                self.back_validate(register_destination, authority, state_transaction)?
+            }
+
             let source_id = self.source_id;
             let destination_id =
                 AssetId::new(source_id.definition_id.clone(), self.destination_id.clone());

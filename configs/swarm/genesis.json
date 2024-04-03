@@ -95,6 +95,15 @@
       },
       {
         "Transfer": {
+          "AssetDefinition": {
+            "source_id": "ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B@genesis",
+            "object": "rose#wonderland",
+            "destination_id": "ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland"
+          }
+        }
+      },
+      {
+        "Transfer": {
           "Domain": {
             "source_id": "ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B@genesis",
             "object": "wonderland",

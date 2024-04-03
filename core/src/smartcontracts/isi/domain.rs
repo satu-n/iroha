@@ -323,9 +323,19 @@ pub mod isi {
     impl Execute for Transfer<Account, DomainId, Account> {
         fn execute(
             self,
-            _authority: &AccountId,
+            authority: &AccountId,
             state_transaction: &mut StateTransaction<'_, '_>,
         ) -> Result<(), Error> {
+            if state_transaction
+                .world
+                .account(&self.destination_id)
+                .is_err()
+            {
+                let register_destination =
+                    Register::account(Account::new(self.destination_id.clone()));
+                self.back_validate(register_destination, authority, state_transaction)?
+            }
+
             let Transfer {
                 source_id,
                 object,
@@ -333,7 +343,6 @@ pub mod isi {
             } = self;
 
             let _ = state_transaction.world.account(&source_id)?;
-            let _ = state_transaction.world.account(&destination_id)?;
 
             let domain = state_transaction.world.domain_mut(&object)?;
 

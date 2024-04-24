@@ -43,7 +43,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Run tests, with coverage
-        run: mold --run cargo test --all-features --workspace --no-fail-fast
+        run: |
+          mold --run cargo clean
+          mold --run cargo test --all-features --workspace --no-fail-fast
         env:
           RUSTFLAGS: "-C instrument-coverage"
           LLVM_PROFILE_FILE: "iroha-%p-%m.profraw"

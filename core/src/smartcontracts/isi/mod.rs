@@ -257,8 +257,8 @@ mod tests {
         let world = World::with([], PeersIds::new());
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world, kura.clone(), query_handle);
-        let genesis_account_id = AccountId::from_alias("genesis@genesis");
-        let account_id = AccountId::from_alias("alice@wonderland");
+        let (genesis_account_id, _genesis_account_keypair) = gen_account_in("genesis"); // ACC_NAME genesis
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
@@ -466,7 +466,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut staet_block = state.block();
         let mut state_transaction = staet_block.transaction();
-        let account_id = AccountId::from_alias("alice@wonderland");
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         assert!(matches!(
             Register::domain(Domain::new(DomainId::from_str("genesis")?))
                 .execute(&account_id, &mut state_transaction)

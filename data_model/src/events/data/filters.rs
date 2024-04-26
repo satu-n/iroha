@@ -758,7 +758,9 @@ mod tests {
     fn entity_scope() {
         let domain_id: DomainId = "wonderland".parse().expect("Valid");
         let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
-        let asset_id: AssetId = format!("rose##{}", gen_account_in("wonderland").0).parse().expect("should be valid"); // ACC_NAME alice
+        let asset_id: AssetId = format!("rose##{}", gen_account_in("wonderland").0)
+            .parse()
+            .expect("should be valid"); // ACC_NAME alice
         let (domain_owner_id, _domain_owner_keypair) = gen_account_in("genesis"); // ACC_NAME genesis
 
         let domain = Domain {

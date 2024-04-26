@@ -148,7 +148,9 @@ fn role_with_invalid_permissions_is_not_accepted() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let role_id = RoleId::from_str("ACCESS_TO_ACCOUNT_METADATA")?;
-    let rose_asset_id: AssetId = format!("rose##{}", ALICE_ID.clone()).parse().expect("should be valid");
+    let rose_asset_id: AssetId = format!("rose##{}", ALICE_ID.clone())
+        .parse()
+        .expect("should be valid");
     let role = Role::new(role_id).add_permission(PermissionToken::new(
         "CanSetKeyValueInAccount".parse()?,
         &json!({ "account_id": rose_asset_id }),

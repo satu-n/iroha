@@ -24,9 +24,9 @@ fn find_asset_total_quantity() -> Result<()> {
 
     let accounts: [AccountId; 5] = [
         ALICE_ID.clone(),
-        gen_account_in("wonderland").0, // ACC_NAME mad_hatter
-        gen_account_in("wonderland").0, // ACC_NAME cheshire_cat
-        gen_account_in("wonderland").0, // ACC_NAME caterpillar
+        gen_account_in("wonderland").0,    // ACC_NAME mad_hatter
+        gen_account_in("wonderland").0,    // ACC_NAME cheshire_cat
+        gen_account_in("wonderland").0,    // ACC_NAME caterpillar
         gen_account_in("looking_glass").0, // ACC_NAME white_rabbit
     ];
 

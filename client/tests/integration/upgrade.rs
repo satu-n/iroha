@@ -28,7 +28,9 @@ fn executor_upgrade_should_work() -> Result<()> {
     client.submit_blocking(register_admin_account)?;
 
     // Check that admin isn't allowed to transfer alice's rose by default
-    let alice_rose: AssetId = format!("rose##{}", ALICE_ID.clone()).parse().expect("should be valid");
+    let alice_rose: AssetId = format!("rose##{}", ALICE_ID.clone())
+        .parse()
+        .expect("should be valid");
     let (admin_rose, _admin_rose_keypair) = gen_account_in("admin"); // ACC_NAME admin
     let transfer_alice_rose = Transfer::asset_numeric(alice_rose, 1u32, admin_rose);
     let transfer_rose_tx = TransactionBuilder::new(chain_id.clone(), admin_id.clone())

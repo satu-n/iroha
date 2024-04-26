@@ -373,14 +373,14 @@ mod tests {
 
     #[test]
     fn genesis_block_builder_example() {
-        let public_key: std::collections::HashMap<&'static str, PublicKey> =
-            [("alice", ALICE_KEYPAIR.public_key().clone()),
-             ("bob", BOB_KEYPAIR.public_key().clone()),
-             ("cheshire_cat", KeyPair::random().into_parts().0),
-             ("mad_hatter", KeyPair::random().into_parts().0)
-             ]
-                .into_iter()
-                .collect();
+        let public_key: std::collections::HashMap<&'static str, PublicKey> = [
+            ("alice", ALICE_KEYPAIR.public_key().clone()),
+            ("bob", BOB_KEYPAIR.public_key().clone()),
+            ("cheshire_cat", KeyPair::random().into_parts().0),
+            ("mad_hatter", KeyPair::random().into_parts().0),
+        ]
+        .into_iter()
+        .collect();
         let mut genesis_builder = RawGenesisBlockBuilder::default();
 
         genesis_builder = genesis_builder

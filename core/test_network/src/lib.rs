@@ -55,7 +55,9 @@ pub fn get_key_pair(signatory: Signatory) -> KeyPair {
         Signatory::Peer => &PEER_KEYPAIR,
         Signatory::Genesis => &GENESIS_KEYPAIR,
         Signatory::Alice => &ALICE_KEYPAIR,
-    }.deref().clone()
+    }
+    .deref()
+    .clone()
 }
 
 /// A common signatory in the test network

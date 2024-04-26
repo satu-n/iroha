@@ -17,7 +17,8 @@ use iroha_primitives::unique_vec::UniqueVec;
 use iroha_sample_params::gen_account_in;
 
 const START_DOMAIN: &str = "start";
-const START_ACCOUNT: &str = "ed0120F71BEB213D4E2963BA7CF9A358CCCBA2429D5AB28D00A468FFD56AFECFAD06C7"; // ACC_NAME starter
+const START_ACCOUNT: &str =
+    "ed0120F71BEB213D4E2963BA7CF9A358CCCBA2429D5AB28D00A468FFD56AFECFAD06C7"; // ACC_NAME starter
 
 const TRANSACTION_LIMITS: TransactionLimits = TransactionLimits {
     max_instruction_number: 4096,
@@ -35,7 +36,9 @@ fn build_test_transaction(keys: &KeyPair, chain_id: ChainId) -> SignedTransactio
 
     TransactionBuilder::new(
         chain_id,
-        format!("{START_ACCOUNT}@{START_DOMAIN}").parse().expect("should be valid"),
+        format!("{START_ACCOUNT}@{START_DOMAIN}")
+            .parse()
+            .expect("should be valid"),
     )
     .with_instructions(instructions)
     .sign(keys)

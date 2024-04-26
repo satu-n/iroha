@@ -27,7 +27,9 @@ pub mod samples {
 
     /// Get sample client configuration.
     pub fn get_client_config(chain_id: ChainId, key_pair: KeyPair, torii_api_url: Url) -> Config {
-        let account_id = format!("{}@wonderland", key_pair.public_key()).parse().expect("should be valid");
+        let account_id = format!("{}@wonderland", key_pair.public_key())
+            .parse()
+            .expect("should be valid");
         Config {
             chain_id,
             key_pair,

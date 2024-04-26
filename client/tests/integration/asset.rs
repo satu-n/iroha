@@ -264,11 +264,17 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let (dex_id, _dex_keypair) = gen_account_in("exchange");
-    let (seller_id, seller_keypair) = gen_account_in("company" );
-    let (buyer_id, buyer_keypair) = gen_account_in("company" );
-    let rate: AssetId = format!("btc/eth##{}", &dex_id).parse().expect("should be valid");
-    let seller_btc: AssetId = format!("btc#crypto#{}", &seller_id).parse().expect("should be valid");
-    let buyer_eth: AssetId = format!("eth#crypto#{}", &buyer_id).parse().expect("should be valid");
+    let (seller_id, seller_keypair) = gen_account_in("company");
+    let (buyer_id, buyer_keypair) = gen_account_in("company");
+    let rate: AssetId = format!("btc/eth##{}", &dex_id)
+        .parse()
+        .expect("should be valid");
+    let seller_btc: AssetId = format!("btc#crypto#{}", &seller_id)
+        .parse()
+        .expect("should be valid");
+    let buyer_eth: AssetId = format!("eth#crypto#{}", &buyer_id)
+        .parse()
+        .expect("should be valid");
     let instructions: [InstructionBox; 12] = [
         register::domain("exchange").into(),
         register::domain("company").into(),
@@ -310,9 +316,7 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
 
     let assert_balance = |asset_id: AssetId, expected: Numeric| {
         let got = test_client
-            .request(FindAssetQuantityById::new(
-                asset_id,
-            ))
+            .request(FindAssetQuantityById::new(asset_id))
             .expect("query should succeed");
         assert_eq!(got, expected);
     };
@@ -327,28 +331,22 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
         .expect("numeric should be u32 originally");
     test_client
         .submit_all_blocking([
-            Transfer::asset_numeric(
-                seller_btc.clone(),
-                10_u32,
-                buyer_id.clone(),
-            ),
-            Transfer::asset_numeric(
-                buyer_eth.clone(),
-                10_u32 * rate,
-                seller_id.clone(),
-            ),
+            Transfer::asset_numeric(seller_btc.clone(), 10_u32, buyer_id.clone()),
+            Transfer::asset_numeric(buyer_eth.clone(), 10_u32 * rate, seller_id.clone()),
         ])
         .expect("transaction should be committed");
 
     let assert_purged = |asset_id: AssetId| {
         let _err = test_client
-            .request(FindAssetQuantityById::new(
-                asset_id,
-            ))
+            .request(FindAssetQuantityById::new(asset_id))
             .expect_err("query should fail, as zero assets are purged from accounts");
     };
-    let seller_eth: AssetId = format!("eth#crypto#{}", &seller_id).parse().expect("should be valid");
-    let buyer_btc: AssetId = format!("btc#crypto#{}", &buyer_id).parse().expect("should be valid");
+    let seller_eth: AssetId = format!("eth#crypto#{}", &seller_id)
+        .parse()
+        .expect("should be valid");
+    let buyer_btc: AssetId = format!("btc#crypto#{}", &buyer_id)
+        .parse()
+        .expect("should be valid");
     // after: seller has $ETH200 and buyer has $BTC10
     assert_purged(seller_btc);
     assert_purged(buyer_eth);

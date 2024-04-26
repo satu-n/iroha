@@ -1,17 +1,21 @@
 //! Utility crate for standardized and random signatories.
 
-use iroha_data_model::prelude::{AccountId, DomainId};
-use iroha_crypto::KeyPair;
-use once_cell::sync::Lazy;
 use std::str::FromStr;
 
+use iroha_crypto::KeyPair;
+use iroha_data_model::prelude::{AccountId, DomainId};
+use once_cell::sync::Lazy;
+
 /// Generate [`AccountId`](iroha_data_model::account::AccountId) in the given `domain`.
-/// 
+///
 /// # Panics
-/// 
+///
 /// Panics if the given `domain` is invalid as [`Name`](iroha_data_model::name::Name).
 pub fn gen_account_in(domain: impl AsRef<str>) -> (AccountId, KeyPair) {
-    let domain_id: DomainId = domain.as_ref().parse().expect("domain name should be valid");
+    let domain_id: DomainId = domain
+        .as_ref()
+        .parse()
+        .expect("domain name should be valid");
     let key_pair = KeyPair::random();
     let account_id = AccountId::new(domain_id, key_pair.public_key().clone());
     (account_id, key_pair)
@@ -22,19 +26,16 @@ macro_rules! static_signatory_ed25519 {
         /// A standardized [`KeyPair`](iroha_crypto::KeyPair).
         pub static $kp: Lazy<KeyPair> = Lazy::new(|| {
             KeyPair::new(
-                iroha_crypto::PublicKey::from_str(
-                    $vk,
-                ).unwrap(),
-                iroha_crypto::PrivateKey::from_hex(
-                    iroha_crypto::Algorithm::Ed25519,
-                    $sk,
-                ).unwrap()
-            ).unwrap()
+                iroha_crypto::PublicKey::from_str($vk).unwrap(),
+                iroha_crypto::PrivateKey::from_hex(iroha_crypto::Algorithm::Ed25519, $sk).unwrap(),
+            )
+            .unwrap()
         });
     };
     ( $id:ident, $dm:literal, $kp:ident, $vk:literal, $sk:literal ) => {
         /// A standardized [`AccountId`](iroha_data_model::account::AccountId).
-        pub static $id: Lazy<AccountId> = Lazy::new(|| format!("{}@{}", $kp.public_key(), $dm).parse().unwrap());
+        pub static $id: Lazy<AccountId> =
+            Lazy::new(|| format!("{}@{}", $kp.public_key(), $dm).parse().unwrap());
 
         static_signatory_ed25519!($kp, $vk, $sk);
     };

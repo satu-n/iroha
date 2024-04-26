@@ -444,14 +444,14 @@ pub mod prelude {
 
 #[cfg(test)]
 mod tests {
+    use alloc::format;
     use core::{mem::ManuallyDrop, slice};
 
     use data_model::{prelude::numeric, query::asset::FindAssetQuantityById, BatchedResponseV1};
+    use iroha_sample_params::gen_account_in;
     use iroha_smart_contract_utils::encode_with_length_prefix;
     use parity_scale_codec::Decode;
     use webassembly_test::webassembly_test;
-    use alloc::format;
-    use iroha_sample_params::gen_account_in;
 
     use super::*;
 
@@ -491,14 +491,18 @@ mod tests {
     const ISI_RESULT: Result<(), ValidationFail> = Ok(());
 
     fn get_test_instruction() -> InstructionBox {
-        let new_asset_id: AssetId = format!("tulip##{}", gen_account_in("wonderland").0).parse().expect("should be valid"); // ACC_NAME alice
+        let new_asset_id: AssetId = format!("tulip##{}", gen_account_in("wonderland").0)
+            .parse()
+            .expect("should be valid"); // ACC_NAME alice
         let register_isi = Register::asset(Asset::new(new_asset_id, 1_u32));
 
         register_isi.into()
     }
 
     fn get_test_query() -> QueryBox {
-        let asset_id: AssetId = format!("rose##{}", gen_account_in("wonderland").0).parse().expect("should be valid"); // ACC_NAME alice
+        let asset_id: AssetId = format!("rose##{}", gen_account_in("wonderland").0)
+            .parse()
+            .expect("should be valid"); // ACC_NAME alice
         FindAssetQuantityById::new(asset_id).into()
     }
 

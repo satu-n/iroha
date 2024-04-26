@@ -38,10 +38,7 @@ fn send_tx_with_different_chain_id() {
     let chain_id_1 = ChainId::from("1");
 
     let transfer_instruction = Transfer::asset_numeric(
-        AssetId::new(
-            "test_asset#wonderland".parse().unwrap(),
-            sender_id.clone(),
-        ),
+        AssetId::new("test_asset#wonderland".parse().unwrap(), sender_id.clone()),
         to_transfer,
         receiver_id.clone(),
     );

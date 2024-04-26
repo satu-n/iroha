@@ -1,81 +1,20 @@
 //! Utility crate for testing.
-//! Provides readability and concise notation along with [`alias`] module.
-//!
-//! # Example
-//!
-//! ```rust
-//! use iroha_data_model::prelude::AccountId;
-//! use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
-//!
-//! let alice_id: AccountId = "alice@wonderland".parse_alias();
-//!
-//! let sp = &SAMPLE_PARAMS;
-//! let alice_keypair = sp.signatory["alice"].make_key_pair();
-//!
-//! assert_eq!(alice_id.signatory(), alice_keypair.public_key())
-//! ```
 
-use once_cell::sync::Lazy;
-use serde::Deserialize;
+use iroha_data_model::prelude::{AccountId, DomainId};
+use iroha_crypto::KeyPair;
 
-pub mod alias;
-
-const TOML_PATH: &str = "src/.toml";
-
-/// [`SampleParams`] from [`TOML_PATH`] file contents which is initialized on the first access.
-///
+/// Generate [`AccountId`] in the given `domain`.
+/// 
 /// # Panics
-///
-/// - [`TOML_PATH`] file does not exist
-/// - [`TOML_PATH`] file contents is not [`SampleParams`] compatible
-pub static SAMPLE_PARAMS: Lazy<SampleParams> = Lazy::new(|| {
-    let mut path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push(TOML_PATH);
-    let buf = std::fs::read_to_string(path).expect("file should exist and be utf-8 format");
-    toml::from_str(&buf).expect("should deserialize to SampleParams")
-});
-
-#[derive(Debug, Deserialize)]
-#[allow(missing_docs)]
-pub struct SampleParams {
-    pub signatory: std::collections::BTreeMap<String, Signatory>,
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(missing_docs)]
-pub struct Signatory {
-    pub public_key: String,
-    pub private_key: PrivateKey,
-}
-
-impl Signatory {
-    /// Make a [`iroha_crypto::PublicKey`] from the deserialized [`Signatory`]
-    pub fn make_public_key(&self) -> iroha_crypto::PublicKey {
-        self.public_key.parse().expect("sample should be valid")
-    }
-    /// Make a [`iroha_crypto::PrivateKey`] from the deserialized [`Signatory`]
-    pub fn make_private_key(&self) -> iroha_crypto::PrivateKey {
-        self.private_key.make()
-    }
-    /// Make a [`iroha_crypto::KeyPair`] from the deserialized [`Signatory`]
-    pub fn make_key_pair(&self) -> iroha_crypto::KeyPair {
-        iroha_crypto::KeyPair::new(self.make_public_key(), self.make_private_key())
-            .expect("should be valid pair")
-    }
-}
-
-#[derive(Debug, Deserialize)]
-#[allow(missing_docs)]
-pub struct PrivateKey {
-    pub algorithm: String,
-    pub payload: String,
-}
-
-impl PrivateKey {
-    /// Make a [`iroha_crypto::PrivateKey`] from the deserialized [`PrivateKey`]
-    pub fn make(&self) -> iroha_crypto::PrivateKey {
-        let algorithm = self.algorithm.parse().expect("sample should be valid");
-        iroha_crypto::PrivateKey::from_hex(algorithm, &self.payload)
-            .expect("sample should be valid")
-    }
+/// 
+/// Panics if the given `domain` is invalid as [`Name`].
+/// 
+/// SATO doc link
+/// [AccountId]: iroha_data_model::prelude::AccountId
+/// [Name]: iroha_data_model::prelude::Name
+pub fn gen_account_in(domain: impl AsRef<str>) -> (AccountId, KeyPair) {
+    let domain_id: DomainId = domain.as_ref().parse().expect("domain name should be valid");
+    let key_pair = KeyPair::random();
+    let account_id = AccountId::new(domain_id, key_pair.public_key().clone());
+    (account_id, key_pair)
 }

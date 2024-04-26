@@ -264,7 +264,7 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // before: 10btc@seller & 200eth@buyer
-    let rate: AssetId = "btc/eth##dex@exchange".parse_alias();
+    let rate: AssetId = format!("btc/eth##{}", gen_account_in("exchange").0).parse().expect("should be valid"); // ACC_NAME dex
     let instructions: [InstructionBox; 12] = [
         register::domain("exchange").into(),
         register::domain("company").into(),

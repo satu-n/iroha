@@ -263,21 +263,25 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_675).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    // before: 10btc@seller & 200eth@buyer
-    let rate: AssetId = format!("btc/eth##{}", gen_account_in("exchange").0).parse().expect("should be valid"); // ACC_NAME dex
+    let (dex_id, _dex_keypair) = gen_account_in("exchange");
+    let (seller_id, seller_keypair) = gen_account_in("company" );
+    let (buyer_id, buyer_keypair) = gen_account_in("company" );
+    let rate: AssetId = format!("btc/eth##{}", &dex_id).parse().expect("should be valid");
+    let seller_btc: AssetId = format!("btc#crypto#{}", &seller_id).parse().expect("should be valid");
+    let buyer_eth: AssetId = format!("eth#crypto#{}", &buyer_id).parse().expect("should be valid");
     let instructions: [InstructionBox; 12] = [
         register::domain("exchange").into(),
         register::domain("company").into(),
         register::domain("crypto").into(),
-        register::account("seller@company").into(),
-        register::account("buyer@company").into(),
-        register::account("dex@exchange").into(),
+        register::account(dex_id.clone()).into(),
+        register::account(seller_id.clone()).into(),
+        register::account(buyer_id.clone()).into(),
+        register::asset_definition_numeric("btc/eth#exchange").into(),
         register::asset_definition_numeric("btc#crypto").into(),
         register::asset_definition_numeric("eth#crypto").into(),
-        register::asset_definition_numeric("btc/eth#exchange").into(),
-        Mint::asset_numeric(10_u32, format!("btc#crypto#{}", gen_account_in("company").0).parse().expect("should be valid")).into(), // ACC_NAME seller
-        Mint::asset_numeric(200_u32, format!("eth#crypto#{}", gen_account_in("company").0).parse().expect("should be valid")).into(), // ACC_NAME buyer
         Mint::asset_numeric(20_u32, rate.clone()).into(),
+        Mint::asset_numeric(10_u32, seller_btc.clone()).into(),
+        Mint::asset_numeric(200_u32, buyer_eth.clone()).into(),
     ];
     test_client
         .submit_all_blocking(instructions)
@@ -301,13 +305,20 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
             .submit_transaction_blocking(&transaction)
             .expect("transaction should be committed");
     };
-    let seller_btc: AssetId = format!("btc#crypto#{}", gen_account_in("company").0).parse().expect("should be valid"); // ACC_NAME seller
-    let buyer_eth: AssetId = format!("eth#crypto#{}", gen_account_in("company").0).parse().expect("should be valid"); // ACC_NAME buyer
-    let sp = &SAMPLE_PARAMS;
-    let seller_keypair = sp.signatory["seller"].make_key_pair();
-    let buyer_keypair = sp.signatory["buyer"].make_key_pair();
-    alice_can_transfer_asset(seller_btc, seller_keypair);
-    alice_can_transfer_asset(buyer_eth, buyer_keypair);
+    alice_can_transfer_asset(seller_btc.clone(), seller_keypair);
+    alice_can_transfer_asset(buyer_eth.clone(), buyer_keypair);
+
+    let assert_balance = |asset_id: AssetId, expected: Numeric| {
+        let got = test_client
+            .request(FindAssetQuantityById::new(
+                asset_id,
+            ))
+            .expect("query should succeed");
+        assert_eq!(got, expected);
+    };
+    // before: seller has $BTC10 and buyer has $ETH200
+    assert_balance(seller_btc.clone(), numeric!(10));
+    assert_balance(buyer_eth.clone(), numeric!(200));
 
     let rate: u32 = test_client
         .request(FindAssetQuantityById::new(rate))
@@ -317,38 +328,32 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
     test_client
         .submit_all_blocking([
             Transfer::asset_numeric(
-                format!("btc#crypto#{}", gen_account_in("company").0).parse().expect("should be valid"), // ACC_NAME seller
+                seller_btc.clone(),
                 10_u32,
-                gen_account_in("company").0, // ACC_NAME buyer
+                buyer_id.clone(),
             ),
             Transfer::asset_numeric(
-                format!("eth#crypto#{}", gen_account_in("company").0).parse().expect("should be valid"), // ACC_NAME buyer
+                buyer_eth.clone(),
                 10_u32 * rate,
-                gen_account_in("company").0, // ACC_NAME seller
+                seller_id.clone(),
             ),
         ])
         .expect("transaction should be committed");
 
-    let assert_balance = |expected: Numeric, asset_name: &str, signatory_alias: &str| {
-        let got = test_client
-            .request(FindAssetQuantityById::new(
-                format!("{asset_name}#crypto#{signatory_alias}@company").parse_alias(),
-            ))
-            .expect("query should succeed");
-        assert_eq!(got, expected);
-    };
-    let assert_purged = |asset_name: &str, signatory_alias: &str| {
+    let assert_purged = |asset_id: AssetId| {
         let _err = test_client
             .request(FindAssetQuantityById::new(
-                format!("{asset_name}#crypto#{signatory_alias}@company").parse_alias(),
+                asset_id,
             ))
             .expect_err("query should fail, as zero assets are purged from accounts");
     };
-    // after: 200eth@seller & 10btc@buyer
-    assert_balance(numeric!(200), "eth", "seller");
-    assert_balance(numeric!(10), "btc", "buyer");
-    assert_purged("btc", "seller");
-    assert_purged("eth", "buyer");
+    let seller_eth: AssetId = format!("eth#crypto#{}", &seller_id).parse().expect("should be valid");
+    let buyer_btc: AssetId = format!("btc#crypto#{}", &buyer_id).parse().expect("should be valid");
+    // after: seller has $ETH200 and buyer has $BTC10
+    assert_purged(seller_btc);
+    assert_purged(buyer_eth);
+    assert_balance(seller_eth, numeric!(200));
+    assert_balance(buyer_btc, numeric!(10));
 }
 
 #[test]
@@ -455,8 +460,8 @@ mod register {
         Register::domain(Domain::new(id.parse().expect("should parse to DomainId")))
     }
 
-    pub fn account(alias: &str) -> Register<Account> {
-        Register::account(Account::new(alias.parse_alias()))
+    pub fn account(id: AccountId) -> Register<Account> {
+        Register::account(Account::new(id))
     }
 
     pub fn asset_definition_numeric(id: &str) -> Register<AssetDefinition> {

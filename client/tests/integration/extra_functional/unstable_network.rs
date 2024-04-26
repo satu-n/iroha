@@ -76,7 +76,7 @@ fn unstable_network(
 
     let pipeline_time = Config::pipeline_time();
 
-    let account_id = *ALICE_ID.clone();
+    let account_id = ALICE_ID.clone();
     let asset_definition_id: AssetDefinitionId = "camomile#wonderland".parse().expect("Valid");
     let register_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));

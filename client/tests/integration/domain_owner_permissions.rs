@@ -190,7 +190,7 @@ fn domain_owner_asset_permissions() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_090).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id = *ALICE_ID.clone();
+    let alice_id = ALICE_ID.clone();
     let kingdom_id: DomainId = "kingdom".parse()?;
     let (bob_id, bob_keypair) = gen_account_in("kingdom"); // ACC_NAME bob
     let coin_id: AssetDefinitionId = "coin#kingdom".parse()?;
@@ -255,7 +255,7 @@ fn domain_owner_trigger_permissions() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_095).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id = *ALICE_ID.clone();
+    let alice_id = ALICE_ID.clone();
     let kingdom_id: DomainId = "kingdom".parse()?;
     let (bob_id, _bob_keypair) = gen_account_in("kingdom"); // ACC_NAME bob
 
@@ -310,7 +310,7 @@ fn domain_owner_transfer() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_100).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let alice_id = *ALICE_ID.clone();
+    let alice_id = ALICE_ID.clone();
     let kingdom_id: DomainId = "kingdom".parse()?;
     let (bob_id, _bob_keypair) = gen_account_in("kingdom"); // ACC_NAME bob
 

@@ -13,7 +13,7 @@ use tokio::runtime::Runtime;
 
 #[test]
 fn restarted_peer_should_have_the_same_asset_amount() -> Result<()> {
-    let account_id = *ALICE_ID.clone();
+    let account_id = ALICE_ID.clone();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").unwrap();
     let quantity = numeric!(200);
 

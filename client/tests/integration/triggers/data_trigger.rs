@@ -9,7 +9,7 @@ fn must_execute_both_triggers() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_650).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let account_id = *ALICE_ID.clone();
+    let account_id = ALICE_ID.clone();
     let asset_definition_id = "rose#wonderland".parse()?;
     let asset_id = AssetId::new(asset_definition_id, account_id.clone());
 

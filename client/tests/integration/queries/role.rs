@@ -124,7 +124,7 @@ fn find_roles_by_account_id() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let role_ids = create_role_ids();
-    let alice_id = *ALICE_ID.clone();
+    let alice_id = ALICE_ID.clone();
 
     // Registering roles
     let register_roles = role_ids

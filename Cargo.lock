@@ -3336,6 +3336,7 @@ dependencies = [
  "getrandom",
  "iroha_data_model",
  "iroha_macro",
+ "iroha_sample_params",
  "iroha_smart_contract_derive",
  "iroha_smart_contract_utils",
  "parity-scale-codec",

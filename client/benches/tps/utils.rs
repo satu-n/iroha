@@ -192,7 +192,7 @@ impl MeasurerUnit {
         let submitter = self.client.clone();
         let interval_us_per_tx = self.config.interval_us_per_tx;
         let instructions = self.instructions();
-        let alice_id = *ALICE_ID.clone();
+        let alice_id = ALICE_ID.clone();
 
         let mut nonce = nonzero!(1_u32);
 

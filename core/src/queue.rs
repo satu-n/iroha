@@ -654,8 +654,7 @@ pub mod tests {
         let chain_id = ChainId::from("0");
 
         let max_txs_in_block = 2;
-        let sp = &SAMPLE_PARAMS;
-        let alice_key = sp.signatory["alice"].make_key_pair();
+        let (alice_id, alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
         let state = Arc::new(State::new(world_with_test_domains(), kura, query_handle));
@@ -670,12 +669,12 @@ pub mod tests {
         }];
         let mut tx = TransactionBuilder::new_with_time_source(
             chain_id.clone(),
-            gen_account_in("wonderland").0, // ACC_NAME alice
+            alice_id, // ACC_NAME alice
             &time_source,
         )
         .with_instructions(instructions);
         tx.set_ttl(Duration::from_millis(TTL_MS));
-        let tx = tx.sign(&alice_key);
+        let tx = tx.sign(&alice_keypair);
         let limits = TransactionLimits {
             max_instruction_number: 4096,
             max_wasm_size_bytes: 0,

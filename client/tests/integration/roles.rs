@@ -53,11 +53,9 @@ fn register_and_grant_role_for_metadata_access() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
-    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
 
     // Registering Mouse
-    let sp = &SAMPLE_PARAMS;
-    let mouse_keypair = sp.signatory["mouse"].make_key_pair();
     let register_mouse = Register::account(Account::new(mouse_id.clone()));
     test_client.submit_blocking(register_mouse)?;
 
@@ -219,11 +217,9 @@ fn grant_revoke_role_permissions() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
-    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
 
     // Registering Mouse
-    let sp = &SAMPLE_PARAMS;
-    let mouse_keypair = sp.signatory["mouse"].make_key_pair();
     let register_mouse = Register::account(Account::new(mouse_id.clone()));
     test_client.submit_blocking(register_mouse)?;
 

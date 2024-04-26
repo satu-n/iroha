@@ -22,9 +22,7 @@ fn executor_upgrade_should_work() -> Result<()> {
     let register_admin_domain = Register::domain(admin_domain);
     client.submit_blocking(register_admin_domain)?;
 
-    let (admin_id, _admin_keypair) = gen_account_in("admin"); // ACC_NAME admin
-    let sp = &SAMPLE_PARAMS;
-    let admin_keypair = sp.signatory["admin"].make_key_pair();
+    let (admin_id, admin_keypair) = gen_account_in("admin"); // ACC_NAME admin
     let admin_account = Account::new(admin_id.clone());
     let register_admin_account = Register::account(admin_account);
     client.submit_blocking(register_admin_account)?;

@@ -2,7 +2,7 @@
 use core::{fmt::Debug, str::FromStr as _, time::Duration};
 #[cfg(debug_assertions)]
 use std::sync::atomic::AtomicBool;
-use std::{collections::BTreeMap, path::Path, sync::Arc, thread};
+use std::{collections::BTreeMap, ops::Deref, path::Path, sync::Arc, thread};
 
 use eyre::Result;
 use futures::{prelude::*, stream::FuturesUnordered};
@@ -23,7 +23,7 @@ use iroha_primitives::{
     unique_vec,
     unique_vec::UniqueVec,
 };
-use iroha_sample_params::gen_account_in;
+use iroha_sample_params::{gen_account_in, ALICE_KEYPAIR, GENESIS_KEYPAIR, PEER_KEYPAIR};
 use rand::{seq::IteratorRandom, thread_rng};
 use serde_json::json;
 use tempfile::TempDir;
@@ -51,13 +51,11 @@ pub fn get_chain_id() -> ChainId {
 
 /// Get a key pair of a common signatory in the test network
 pub fn get_key_pair(signatory: Signatory) -> KeyPair {
-    let sp = &SAMPLE_PARAMS;
-    let name = match signatory {
-        Signatory::Peer => "peer",
-        Signatory::Genesis => "genesis",
-        Signatory::Alice => "alice",
-    };
-    sp.signatory[name].make_key_pair()
+    match signatory {
+        Signatory::Peer => &PEER_KEYPAIR,
+        Signatory::Genesis => &GENESIS_KEYPAIR,
+        Signatory::Alice => &ALICE_KEYPAIR,
+    }.deref().clone()
 }
 
 /// A common signatory in the test network

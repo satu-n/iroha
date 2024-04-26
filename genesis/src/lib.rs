@@ -344,7 +344,7 @@ impl<S> RawGenesisDomainBuilder<S> {
 
 #[cfg(test)]
 mod tests {
-    use iroha_sample_params::gen_account_in;
+    use iroha_sample_params::{ALICE_KEYPAIR, BOB_KEYPAIR};
 
     use super::*;
 
@@ -373,16 +373,13 @@ mod tests {
 
     #[test]
     fn genesis_block_builder_example() {
-        let sp = &SAMPLE_PARAMS;
         let public_key: std::collections::HashMap<&'static str, PublicKey> =
-            ["alice", "bob", "cheshire_cat", "mad_hatter"]
+            [("alice", ALICE_KEYPAIR.public_key().clone()),
+             ("bob", BOB_KEYPAIR.public_key().clone()),
+             ("cheshire_cat", KeyPair::random().into_parts().0),
+             ("mad_hatter", KeyPair::random().into_parts().0)
+             ]
                 .into_iter()
-                .map(|signatory_alias| {
-                    (
-                        signatory_alias,
-                        sp.signatory[signatory_alias].make_public_key(),
-                    )
-                })
                 .collect();
         let mut genesis_builder = RawGenesisBlockBuilder::default();
 

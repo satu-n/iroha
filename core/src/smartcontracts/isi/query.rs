@@ -182,12 +182,13 @@ impl ValidQuery for QueryBox {
 mod tests {
     use std::str::FromStr as _;
 
-    use iroha_crypto::{Hash, HashOf, KeyPair};
+    use iroha_crypto::{Hash, HashOf};
     use iroha_data_model::{
         metadata::MetadataValueBox, query::error::FindError, transaction::TransactionLimits,
     };
     use iroha_primitives::unique_vec::UniqueVec;
     use iroha_sample_params::gen_account_in;
+    use iroha_sample_params::ALICE_KEYPAIR;
     use once_cell::sync::Lazy;
     use tokio::test;
 
@@ -203,11 +204,7 @@ mod tests {
         PeersIds,
     };
 
-    static ALICE_KEYS: Lazy<KeyPair> = Lazy::new(|| {
-        let sp = &SAMPLE_PARAMS;
-        sp.signatory["alice"].make_key_pair()
-    });
-    static ALICE_ID: Lazy<AccountId> = Lazy::new(|| gen_account_in("wonderland").0); // ACC_NAME alice
+    static ALICE_ID: Lazy<AccountId> = Lazy::new(|| format!("{}@wonderland", ALICE_KEYPAIR.public_key()).parse().expect("should be valid")); // ACC_NAME alice
 
     fn world_with_test_domains() -> World {
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
@@ -295,14 +292,14 @@ mod tests {
                 let instructions: [InstructionBox; 0] = [];
                 let tx = TransactionBuilder::new(chain_id.clone(), ALICE_ID.clone())
                     .with_instructions(instructions)
-                    .sign(&ALICE_KEYS);
+                    .sign(&ALICE_KEYPAIR);
                 AcceptedTransaction::accept(tx, &chain_id, &limits)?
             };
             let invalid_tx = {
                 let isi = Fail::new("fail".to_owned());
                 let tx = TransactionBuilder::new(chain_id.clone(), ALICE_ID.clone())
                     .with_instructions([isi.clone(), isi])
-                    .sign(&ALICE_KEYS);
+                    .sign(&ALICE_KEYPAIR);
                 AcceptedTransaction::accept(tx, &chain_id, &huge_limits)?
             };
 
@@ -312,7 +309,7 @@ mod tests {
             let topology = Topology::new(UniqueVec::new());
             let first_block = BlockBuilder::new(transactions.clone(), topology.clone(), Vec::new())
                 .chain(0, &mut state_block)
-                .sign(&ALICE_KEYS)
+                .sign(&ALICE_KEYPAIR)
                 .unpack(|_| {})
                 .commit(&topology)
                 .unpack(|_| {})
@@ -324,7 +321,7 @@ mod tests {
             for _ in 1u64..blocks {
                 let block = BlockBuilder::new(transactions.clone(), topology.clone(), Vec::new())
                     .chain(0, &mut state_block)
-                    .sign(&ALICE_KEYS)
+                    .sign(&ALICE_KEYPAIR)
                     .unpack(|_| {})
                     .commit(&topology)
                     .unpack(|_| {})
@@ -458,7 +455,7 @@ mod tests {
         let instructions: [InstructionBox; 0] = [];
         let tx = TransactionBuilder::new(chain_id.clone(), ALICE_ID.clone())
             .with_instructions(instructions)
-            .sign(&ALICE_KEYS);
+            .sign(&ALICE_KEYPAIR);
 
         let tx_limits = &state_block.transaction_executor().transaction_limits;
         let va_tx = AcceptedTransaction::accept(tx, &chain_id, tx_limits)?;
@@ -466,7 +463,7 @@ mod tests {
         let topology = Topology::new(UniqueVec::new());
         let vcb = BlockBuilder::new(vec![va_tx.clone()], topology.clone(), Vec::new())
             .chain(0, &mut state_block)
-            .sign(&ALICE_KEYS)
+            .sign(&ALICE_KEYPAIR)
             .unpack(|_| {})
             .commit(&topology)
             .unpack(|_| {})
@@ -480,7 +477,7 @@ mod tests {
 
         let unapplied_tx = TransactionBuilder::new(chain_id, ALICE_ID.clone())
             .with_instructions([Unregister::account(gen_account_in("domain").0)]) // ACC_NAME account
-            .sign(&ALICE_KEYS);
+            .sign(&ALICE_KEYPAIR);
         let wrong_hash = unapplied_tx.hash();
         let not_found = FindTransactionByHash::new(wrong_hash).execute(&state_view);
         assert!(matches!(

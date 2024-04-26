@@ -26,14 +26,12 @@ impl StateValidateBlocks {
         let domains = 100;
         let accounts_per_domain = 1000;
         let assets_per_domain = 1000;
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
-        let sp = &SAMPLE_PARAMS;
-        let alice_keypair = sp.signatory["alice"].make_key_pair();
-        let state = build_state(rt, &account_id);
+        let (alice_id, alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let state = build_state(rt, &alice_id);
 
         let nth = 100;
         let instructions = [
-            populate_state(domains, accounts_per_domain, assets_per_domain, &account_id),
+            populate_state(domains, accounts_per_domain, assets_per_domain, &alice_id),
             delete_every_nth(domains, accounts_per_domain, assets_per_domain, nth),
             restore_every_nth(domains, accounts_per_domain, assets_per_domain, nth),
         ]
@@ -44,7 +42,7 @@ impl StateValidateBlocks {
             state,
             instructions,
             key_pair: alice_keypair,
-            account_id,
+            account_id: alice_id,
         }
     }
 

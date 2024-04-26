@@ -199,9 +199,7 @@ fn permissions_differ_not_only_by_names() {
     let (_rt, _not_drop, client) = <PeerBuilder>::new().with_port(10_745).start_with_runtime();
 
     let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
-    let (mouse_id, _mouse_keypair) = gen_account_in("outfit"); // ACC_NAME mouse
-    let sp = &SAMPLE_PARAMS;
-    let mouse_keypair = sp.signatory["mouse"].make_key_pair();
+    let (mouse_id, mouse_keypair) = gen_account_in("outfit"); // ACC_NAME mouse
 
     // Registering mouse
     let outfit_domain: DomainId = "outfit".parse().unwrap();
@@ -304,9 +302,7 @@ fn stored_vs_granted_token_payload() -> Result<()> {
     let asset_definition_id: AssetDefinitionId = "xor#wonderland".parse().expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::store(asset_definition_id.clone()));
-    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
-    let sp = &SAMPLE_PARAMS;
-    let mouse_keypair = sp.signatory["mouse"].make_key_pair();
+    let (mouse_id, mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
     let new_mouse_account = Account::new(mouse_id.clone());
     let instructions: [InstructionBox; 2] = [
         Register::account(new_mouse_account).into(),

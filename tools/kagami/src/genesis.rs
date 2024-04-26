@@ -14,7 +14,7 @@ use iroha_data_model::{
     prelude::AssetId,
 };
 use iroha_genesis::{executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile};
-use iroha_sample_params::gen_account_in;
+use iroha_sample_params::{gen_account_in, ALICE_KEYPAIR, BOB_KEYPAIR, CARPENTER_KEYPAIR};
 use serde_json::json;
 
 use super::*;
@@ -81,18 +81,17 @@ pub fn generate_default(
     let mut meta = Metadata::new();
     meta.insert_with_limits("key".parse()?, "value".to_owned(), Limits::new(1024, 1024))?;
 
-    let sp = &SAMPLE_PARAMS;
     let mut genesis = builder
         .domain_with_metadata("wonderland".parse()?, meta.clone())
-        .account_with_metadata(sp.signatory["alice"].make_public_key(), meta.clone())
-        .account_with_metadata(sp.signatory["bob"].make_public_key(), meta)
+        .account_with_metadata(ALICE_KEYPAIR.public_key().clone(), meta.clone())
+        .account_with_metadata(BOB_KEYPAIR.public_key().clone(), meta)
         .asset(
             "rose".parse()?,
             AssetValueType::Numeric(NumericSpec::default()),
         )
         .finish_domain()
         .domain("garden_of_live_flowers".parse()?)
-        .account(sp.signatory["carpenter"].make_public_key())
+        .account(CARPENTER_KEYPAIR.public_key().clone())
         .asset(
             "cabbage".parse()?,
             AssetValueType::Numeric(NumericSpec::default()),

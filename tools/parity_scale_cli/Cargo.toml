@@ -23,7 +23,6 @@ iroha_schema_gen = { workspace = true }
 iroha_crypto = { workspace = true }
 iroha_version = { workspace = true }
 iroha_genesis = { workspace = true }
-iroha_sample_params = { workspace = true }
 
 clap = { workspace = true, features = ["derive", "cargo"] }
 eyre = { workspace = true }
@@ -39,3 +38,6 @@ parity-scale-codec = { workspace = true }
 serde_json = { workspace = true, features = ["std"]}
 serde = { workspace = true }
 eyre = { workspace = true }
+
+[dev-dependencies]
+iroha_sample_params = { workspace = true }

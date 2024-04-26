@@ -34,7 +34,7 @@ fn correct_pagination_assets_after_creating_new_one() {
     ));
     let sort_by_metadata_key = Name::from_str("sort").expect("Valid");
     let sorting = Sorting::by_metadata_key(sort_by_metadata_key.clone());
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
 
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_635).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);

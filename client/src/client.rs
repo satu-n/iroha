@@ -1586,10 +1586,11 @@ mod tests {
     const ENCRYPTED_CREDENTIALS: &str = "bWFkX2hhdHRlcjppbG92ZXRlYQ==";
 
     fn config_factory() -> Config {
+        let (account_id, key_pair) = gen_account_in("wonderland");
         Config {
             chain_id: ChainId::from("0"),
-            key_pair: KeyPair::random(),
-            account_id: gen_account_in("wonderland").0, // ACC_NAME alice
+            key_pair,
+            account_id, // SATO
             torii_api_url: "http://127.0.0.1:8080".parse().unwrap(),
             basic_auth: None,
             transaction_add_nonce: false,

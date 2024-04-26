@@ -197,7 +197,7 @@ fn produce_multiple_events() -> Result<()> {
     init_receiver.recv()?;
 
     // Registering role
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let role_id = RoleId::from_str("TEST_ROLE")?;
     let token_1 = PermissionToken::new(
         "CanRemoveKeyValueInAccount".parse()?,

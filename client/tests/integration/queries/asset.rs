@@ -23,7 +23,7 @@ fn find_asset_total_quantity() -> Result<()> {
     test_client.submit_blocking(Register::domain(domain))?;
 
     let accounts: [AccountId; 5] = [
-        gen_account_in("wonderland").0, // ACC_NAME alice
+        *ALICE_ID.clone(),
         gen_account_in("wonderland").0, // ACC_NAME mad_hatter
         gen_account_in("wonderland").0, // ACC_NAME cheshire_cat
         gen_account_in("wonderland").0, // ACC_NAME caterpillar

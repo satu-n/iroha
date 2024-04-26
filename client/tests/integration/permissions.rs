@@ -23,7 +23,7 @@ fn genesis_transactions_are_validated() {
 
     let genesis = GenesisNetwork::test_with_instructions([Grant::permission(
         PermissionToken::new("InvalidToken".parse().unwrap(), &json!(null)),
-        gen_account_in("wonderland").0, // ACC_NAME alice
+        *ALICE_ID.clone(),
     )
     .into()]);
 
@@ -72,7 +72,7 @@ fn permissions_disallow_asset_transfer() {
     wait_for_genesis_committed(&[iroha_client.clone()], 0);
 
     // Given
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
     let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
     let asset_definition_id: AssetDefinitionId = "xor#wonderland".parse().expect("Valid");
@@ -125,7 +125,7 @@ fn permissions_disallow_asset_burn() {
 
     let (_rt, _peer, iroha_client) = <PeerBuilder>::new().with_port(10_735).start_with_runtime();
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
     let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
@@ -198,7 +198,7 @@ fn permissions_differ_not_only_by_names() {
 
     let (_rt, _not_drop, client) = <PeerBuilder>::new().with_port(10_745).start_with_runtime();
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let (mouse_id, mouse_keypair) = gen_account_in("outfit"); // ACC_NAME mouse
 
     // Registering mouse
@@ -296,7 +296,7 @@ fn stored_vs_granted_token_payload() -> Result<()> {
     wait_for_genesis_committed(&[iroha_client.clone()], 0);
 
     // Given
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
 
     // Registering mouse and asset definition
     let asset_definition_id: AssetDefinitionId = "xor#wonderland".parse().expect("Valid");
@@ -346,7 +346,7 @@ fn permission_tokens_are_unified() {
     wait_for_genesis_committed(&[iroha_client.clone()], 0);
 
     // Given
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
 
     let allow_alice_to_transfer_rose_1 = Grant::permission(
         PermissionToken::from_str_unchecked(

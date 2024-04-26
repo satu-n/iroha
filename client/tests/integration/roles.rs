@@ -52,7 +52,7 @@ fn register_and_grant_role_for_metadata_access() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_700).start_with_runtime();
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let (mouse_id, mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
 
     // Registering Mouse
@@ -103,7 +103,7 @@ fn unregistered_role_removed_from_account() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let role_id: RoleId = "root".parse().expect("Valid");
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
 
     // Registering Mouse
@@ -148,7 +148,7 @@ fn role_with_invalid_permissions_is_not_accepted() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let role_id = RoleId::from_str("ACCESS_TO_ACCOUNT_METADATA")?;
-    let rose_asset_id: AssetId = format!("rose##{}", gen_account_in("wonderland").0).parse().expect("should be valid"); // ACC_NAME alice
+    let rose_asset_id: AssetId = format!("rose##{}", *ALICE_ID.clone()).parse().expect("should be valid");
     let role = Role::new(role_id).add_permission(PermissionToken::new(
         "CanSetKeyValueInAccount".parse()?,
         &json!({ "account_id": rose_asset_id }),
@@ -216,7 +216,7 @@ fn grant_revoke_role_permissions() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_245).start_with_runtime();
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let (mouse_id, mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
 
     // Registering Mouse

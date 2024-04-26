@@ -29,7 +29,7 @@ fn find_accounts_with_asset() -> Result<()> {
     ));
 
     let accounts: [AccountId; 5] = [
-        gen_account_in("wonderland").0, // ACC_NAME alice
+        *ALICE_ID.clone(),
         gen_account_in("wonderland").0, // ACC_NAME mad_hatter
         gen_account_in("wonderland").0, // ACC_NAME cheshire_cat
         gen_account_in("wonderland").0, // ACC_NAME caterpillar

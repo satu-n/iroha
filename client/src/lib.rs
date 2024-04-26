@@ -11,7 +11,6 @@ mod query_builder;
 /// Module containing sample configurations for tests and benchmarks.
 pub mod samples {
     use eyre::Result;
-    use iroha_sample_params::gen_account_in;
     use iroha_telemetry::metrics::Status;
     use url::Url;
 
@@ -28,11 +27,12 @@ pub mod samples {
 
     /// Get sample client configuration.
     pub fn get_client_config(chain_id: ChainId, key_pair: KeyPair, torii_api_url: Url) -> Config {
+        let account_id = format!("{}@wonderland", key_pair.public_key()).parse().expect("should be valid");
         Config {
             chain_id,
             key_pair,
             torii_api_url,
-            account_id: gen_account_in("wonderland").0, // ACC_NAME alice
+            account_id, // SATO
             basic_auth: None,
             transaction_ttl: DEFAULT_TRANSACTION_TIME_TO_LIVE,
             transaction_status_timeout: DEFAULT_TRANSACTION_STATUS_TIMEOUT,

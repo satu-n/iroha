@@ -15,7 +15,7 @@ fn failed_trigger_revert() -> Result<()> {
 
     //When
     let trigger_id = TriggerId::from_str("trigger")?;
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland")?;
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));

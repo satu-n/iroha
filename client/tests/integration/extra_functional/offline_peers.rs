@@ -26,7 +26,7 @@ fn genesis_block_is_committed_with_some_offline_peers() -> Result<()> {
     wait_for_genesis_committed(&network.clients(), 1);
 
     //When
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let roses = "rose#wonderland".parse()?;
     let alice_has_roses = numeric!(13);
 

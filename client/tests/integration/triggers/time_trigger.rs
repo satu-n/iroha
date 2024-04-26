@@ -46,7 +46,7 @@ fn time_trigger_execution_count_error_should_be_less_than_15_percent() -> Result
     // Start listening BEFORE submitting any transaction not to miss any block committed event
     let event_listener = get_block_committed_event_listener(&test_client)?;
 
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
     let asset_definition_id = "rose#wonderland".parse().expect("Valid");
     let asset_id = AssetId::new(asset_definition_id, account_id.clone());
 
@@ -106,7 +106,7 @@ fn change_asset_metadata_after_1_sec() -> Result<()> {
     let event_listener = get_block_committed_event_listener(&test_client)?;
 
     let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland").expect("Valid");
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
     let key = Name::from_str("petal")?;
 
     let schedule = TimeSchedule::starting_at(start_time + PERIOD);
@@ -147,7 +147,7 @@ fn pre_commit_trigger_should_be_executed() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let asset_definition_id = "rose#wonderland".parse().expect("Valid");
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
     let asset_id = AssetId::new(asset_definition_id, account_id.clone());
 
     let mut prev_value = get_asset_value(&mut test_client, asset_id.clone());
@@ -192,7 +192,7 @@ fn mint_nft_for_every_user_every_1_sec() -> Result<()> {
     let (_rt, _peer, mut test_client) = <PeerBuilder>::new().with_port(10_780).start_with_runtime();
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
 
     let accounts: Vec<AccountId> = vec![
         alice_id.clone(),

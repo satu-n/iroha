@@ -24,7 +24,7 @@ fn client_register_asset_should_add_asset_once_but_not_twice() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
 
     let asset_definition_id = AssetDefinitionId::from_str("test_asset#wonderland").expect("Valid");
     let create_asset: InstructionBox =
@@ -60,7 +60,7 @@ fn unregister_asset_should_remove_asset_from_account() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
 
     let asset_definition_id = AssetDefinitionId::from_str("test_asset#wonderland").expect("Valid");
     let asset_id = AssetId::new(asset_definition_id.clone(), account_id.clone());
@@ -102,7 +102,7 @@ fn client_add_asset_quantity_to_existing_asset_should_increase_asset_amount() ->
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));
@@ -133,7 +133,7 @@ fn client_add_big_asset_quantity_to_existing_asset_should_increase_asset_amount(
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));
@@ -164,7 +164,7 @@ fn client_add_asset_with_decimal_should_increase_asset_amount() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let account_id = *ALICE_ID.clone();
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let asset_definition = AssetDefinition::numeric(asset_definition_id.clone());
     let create_asset = Register::asset_definition(asset_definition);
@@ -287,7 +287,7 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
         .submit_all_blocking(instructions)
         .expect("transaction should be committed");
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let alice_can_transfer_asset = |asset_id: AssetId, owner_key_pair: KeyPair| {
         let instruction = Grant::permission(
             PermissionToken::new(
@@ -361,7 +361,7 @@ fn transfer_asset_definition() {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_060).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
     let asset_definition_id: AssetDefinitionId = "asset#wonderland".parse().expect("Valid");
 
@@ -395,7 +395,7 @@ fn fail_if_dont_satisfy_spec() {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_125).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let alice_id = *ALICE_ID.clone();
     let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
     let asset_definition_id: AssetDefinitionId = "asset#wonderland".parse().expect("Valid");
     let asset_id: AssetId = AssetId::new(asset_definition_id.clone(), alice_id.clone());

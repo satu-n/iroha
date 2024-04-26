@@ -13,7 +13,7 @@ use iroha_client::{
     },
 };
 use iroha_crypto::KeyPair;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use nonzero_ext::nonzero;
 use rand::{seq::SliceRandom, thread_rng};
 use test_network::*;
@@ -34,7 +34,7 @@ fn correct_pagination_assets_after_creating_new_one() {
     ));
     let sort_by_metadata_key = Name::from_str("sort").expect("Valid");
     let sorting = Sorting::by_metadata_key(sort_by_metadata_key.clone());
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
 
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_635).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);

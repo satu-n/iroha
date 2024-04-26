@@ -5,7 +5,7 @@ use iroha_client::{
     client::{self, QueryResult},
     data_model::{prelude::*, query::error::QueryExecutionFail},
 };
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use serde_json::json;
 use test_network::*;
 
@@ -124,7 +124,7 @@ fn find_roles_by_account_id() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let role_ids = create_role_ids();
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
 
     // Registering roles
     let register_roles = role_ids

@@ -2,7 +2,7 @@ use std::{fmt::Write as _, str::FromStr, sync::mpsc, thread};
 
 use eyre::Result;
 use iroha_client::data_model::{prelude::*, transaction::WasmSmartContract};
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use parity_scale_codec::Encode as _;
 use serde_json::json;
 use test_network::*;
@@ -197,7 +197,7 @@ fn produce_multiple_events() -> Result<()> {
     init_receiver.recv()?;
 
     // Registering role
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let role_id = RoleId::from_str("TEST_ROLE")?;
     let token_1 = PermissionToken::new(
         "CanRemoveKeyValueInAccount".parse()?,
@@ -214,7 +214,7 @@ fn produce_multiple_events() -> Result<()> {
     client.submit_all_blocking(instructions)?;
 
     // Grants role to Bob
-    let bob_id: AccountId = "bob@wonderland".parse_alias();
+    let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
     let grant_role = Grant::role(role_id.clone(), bob_id.clone());
     client.submit_blocking(grant_role)?;
 

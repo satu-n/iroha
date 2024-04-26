@@ -3,7 +3,7 @@ use iroha_client::{
     client::{self, Client},
     data_model::prelude::*,
 };
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use test_network::*;
 
 #[test]
@@ -12,7 +12,7 @@ fn test_mint_asset_when_new_asset_definition_created() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let asset_definition_id = "rose#wonderland".parse()?;
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_id = AssetId::new(asset_definition_id, account_id.clone());
     let prev_value = get_asset_value(&mut test_client, asset_id.clone());
 

@@ -16,19 +16,19 @@ use iroha_core::{
 use iroha_crypto::KeyPair;
 use iroha_data_model::{prelude::*, transaction::TransactionLimits};
 use iroha_primitives::unique_vec::UniqueVec;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use tokio::{fs, runtime::Runtime};
 
 async fn measure_block_size_for_n_executors(n_executors: u32) {
     let chain_id = ChainId::from("0");
 
-    let alice_id: AccountId = "alice@test".parse_alias();
-    let bob_id: AccountId = "bob@test".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("test"); // ACC_NAME alice
+    let (bob_id, _bob_keypair) = gen_account_in("test"); // ACC_NAME bob
     let xor_id = AssetDefinitionId::from_str("xor#test").expect("tested");
     let alice_xor_id = AssetId::new(xor_id, alice_id);
     let transfer = Transfer::asset_numeric(alice_xor_id, 10u32, bob_id);
     let keypair = KeyPair::random();
-    let tx = TransactionBuilder::new(chain_id.clone(), "alice@wonderland".parse_alias())
+    let tx = TransactionBuilder::new(chain_id.clone(), gen_account_in("wonderland").0) // ACC_NAME alice
         .with_instructions([transfer])
         .sign(&keypair);
     let transaction_limits = TransactionLimits {

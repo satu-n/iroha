@@ -2,7 +2,7 @@ use std::str::FromStr as _;
 
 use eyre::Result;
 use iroha_client::{data_model::prelude::*, samples::get_status_json};
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use iroha_telemetry::metrics::Status;
 use test_network::*;
 
@@ -30,7 +30,7 @@ fn json_and_scale_statuses_equality() -> Result<()> {
 
     let coins = ["xor", "btc", "eth", "doge"];
 
-    let account_id: AccountId = "account@domain".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("domain"); // ACC_NAME account
 
     for coin in coins {
         let asset_definition_id = AssetDefinitionId::from_str(&format!("{coin}#wonderland"))?;

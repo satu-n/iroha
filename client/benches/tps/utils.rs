@@ -10,7 +10,7 @@ use iroha_client::{
 };
 use iroha_crypto::KeyPair;
 use iroha_data_model::events::pipeline::{BlockEventFilter, BlockStatus};
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use nonzero_ext::nonzero;
 use serde::Deserialize;
 use test_network::*;
@@ -192,7 +192,7 @@ impl MeasurerUnit {
         let submitter = self.client.clone();
         let interval_us_per_tx = self.config.interval_us_per_tx;
         let instructions = self.instructions();
-        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
 
         let mut nonce = nonzero!(1_u32);
 

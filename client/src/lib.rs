@@ -11,7 +11,7 @@ mod query_builder;
 /// Module containing sample configurations for tests and benchmarks.
 pub mod samples {
     use eyre::Result;
-    use iroha_sample_params::alias::Alias;
+    use iroha_sample_params::gen_account_in;
     use iroha_telemetry::metrics::Status;
     use url::Url;
 
@@ -32,7 +32,7 @@ pub mod samples {
             chain_id,
             key_pair,
             torii_api_url,
-            account_id: "alice@wonderland".parse_alias(),
+            account_id: gen_account_in("wonderland").0, // ACC_NAME alice
             basic_auth: None,
             transaction_ttl: DEFAULT_TRANSACTION_TIME_TO_LIVE,
             transaction_status_timeout: DEFAULT_TRANSACTION_STATUS_TIMEOUT,

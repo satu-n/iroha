@@ -172,7 +172,7 @@ mod tests {
     use std::cmp::Ordering;
 
     use iroha_data_model::{account::AccountId, role::RoleId};
-    use iroha_sample_params::alias::Alias;
+    use iroha_sample_params::gen_account_in;
 
     use crate::role::RoleIdWithOwner;
 
@@ -180,8 +180,8 @@ mod tests {
     fn cmp_role_id_with_owner() {
         let role_id_a: RoleId = "a".parse().expect("failed to parse RoleId");
         let role_id_b: RoleId = "b".parse().expect("failed to parse RoleId");
-        let account_id_a: AccountId = "a@domain".parse_alias();
-        let account_id_b: AccountId = "b@domain".parse_alias();
+        let (account_id_a, _account_keypair_a) = gen_account_in("domain"); // ACC_NAME a
+        let (account_id_b, _account_keypair_b) = gen_account_in("domain"); // ACC_NAME b
 
         let mut role_ids_with_owner = Vec::new();
         for account_id in [&account_id_a, &account_id_b] {

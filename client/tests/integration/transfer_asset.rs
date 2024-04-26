@@ -10,7 +10,7 @@ use iroha_data_model::{
     isi::InstructionBox,
     name::Name,
 };
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use test_network::*;
 
 #[test]
@@ -135,8 +135,8 @@ fn simulate_transfer<T>(
 }
 
 fn generate_two_ids() -> (AccountId, AccountId) {
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
-    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
     (alice_id, mouse_id)
 }
 

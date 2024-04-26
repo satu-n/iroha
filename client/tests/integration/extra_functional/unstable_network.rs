@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::{prelude::*, Level},
 };
 use iroha_config::parameters::actual::Root as Config;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use rand::seq::SliceRandom;
 use test_network::*;
 use tokio::runtime::Runtime;
@@ -76,7 +76,7 @@ fn unstable_network(
 
     let pipeline_time = Config::pipeline_time();
 
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_definition_id: AssetDefinitionId = "camomile#wonderland".parse().expect("Valid");
     let register_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));

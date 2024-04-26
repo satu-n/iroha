@@ -22,9 +22,9 @@ where
     ///
     /// ```rust
     /// use iroha_data_model::prelude::{AccountId, AssetId};
-    /// use iroha_sample_params::alias::Alias;
+    /// use iroha_sample_params::gen_account_in;
     ///
-    /// let alice_from_alias: AccountId = "alice@wonderland".parse_alias();
+    /// let (alice_from_alias, _alice_from_alias_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     /// let alice: AccountId = "ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland".parse().expect("should be valid");
     /// assert_eq!(alice, alice_from_alias);
     ///
@@ -32,7 +32,7 @@ where
     /// let rose: AssetId = "rose##ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland".parse().expect("should be valid");
     /// assert_eq!(rose, rose_from_alias);
     ///
-    /// use iroha_sample_params::alias::FromAlias;
+    /// use iroha_sample_params::gen_account_in;
     ///
     /// let alice_from_alias_alt = AccountId::from_alias("alice@wonderland");
     /// assert_eq!(alice_from_alias, alice_from_alias_alt);
@@ -68,9 +68,9 @@ where
     ///
     /// ```rust
     /// use iroha_data_model::prelude::AccountId;
-    /// use iroha_sample_params::alias::{Alias, FromAlias};
+    /// use iroha_sample_params::gen_account_in;
     ///
-    /// let alice_from_alias: AccountId = "alice@wonderland".parse_alias();
+    /// let (alice_from_alias, _alice_from_alias_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     /// let alice_from_alias_alt = AccountId::from_alias("alice@wonderland");
     /// assert_eq!(alice_from_alias, alice_from_alias_alt);
     /// ```
@@ -120,7 +120,7 @@ mod tests {
 
     #[test]
     fn parse_sample_account_alias() {
-        let alice: AccountId = "alice@wonderland".parse_alias();
+        let (alice, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let sp = &crate::SAMPLE_PARAMS;
         assert_eq!(
             *alice.signatory(),
@@ -146,6 +146,6 @@ mod tests {
                 .parse::<AssetDefinitionId>()
                 .expect("should be valid")
         );
-        assert_eq!(*rose.account_id(), "alice@wonderland".parse_alias());
+        assert_eq!(*rose.account_id(), gen_account_in("wonderland").0); // ACC_NAME alice
     }
 }

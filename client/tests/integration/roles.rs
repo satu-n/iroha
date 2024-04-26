@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::prelude::*,
 };
 use iroha_data_model::transaction::error::TransactionRejectionReason;
-use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+use iroha_sample_params::gen_account_in;
 use serde_json::json;
 use test_network::*;
 
@@ -52,8 +52,8 @@ fn register_and_grant_role_for_metadata_access() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_700).start_with_runtime();
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
-    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
 
     // Registering Mouse
     let sp = &SAMPLE_PARAMS;
@@ -105,8 +105,8 @@ fn unregistered_role_removed_from_account() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let role_id: RoleId = "root".parse().expect("Valid");
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
-    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
 
     // Registering Mouse
     let register_mouse = Register::account(Account::new(mouse_id.clone()));
@@ -218,8 +218,8 @@ fn grant_revoke_role_permissions() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_245).start_with_runtime();
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
-    let mouse_id: AccountId = "mouse@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
 
     // Registering Mouse
     let sp = &SAMPLE_PARAMS;

@@ -241,7 +241,7 @@ mod tests {
 
     use iroha_data_model::metadata::MetadataValueBox;
     use iroha_genesis::GENESIS_ACCOUNT_ID;
-    use iroha_sample_params::alias::{Alias, FromAlias};
+    use iroha_sample_params::gen_account_in;
     use tokio::test;
 
     use super::*;
@@ -279,7 +279,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut staet_block = state.block();
         let mut state_transaction = staet_block.transaction();
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
         let asset_id = AssetId::new(asset_definition_id, account_id.clone());
         SetKeyValue::asset(
@@ -310,7 +310,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         SetKeyValue::account(
             account_id.clone(),
             Name::from_str("Bytes")?,
@@ -343,7 +343,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         SetKeyValue::asset_definition(
             definition_id.clone(),
             Name::from_str("Bytes")?,
@@ -374,7 +374,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let domain_id = DomainId::from_str("wonderland")?;
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         SetKeyValue::domain(
             domain_id.clone(),
             Name::from_str("Bytes")?,
@@ -404,7 +404,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let trigger_id = TriggerId::from_str("test_trigger_id")?;
 
         assert!(matches!(
@@ -423,8 +423,8 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let account_id: AccountId = "alice@wonderland".parse_alias();
-        let fake_account_id: AccountId = "john_doe@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (fake_account_id, _fake_account_keypair) = gen_account_in("wonderland"); // ACC_NAME john_doe
         let trigger_id = TriggerId::from_str("test_trigger_id")?;
 
         // register fake account

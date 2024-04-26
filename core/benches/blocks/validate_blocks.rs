@@ -1,6 +1,6 @@
 use iroha_core::{prelude::*, state::State};
 use iroha_data_model::{isi::InstructionBox, prelude::*};
-use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+use iroha_sample_params::gen_account_in;
 
 #[path = "./common.rs"]
 mod common;
@@ -26,7 +26,7 @@ impl StateValidateBlocks {
         let domains = 100;
         let accounts_per_domain = 1000;
         let assets_per_domain = 1000;
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let sp = &SAMPLE_PARAMS;
         let alice_keypair = sp.signatory["alice"].make_key_pair();
         let state = build_state(rt, &account_id);

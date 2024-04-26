@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::prelude::*,
 };
 use iroha_logger::info;
-use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+use iroha_sample_params::gen_account_in;
 use serde_json::json;
 use test_network::*;
 
@@ -22,7 +22,7 @@ fn executor_upgrade_should_work() -> Result<()> {
     let register_admin_domain = Register::domain(admin_domain);
     client.submit_blocking(register_admin_domain)?;
 
-    let admin_id: AccountId = "admin@admin".parse_alias();
+    let (admin_id, _admin_keypair) = gen_account_in("admin"); // ACC_NAME admin
     let sp = &SAMPLE_PARAMS;
     let admin_keypair = sp.signatory["admin"].make_key_pair();
     let admin_account = Account::new(admin_id.clone());
@@ -31,7 +31,7 @@ fn executor_upgrade_should_work() -> Result<()> {
 
     // Check that admin isn't allowed to transfer alice's rose by default
     let alice_rose: AssetId = "rose##alice@wonderland".parse_alias();
-    let admin_rose: AccountId = "admin@admin".parse_alias();
+    let (admin_rose, _admin_rose_keypair) = gen_account_in("admin"); // ACC_NAME admin
     let transfer_alice_rose = Transfer::asset_numeric(alice_rose, 1u32, admin_rose);
     let transfer_rose_tx = TransactionBuilder::new(chain_id.clone(), admin_id.clone())
         .with_instructions([transfer_alice_rose.clone()])
@@ -72,7 +72,7 @@ fn executor_upgrade_should_run_migration() -> Result<()> {
         .any(|id| id == &can_unregister_domain_token_id));
 
     // Check that Alice has permission to unregister Wonderland
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let alice_tokens = client
         .request(FindPermissionTokensByAccountId::new(alice_id.clone()))?
         .collect::<QueryResult<Vec<_>>>()

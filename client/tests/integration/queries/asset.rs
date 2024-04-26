@@ -8,7 +8,7 @@ use iroha_client::{
         query::{asset::FindTotalAssetQuantityByAssetDefinitionId, error::QueryExecutionFail},
     },
 };
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use test_network::*;
 
 #[test]
@@ -23,11 +23,11 @@ fn find_asset_total_quantity() -> Result<()> {
     test_client.submit_blocking(Register::domain(domain))?;
 
     let accounts: [AccountId; 5] = [
-        "alice@wonderland".parse_alias(),
-        "mad_hatter@wonderland".parse_alias(),
-        "cheshire_cat@wonderland".parse_alias(),
-        "caterpillar@wonderland".parse_alias(),
-        "white_rabbit@looking_glass".parse_alias(),
+        gen_account_in("wonderland").0, // ACC_NAME alice
+        gen_account_in("wonderland").0, // ACC_NAME mad_hatter
+        gen_account_in("wonderland").0, // ACC_NAME cheshire_cat
+        gen_account_in("wonderland").0, // ACC_NAME caterpillar
+        gen_account_in("looking_glass").0, // ACC_NAME white_rabbit
     ];
 
     // Registering accounts

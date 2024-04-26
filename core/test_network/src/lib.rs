@@ -23,7 +23,7 @@ use iroha_primitives::{
     unique_vec,
     unique_vec::UniqueVec,
 };
-use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+use iroha_sample_params::gen_account_in;
 use rand::{seq::IteratorRandom, thread_rng};
 use serde_json::json;
 use tempfile::TempDir;
@@ -90,7 +90,7 @@ impl TestGenesis for GenesisNetwork {
 
         let rose_definition_id =
             AssetDefinitionId::from_str("rose#wonderland").expect("valid names");
-        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
 
         let mint_rose_permission = PermissionToken::new(
             "CanMintAssetWithDefinition".parse().unwrap(),

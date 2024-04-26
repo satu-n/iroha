@@ -1,7 +1,7 @@
 use eyre::Result;
 use iroha_client::{client, data_model::prelude::*};
 use iroha_data_model::asset::AssetValue;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use test_network::*;
 
 #[test]
@@ -9,7 +9,7 @@ fn must_execute_both_triggers() -> Result<()> {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(10_650).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_definition_id = "rose#wonderland".parse()?;
     let asset_id = AssetId::new(asset_definition_id, account_id.clone());
 
@@ -39,7 +39,7 @@ fn must_execute_both_triggers() -> Result<()> {
     test_client.submit_blocking(register_trigger)?;
 
     test_client.submit_blocking(Register::account(Account::new(
-        "white_rabbit@wonderland".parse_alias(),
+        gen_account_in("wonderland").0, // ACC_NAME white_rabbit
     )))?;
     test_client.submit_blocking(Register::domain(Domain::new("neverland".parse()?)))?;
 
@@ -57,7 +57,7 @@ fn domain_scoped_trigger_must_be_executed_only_on_events_in_its_domain() -> Resu
     let create_neverland_domain: InstructionBox =
         Register::domain(Domain::new("neverland".parse()?)).into();
 
-    let account_id: AccountId = "sapporo@neverland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("neverland"); // ACC_NAME sapporo
     let create_sapporo_account = Register::account(Account::new(account_id.clone())).into();
 
     let asset_definition_id: AssetDefinitionId = "sakura#neverland".parse()?;
@@ -88,11 +88,11 @@ fn domain_scoped_trigger_must_be_executed_only_on_events_in_its_domain() -> Resu
     test_client.submit_blocking(register_trigger)?;
 
     test_client.submit_blocking(Register::account(Account::new(
-        "asahi@wonderland".parse_alias(),
+        gen_account_in("wonderland").0, // ACC_NAME asahi
     )))?;
 
     test_client.submit_blocking(Register::account(Account::new(
-        "asahi@neverland".parse_alias(),
+        gen_account_in("neverland").0, // ACC_NAME asahi
     )))?;
 
     let new_value = get_asset_value(&test_client, asset_id);

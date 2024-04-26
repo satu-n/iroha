@@ -486,13 +486,13 @@ pub mod isi {
     #[cfg(test)]
     mod test {
         use iroha_data_model::{prelude::AssetDefinition, ParseError};
-        use iroha_sample_params::alias::Alias;
+        use iroha_sample_params::gen_account_in;
 
         use crate::smartcontracts::isi::Registrable as _;
 
         #[test]
         fn cannot_forbid_minting_on_asset_mintable_infinitely() -> Result<(), ParseError> {
-            let authority = "alice@wonderland".parse_alias();
+            let (authority, _authority_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
             let mut definition = AssetDefinition::numeric("test#hello".parse()?).build(&authority);
             assert!(super::forbid_minting(&mut definition).is_err());
             Ok(())

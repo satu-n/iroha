@@ -6,14 +6,14 @@ use iroha_client::{
     data_model::prelude::*,
 };
 use iroha_config::parameters::actual::Root as Config;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use rand::{seq::SliceRandom, thread_rng, Rng};
 use test_network::*;
 use tokio::runtime::Runtime;
 
 #[test]
 fn restarted_peer_should_have_the_same_asset_amount() -> Result<()> {
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").unwrap();
     let quantity = numeric!(200);
 

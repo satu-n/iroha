@@ -744,7 +744,7 @@ pub mod prelude {
 #[cfg(test)]
 #[cfg(feature = "transparent_api")]
 mod tests {
-    use iroha_sample_params::alias::Alias;
+    use iroha_sample_params::gen_account_in;
 
     use super::*;
     use crate::{
@@ -757,9 +757,9 @@ mod tests {
     #[cfg(feature = "transparent_api")]
     fn entity_scope() {
         let domain_id: DomainId = "wonderland".parse().expect("Valid");
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let asset_id: AssetId = "rose##alice@wonderland".parse_alias();
-        let domain_owner_id: AccountId = "genesis@genesis".parse_alias();
+        let (domain_owner_id, _domain_owner_keypair) = gen_account_in("genesis"); // ACC_NAME genesis
 
         let domain = Domain {
             id: domain_id.clone(),

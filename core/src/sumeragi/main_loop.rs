@@ -1202,7 +1202,7 @@ fn handle_block_sync<'state, F: Fn(PipelineEventBox)>(
 #[cfg(test)]
 mod tests {
     use iroha_primitives::{unique_vec, unique_vec::UniqueVec};
-    use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+    use iroha_sample_params::gen_account_in;
     use tokio::test;
 
     use super::*;
@@ -1220,7 +1220,7 @@ mod tests {
         leader_key_pair: &KeyPair,
     ) -> (State, Arc<Kura>, SignedBlock, PublicKey) {
         // Predefined world state
-        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let sp = &SAMPLE_PARAMS;
         let alice_keypair = sp.signatory["alice"].make_key_pair();
         let genesis_public_key = sp.signatory["genesis"].make_public_key();

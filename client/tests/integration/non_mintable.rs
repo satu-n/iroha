@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::{metadata::UnlimitedMetadata, prelude::*},
 };
 use iroha_data_model::isi::InstructionBox;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use test_network::*;
 
 #[test]
@@ -15,7 +15,7 @@ fn non_mintable_asset_can_be_minted_once_but_not_twice() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset = Register::asset_definition(
         AssetDefinition::numeric(asset_definition_id.clone()).mintable_once(),
@@ -63,7 +63,7 @@ fn non_mintable_asset_cannot_be_minted_if_registered_with_non_zero_value() -> Re
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset: InstructionBox = Register::asset_definition(
         AssetDefinition::numeric(asset_definition_id.clone()).mintable_once(),
@@ -100,7 +100,7 @@ fn non_mintable_asset_can_be_minted_if_registered_with_zero_value() -> Result<()
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     // Given
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset = Register::asset_definition(
         AssetDefinition::numeric(asset_definition_id.clone()).mintable_once(),

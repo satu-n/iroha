@@ -187,7 +187,7 @@ mod tests {
         metadata::MetadataValueBox, query::error::FindError, transaction::TransactionLimits,
     };
     use iroha_primitives::unique_vec::UniqueVec;
-    use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+    use iroha_sample_params::gen_account_in;
     use once_cell::sync::Lazy;
     use tokio::test;
 
@@ -207,7 +207,7 @@ mod tests {
         let sp = &SAMPLE_PARAMS;
         sp.signatory["alice"].make_key_pair()
     });
-    static ALICE_ID: Lazy<AccountId> = Lazy::new(|| "alice@wonderland".parse_alias());
+    static ALICE_ID: Lazy<AccountId> = Lazy::new(|| gen_account_in("wonderland").0); // ACC_NAME alice
 
     fn world_with_test_domains() -> World {
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
@@ -479,7 +479,7 @@ mod tests {
         let state_view = state.view();
 
         let unapplied_tx = TransactionBuilder::new(chain_id, ALICE_ID.clone())
-            .with_instructions([Unregister::account("account@domain".parse_alias())])
+            .with_instructions([Unregister::account(gen_account_in("domain").0)]) // ACC_NAME account
             .sign(&ALICE_KEYS);
         let wrong_hash = unapplied_tx.hash();
         let not_found = FindTransactionByHash::new(wrong_hash).execute(&state_view);

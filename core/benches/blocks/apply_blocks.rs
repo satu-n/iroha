@@ -1,7 +1,7 @@
 use eyre::Result;
 use iroha_core::{block::CommittedBlock, prelude::*, state::State};
 use iroha_data_model::prelude::*;
-use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+use iroha_sample_params::gen_account_in;
 
 #[path = "./common.rs"]
 mod common;
@@ -24,7 +24,7 @@ impl StateApplyBlocks {
         let domains = 100;
         let accounts_per_domain = 1000;
         let assets_per_domain = 1000;
-        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let sp = &SAMPLE_PARAMS;
         let alice_keypair = sp.signatory["alice"].make_key_pair();
         let state = build_state(rt, &alice_id);

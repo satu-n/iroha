@@ -322,7 +322,7 @@ mod tests {
     use std::str::FromStr as _;
 
     use iroha_data_model::{ipfs::IpfsPath, prelude::*};
-    use iroha_sample_params::alias::Alias;
+    use iroha_sample_params::gen_account_in;
 
     use super::*;
 
@@ -337,7 +337,7 @@ mod tests {
                 limits,
             )
             .expect("Valid");
-        let account = Account::new("alice@wonderland".parse_alias()).with_metadata(metadata);
+        let account = Account::new(gen_account_in("wonderland").0).with_metadata(metadata); // ACC_NAME alice
 
         decode_sample("account.bin", String::from("NewAccount"), &account);
     }
@@ -361,7 +361,7 @@ mod tests {
 
     #[test]
     fn decode_trigger_sample() {
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let rose_definition_id = AssetDefinitionId::new(
             "wonderland".parse().expect("Valid"),
             "rose".parse().expect("Valid"),

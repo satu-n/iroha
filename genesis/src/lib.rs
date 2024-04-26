@@ -344,7 +344,7 @@ impl<S> RawGenesisDomainBuilder<S> {
 
 #[cfg(test)]
 mod tests {
-    use iroha_sample_params::SAMPLE_PARAMS;
+    use iroha_sample_params::gen_account_in;
 
     use super::*;
 

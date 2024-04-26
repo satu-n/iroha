@@ -14,7 +14,7 @@ use iroha_data_model::{
     prelude::AssetId,
 };
 use iroha_genesis::{executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile};
-use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+use iroha_sample_params::gen_account_in;
 use serde_json::json;
 
 use super::*;
@@ -100,7 +100,7 @@ pub fn generate_default(
         .finish_domain()
         .build();
 
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let mint = Mint::asset_numeric(
         13u32,
         AssetId::new("rose#wonderland".parse()?, alice_id.clone()),
@@ -114,7 +114,7 @@ pub fn generate_default(
         alice_id.clone(),
     );
     let transfer_domain_ownerhip = Transfer::domain(
-        "genesis@genesis".parse_alias(),
+        gen_account_in("genesis").0, // ACC_NAME genesis
         "wonderland".parse()?,
         alice_id.clone(),
     );

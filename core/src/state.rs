@@ -1766,7 +1766,7 @@ pub(crate) mod deserialize {
 mod tests {
     use iroha_data_model::block::BlockPayload;
     use iroha_primitives::unique_vec::UniqueVec;
-    use iroha_sample_params::alias::Alias;
+    use iroha_sample_params::gen_account_in;
 
     use super::*;
     use crate::{
@@ -1845,14 +1845,14 @@ mod tests {
 
     #[test]
     fn role_account_range() {
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let roles = [
             RoleIdWithOwner::new(account_id.clone(), "1".parse().unwrap()),
             RoleIdWithOwner::new(account_id.clone(), "2".parse().unwrap()),
-            RoleIdWithOwner::new("bob@wonderland".parse_alias(), "3".parse().unwrap()),
-            RoleIdWithOwner::new("a@wonderland".parse_alias(), "4".parse().unwrap()),
-            RoleIdWithOwner::new("0@0".parse_alias(), "5".parse().unwrap()),
-            RoleIdWithOwner::new("1@1".parse_alias(), "6".parse().unwrap()),
+            RoleIdWithOwner::new(gen_account_in("wonderland").0, "3".parse().unwrap()), // ACC_NAME bob
+            RoleIdWithOwner::new(gen_account_in("wonderland").0, "4".parse().unwrap()), // ACC_NAME a
+            RoleIdWithOwner::new(gen_account_in("0").0, "5".parse().unwrap()), // ACC_NAME 0
+            RoleIdWithOwner::new(gen_account_in("1").0, "6".parse().unwrap()), // ACC_NAME 1
         ];
         let map = BTreeSet::from(roles);
 

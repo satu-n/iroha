@@ -1705,7 +1705,7 @@ impl<C: wasmtime::AsContextMut> GetExport for (&wasmtime::Instance, C) {
 #[cfg(test)]
 mod tests {
     use iroha_data_model::query::{sorting::Sorting, Pagination};
-    use iroha_sample_params::alias::Alias;
+    use iroha_sample_params::gen_account_in;
     use parity_scale_codec::Encode;
     use tokio::test;
 
@@ -1770,13 +1770,13 @@ mod tests {
 
     #[test]
     async fn execute_instruction_exported() -> Result<(), Error> {
-        let authority: AccountId = "alice@wonderland".parse_alias();
+        let (authority, _authority_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world_with_test_account(&authority), kura, query_handle);
 
         let isi_hex = {
-            let new_authority: AccountId = "mad_hatter@wonderland".parse_alias();
+            let (new_authority, _new_authority_keypair) = gen_account_in("wonderland"); // ACC_NAME mad_hatter
             let register_isi = Register::account(Account::new(new_authority));
             encode_hex(InstructionBox::from(register_isi))
         };
@@ -1812,7 +1812,7 @@ mod tests {
 
     #[test]
     async fn execute_query_exported() -> Result<(), Error> {
-        let authority: AccountId = "alice@wonderland".parse_alias();
+        let (authority, _authority_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world_with_test_account(&authority), kura, query_handle);
@@ -1857,14 +1857,14 @@ mod tests {
 
     #[test]
     async fn instruction_limit_reached() -> Result<(), Error> {
-        let authority: AccountId = "alice@wonderland".parse_alias();
+        let (authority, _authority_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
 
         let state = State::new(world_with_test_account(&authority), kura, query_handle);
 
         let isi_hex = {
-            let new_authority: AccountId = "mad_hatter@wonderland".parse_alias();
+            let (new_authority, _new_authority_keypair) = gen_account_in("wonderland"); // ACC_NAME mad_hatter
             let register_isi = Register::account(Account::new(new_authority));
             encode_hex(InstructionBox::from(register_isi))
         };
@@ -1907,13 +1907,13 @@ mod tests {
 
     #[test]
     async fn instructions_not_allowed() -> Result<(), Error> {
-        let authority: AccountId = "alice@wonderland".parse_alias();
+        let (authority, _authority_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world_with_test_account(&authority), kura, query_handle);
 
         let isi_hex = {
-            let new_authority: AccountId = "mad_hatter@wonderland".parse_alias();
+            let (new_authority, _new_authority_keypair) = gen_account_in("wonderland"); // ACC_NAME mad_hatter
             let register_isi = Register::account(Account::new(new_authority));
             encode_hex(InstructionBox::from(register_isi))
         };
@@ -1956,7 +1956,7 @@ mod tests {
 
     #[test]
     async fn queries_not_allowed() -> Result<(), Error> {
-        let authority: AccountId = "alice@wonderland".parse_alias();
+        let (authority, _authority_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world_with_test_account(&authority), kura, query_handle);
@@ -1998,7 +1998,7 @@ mod tests {
 
     #[test]
     async fn trigger_related_func_is_not_linked_for_smart_contract() -> Result<(), Error> {
-        let authority: AccountId = "alice@wonderland".parse_alias();
+        let (authority, _authority_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let kura = Kura::blank_kura_for_testing();
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world_with_test_account(&authority), kura, query_handle);

@@ -380,7 +380,7 @@ pub mod tests {
     use std::{str::FromStr, sync::Arc, thread, time::Duration};
 
     use iroha_data_model::{prelude::*, transaction::TransactionLimits};
-    use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+    use iroha_sample_params::gen_account_in;
     use nonzero_ext::nonzero;
     use rand::Rng as _;
     use tokio::test;
@@ -436,7 +436,7 @@ pub mod tests {
 
     pub fn world_with_test_domains() -> World {
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
-        let account_id: AccountId = "alice@wonderland".parse_alias();
+        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let mut domain = Domain::new(domain_id).build(&account_id);
         let account = Account::new(account_id.clone()).build(&account_id);
         assert!(domain.add_account(account).is_none());
@@ -676,7 +676,7 @@ pub mod tests {
         }];
         let mut tx = TransactionBuilder::new_with_time_source(
             chain_id.clone(),
-            "alice@wonderland".parse_alias(),
+            gen_account_in("wonderland").0, // ACC_NAME alice
             &time_source,
         )
         .with_instructions(instructions);
@@ -836,8 +836,8 @@ pub mod tests {
         let kura = Kura::blank_kura_for_testing();
         let world = {
             let domain_id = DomainId::from_str("wonderland").expect("Valid");
-            let alice_account_id: AccountId = "alice@wonderland".parse_alias();
-            let bob_account_id: AccountId = "bob@wonderland".parse_alias();
+            let (alice_account_id, _alice_account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+            let (bob_account_id, _bob_account_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
             let mut domain = Domain::new(domain_id).build(&alice_account_id);
             let alice_account = Account::new(alice_account_id.clone()).build(&alice_account_id);
             let bob_account = Account::new(bob_account_id.clone()).build(&bob_account_id);

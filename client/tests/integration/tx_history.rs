@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::{prelude::*, query::Pagination},
 };
 use iroha_config::parameters::actual::Root as Config;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use nonzero_ext::nonzero;
 use test_network::*;
 
@@ -19,7 +19,7 @@ fn client_has_rejected_and_acepted_txs_should_return_tx_history() -> Result<()> 
     let pipeline_time = Config::pipeline_time();
 
     // Given
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland")?;
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));

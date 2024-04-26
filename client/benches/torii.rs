@@ -10,7 +10,7 @@ use iroha_client::{
 };
 use iroha_genesis::{GenesisNetwork, RawGenesisBlockBuilder};
 use iroha_primitives::unique_vec;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use iroha_version::Encode;
 use test_network::{get_chain_id, get_key_pair, Peer as TestPeer, PeerBuilder, TestRuntime};
 use tokio::runtime::Runtime;
@@ -59,7 +59,7 @@ fn query_requests(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("query-requests");
     let domain_id: DomainId = "domain".parse().expect("Valid");
     let create_domain = Register::domain(Domain::new(domain_id));
-    let account_id: AccountId = "account@domain".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("domain"); // ACC_NAME account
     let create_account = Register::account(Account::new(account_id.clone()));
     let asset_definition_id: AssetDefinitionId = "xor#domain".parse().expect("Valid");
     let create_asset =
@@ -154,7 +154,7 @@ fn instruction_submits(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("instruction-requests");
     let domain_id: DomainId = "domain".parse().expect("Valid");
     let create_domain: InstructionBox = Register::domain(Domain::new(domain_id)).into();
-    let account_id: AccountId = "account@domain".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("domain"); // ACC_NAME account
     let create_account = Register::account(Account::new(account_id.clone())).into();
     let asset_definition_id: AssetDefinitionId = "xor#domain".parse().expect("Valid");
     let client_config = iroha_client::samples::get_client_config(

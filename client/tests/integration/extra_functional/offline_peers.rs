@@ -9,7 +9,7 @@ use iroha_client::{
 use iroha_config::parameters::actual::Root as Config;
 use iroha_crypto::KeyPair;
 use iroha_primitives::addr::socket_addr;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use test_network::*;
 use tokio::runtime::Runtime;
 
@@ -26,7 +26,7 @@ fn genesis_block_is_committed_with_some_offline_peers() -> Result<()> {
     wait_for_genesis_committed(&network.clients(), 1);
 
     //When
-    let alice_id: AccountId = "alice@wonderland".parse_alias();
+    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let roses = "rose#wonderland".parse()?;
     let alice_has_roses = numeric!(13);
 

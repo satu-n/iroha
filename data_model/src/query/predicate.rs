@@ -611,7 +611,7 @@ pub mod string {
     #[cfg(test)]
     mod tests {
         use iroha_primitives::addr::socket_addr;
-        use iroha_sample_params::alias::Alias;
+        use iroha_sample_params::gen_account_in;
 
         use super::*;
 
@@ -692,7 +692,7 @@ pub mod string {
             #[cfg(compile_err)] // FIXME the trait `Alias<AccountId>` is not implemented for `str`
             #[test]
             fn account_id() {
-                let id = IdBox::AccountId("alice@wonderland".parse_alias());
+                let id = IdBox::AccountId(gen_account_in("wonderland").0); // ACC_NAME alice
                 assert!(StringPredicate::starts_with("alice@").applies(&id));
                 assert!(StringPredicate::ends_with("@wonderland").applies(&id));
                 assert!(StringPredicate::is("alice@wonderland").applies(&id));
@@ -712,7 +712,7 @@ pub mod string {
             #[test]
             fn asset_id() {
                 let definition_id = "rose#wonderland".parse().expect("Valid");
-                let account_id: AccountId = "alice@wonderland".parse_alias();
+                let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
                 let id = IdBox::AssetId(crate::asset::AssetId {
                     definition_id,
                     account_id,
@@ -1230,7 +1230,7 @@ pub mod value {
     mod test {
         use iroha_crypto::KeyPair;
         use iroha_primitives::{addr::socket_addr, numeric::numeric};
-        use iroha_sample_params::alias::Alias;
+        use iroha_sample_params::gen_account_in;
 
         use super::*;
         use crate::{
@@ -1249,11 +1249,11 @@ pub mod value {
                 ));
                 println!("{pred:?}");
                 assert!(pred.applies(&QueryOutputBox::Id(IdBox::AccountId(
-                    "alice@wonderland".parse_alias()
+                    gen_account_in("wonderland").0 // ACC_NAME alice
                 ))));
                 assert!(
                     pred.applies(&QueryOutputBox::Identifiable(IdentifiableBox::NewAccount(
-                        Account::new("alice@wonderland".parse_alias(),)
+                        Account::new(gen_account_in("wonderland").0,) // ACC_NAME alice
                     )))
                 );
                 assert!(!pred.applies(
@@ -1296,7 +1296,7 @@ pub mod value {
         #[cfg(compile_err)] // FIXME the trait `Alias<AccountId>` is not implemented for `str`
         #[test]
         fn container_vec() {
-            let alice_id: AccountId = "alice@wonderland".parse_alias();
+            let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
             let list = QueryOutputBox::Vec(vec![
                 QueryOutputBox::Identifiable(
                     Domain::new("alice".parse::<DomainId>().unwrap()).into(),

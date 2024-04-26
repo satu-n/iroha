@@ -14,7 +14,7 @@ use iroha_core::{
 };
 use iroha_data_model::{isi::InstructionBox, prelude::*, transaction::TransactionLimits};
 use iroha_primitives::unique_vec::UniqueVec;
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 
 const START_DOMAIN: &str = "start";
 const START_ACCOUNT: &str = "starter";
@@ -27,7 +27,7 @@ const TRANSACTION_LIMITS: TransactionLimits = TransactionLimits {
 fn build_test_transaction(keys: &KeyPair, chain_id: ChainId) -> SignedTransaction {
     let domain_id = "domain".parse().expect("Valid");
     let create_domain: InstructionBox = Register::domain(Domain::new(domain_id)).into();
-    let create_account = Register::account(Account::new("account@domain".parse_alias())).into();
+    let create_account = Register::account(Account::new(gen_account_in("domain").0)).into(); // ACC_NAME account
     let asset_definition_id = "xor#domain".parse().expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id)).into();
@@ -67,7 +67,7 @@ fn build_test_and_transient_state(keys: KeyPair) -> State {
         let wasm = std::fs::read(&path_to_executor)
             .unwrap_or_else(|_| panic!("Failed to read file: {}", path_to_executor.display()));
         let executor = Executor::new(WasmSmartContract::from_compiled(wasm));
-        let authority = "genesis@genesis".parse_alias();
+        let (authority, _authority_keypair) = gen_account_in("genesis"); // ACC_NAME genesis
         Upgrade::new(executor)
             .execute(&authority, &mut state_transaction)
             .expect("Failed to load executor");

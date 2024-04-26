@@ -5,7 +5,7 @@ use iroha_client::{
     client::QueryResult,
     data_model::{prelude::*, query::asset::FindAllAssetsDefinitions, trigger::TriggerId},
 };
-use iroha_sample_params::alias::Alias;
+use iroha_sample_params::gen_account_in;
 use test_network::*;
 
 #[test]
@@ -15,7 +15,7 @@ fn failed_trigger_revert() -> Result<()> {
 
     //When
     let trigger_id = TriggerId::from_str("trigger")?;
-    let account_id: AccountId = "alice@wonderland".parse_alias();
+    let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland")?;
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));

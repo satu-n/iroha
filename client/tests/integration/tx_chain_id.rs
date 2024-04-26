@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use iroha_data_model::prelude::*;
 use iroha_primitives::numeric::numeric;
-use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+use iroha_sample_params::gen_account_in;
 use test_network::*;
 
 #[test]
@@ -10,10 +10,10 @@ fn send_tx_with_different_chain_id() {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_250).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
     // Given
-    let sender_account_id: AccountId = "sender@wonderland".parse_alias();
+    let (sender_account_id, _sender_account_keypair) = gen_account_in("wonderland"); // ACC_NAME sender
     let sp = &SAMPLE_PARAMS;
     let sender_keypair = sp.signatory["sender"].make_key_pair();
-    let receiver_account_id: AccountId = "receiver@wonderland".parse_alias();
+    let (receiver_account_id, _receiver_account_keypair) = gen_account_in("wonderland"); // ACC_NAME receiver
     let asset_definition_id = AssetDefinitionId::from_str("test_asset#wonderland").unwrap();
     let to_transfer = numeric!(1);
 

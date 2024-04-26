@@ -796,7 +796,7 @@ mod tests {
     use iroha_crypto::SignatureVerificationFail;
     use iroha_data_model::prelude::*;
     use iroha_genesis::{GENESIS_ACCOUNT_ID, GENESIS_DOMAIN_ID};
-    use iroha_sample_params::{alias::Alias, SAMPLE_PARAMS};
+    use iroha_sample_params::gen_account_in;
 
     use super::*;
     use crate::{
@@ -822,7 +822,7 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let sp = &SAMPLE_PARAMS;
         let alice_keypair = sp.signatory["alice"].make_key_pair();
         let account = Account::new(alice_id.clone()).build(&alice_id);
@@ -879,7 +879,7 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let sp = &SAMPLE_PARAMS;
         let alice_keypair = sp.signatory["alice"].make_key_pair();
         let account = Account::new(alice_id.clone()).build(&alice_id);
@@ -954,7 +954,7 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let alice_id: AccountId = "alice@wonderland".parse_alias();
+        let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
         let sp = &SAMPLE_PARAMS;
         let alice_keypair = sp.signatory["alice"].make_key_pair();
         let account = Account::new(alice_id.clone()).build(&alice_id);

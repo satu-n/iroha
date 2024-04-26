@@ -275,8 +275,8 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
         register::asset_definition_numeric("btc#crypto").into(),
         register::asset_definition_numeric("eth#crypto").into(),
         register::asset_definition_numeric("btc/eth#exchange").into(),
-        Mint::asset_numeric(10_u32, "btc#crypto#seller@company".parse_alias()).into(),
-        Mint::asset_numeric(200_u32, "eth#crypto#buyer@company".parse_alias()).into(),
+        Mint::asset_numeric(10_u32, format!("btc#crypto#{}", gen_account_in("company").0).parse().expect("should be valid")).into(), // ACC_NAME seller
+        Mint::asset_numeric(200_u32, format!("eth#crypto#{}", gen_account_in("company").0).parse().expect("should be valid")).into(), // ACC_NAME buyer
         Mint::asset_numeric(20_u32, rate.clone()).into(),
     ];
     test_client
@@ -301,8 +301,8 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
             .submit_transaction_blocking(&transaction)
             .expect("transaction should be committed");
     };
-    let seller_btc: AssetId = "btc#crypto#seller@company".parse_alias();
-    let buyer_eth: AssetId = "eth#crypto#buyer@company".parse_alias();
+    let seller_btc: AssetId = format!("btc#crypto#{}", gen_account_in("company").0).parse().expect("should be valid"); // ACC_NAME seller
+    let buyer_eth: AssetId = format!("eth#crypto#{}", gen_account_in("company").0).parse().expect("should be valid"); // ACC_NAME buyer
     let sp = &SAMPLE_PARAMS;
     let seller_keypair = sp.signatory["seller"].make_key_pair();
     let buyer_keypair = sp.signatory["buyer"].make_key_pair();
@@ -317,12 +317,12 @@ fn find_rate_and_make_exchange_isi_should_succeed() {
     test_client
         .submit_all_blocking([
             Transfer::asset_numeric(
-                "btc#crypto#seller@company".parse_alias(),
+                format!("btc#crypto#{}", gen_account_in("company").0).parse().expect("should be valid"), // ACC_NAME seller
                 10_u32,
                 gen_account_in("company").0, // ACC_NAME buyer
             ),
             Transfer::asset_numeric(
-                "eth#crypto#buyer@company".parse_alias(),
+                format!("eth#crypto#{}", gen_account_in("company").0).parse().expect("should be valid"), // ACC_NAME buyer
                 10_u32 * rate,
                 gen_account_in("company").0, // ACC_NAME seller
             ),

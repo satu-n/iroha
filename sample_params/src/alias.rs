@@ -28,7 +28,7 @@ where
     /// let alice: AccountId = "ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland".parse().expect("should be valid");
     /// assert_eq!(alice, alice_from_alias);
     ///
-    /// let rose_from_alias: AssetId = "rose##alice@wonderland".parse_alias();
+    /// let rose_from_alias: AssetId = format!("rose##{}", gen_account_in("wonderland").0).parse().expect("should be valid"); // ACC_NAME alice
     /// let rose: AssetId = "rose##ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland".parse().expect("should be valid");
     /// assert_eq!(rose, rose_from_alias);
     ///
@@ -139,7 +139,7 @@ mod tests {
 
     #[test]
     fn parse_sample_asset_alias() {
-        let rose: AssetId = "rose##alice@wonderland".parse_alias();
+        let rose: AssetId = format!("rose##{}", gen_account_in("wonderland").0).parse().expect("should be valid"); // ACC_NAME alice
         assert_eq!(
             *rose.definition_id(),
             "rose#wonderland"

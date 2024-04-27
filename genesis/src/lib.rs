@@ -25,7 +25,6 @@ use serde::{Deserialize, Serialize};
 pub static GENESIS_DOMAIN_ID: Lazy<DomainId> = Lazy::new(|| "genesis".parse().unwrap());
 
 /// [`AccountId`](iroha_data_model::account::AccountId) of the genesis account.
-/// TODO remove "genesis account" #4409
 pub static GENESIS_ACCOUNT_ID: Lazy<AccountId> = Lazy::new(|| {
     AccountId::new(
         GENESIS_DOMAIN_ID.clone(),

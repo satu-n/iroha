@@ -70,7 +70,6 @@ pub fn get_user_config(
     let (peer_public_key, peer_private_key) =
         peer_key_pair.unwrap_or_else(KeyPair::random).into_parts();
     iroha_logger::info!(%peer_public_key);
-    // TODO remove "genesis account" #4409
     let (genesis_public_key, genesis_private_key) = genesis_key_pair
         .unwrap_or_else(KeyPair::random)
         .into_parts();

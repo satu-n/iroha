@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::prelude::*,
 };
 use iroha_logger::info;
-use iroha_sample_params::{gen_account_in, ALICE_ID};
+use iroha_sample_params::{ADMIN_ID, ADMIN_KEYPAIR, ALICE_ID};
 use serde_json::json;
 use test_network::*;
 
@@ -18,12 +18,11 @@ fn executor_upgrade_should_work() -> Result<()> {
     wait_for_genesis_committed(&vec![client.clone()], 0);
 
     // Register `admin` domain and account
-    let admin_domain = Domain::new("admin".parse()?);
+    let admin_domain = Domain::new(ADMIN_ID.domain_id().clone());
     let register_admin_domain = Register::domain(admin_domain);
     client.submit_blocking(register_admin_domain)?;
 
-    let (admin_id, admin_keypair) = gen_account_in("admin"); // ACC_NAME admin
-    let admin_account = Account::new(admin_id.clone());
+    let admin_account = Account::new(ADMIN_ID.clone());
     let register_admin_account = Register::account(admin_account);
     client.submit_blocking(register_admin_account)?;
 
@@ -31,11 +30,10 @@ fn executor_upgrade_should_work() -> Result<()> {
     let alice_rose: AssetId = format!("rose##{}", ALICE_ID.clone())
         .parse()
         .expect("should be valid");
-    let (admin_rose, _admin_rose_keypair) = gen_account_in("admin"); // ACC_NAME admin
-    let transfer_alice_rose = Transfer::asset_numeric(alice_rose, 1u32, admin_rose);
-    let transfer_rose_tx = TransactionBuilder::new(chain_id.clone(), admin_id.clone())
+    let transfer_alice_rose = Transfer::asset_numeric(alice_rose, 1u32, ADMIN_ID.clone());
+    let transfer_rose_tx = TransactionBuilder::new(chain_id.clone(), ADMIN_ID.clone())
         .with_instructions([transfer_alice_rose.clone()])
-        .sign(&admin_keypair);
+        .sign(&ADMIN_KEYPAIR);
     let _ = client
         .submit_transaction_blocking(&transfer_rose_tx)
         .expect_err("Should fail");
@@ -47,9 +45,9 @@ fn executor_upgrade_should_work() -> Result<()> {
 
     // Check that admin can transfer alice's rose now
     // Creating new transaction instead of cloning, because we need to update it's creation time
-    let transfer_rose_tx = TransactionBuilder::new(chain_id, admin_id)
+    let transfer_rose_tx = TransactionBuilder::new(chain_id, ADMIN_ID.clone())
         .with_instructions([transfer_alice_rose])
-        .sign(&admin_keypair);
+        .sign(&ADMIN_KEYPAIR);
     client
         .submit_transaction_blocking(&transfer_rose_tx)
         .expect("Should succeed");

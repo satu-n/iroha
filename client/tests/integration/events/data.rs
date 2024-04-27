@@ -2,8 +2,8 @@ use std::{fmt::Write as _, str::FromStr, sync::mpsc, thread};
 
 use eyre::Result;
 use iroha_client::data_model::{prelude::*, transaction::WasmSmartContract};
-use iroha_sample_params::gen_account_in;
 use iroha_sample_params::ALICE_ID;
+use iroha_sample_params::BOB_ID;
 use parity_scale_codec::Encode as _;
 use serde_json::json;
 use test_network::*;
@@ -215,7 +215,7 @@ fn produce_multiple_events() -> Result<()> {
     client.submit_all_blocking(instructions)?;
 
     // Grants role to Bob
-    let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
+    let bob_id = BOB_ID.clone();
     let grant_role = Grant::role(role_id.clone(), bob_id.clone());
     client.submit_blocking(grant_role)?;
 

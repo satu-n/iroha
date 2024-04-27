@@ -828,11 +828,11 @@ pub mod tests {
         let kura = Kura::blank_kura_for_testing();
         let world = {
             let domain_id = DomainId::from_str("wonderland").expect("Valid");
-            let (alice_account_id, _alice_account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
-            let (bob_account_id, _bob_account_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
-            let mut domain = Domain::new(domain_id).build(&alice_account_id);
-            let alice_account = Account::new(alice_account_id.clone()).build(&alice_account_id);
-            let bob_account = Account::new(bob_account_id.clone()).build(&bob_account_id);
+            let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+            let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
+            let mut domain = Domain::new(domain_id).build(&alice_id);
+            let alice_account = Account::new(alice_id.clone()).build(&alice_id);
+            let bob_account = Account::new(bob_id.clone()).build(&bob_id);
             assert!(domain.add_account(alice_account).is_none());
             assert!(domain.add_account(bob_account).is_none());
             World::with([domain], PeersIds::new())

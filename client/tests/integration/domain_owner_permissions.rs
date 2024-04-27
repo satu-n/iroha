@@ -3,6 +3,7 @@ use iroha_client::data_model::prelude::*;
 use iroha_data_model::transaction::error::TransactionRejectionReason;
 use iroha_sample_params::gen_account_in;
 use iroha_sample_params::ALICE_ID;
+use iroha_sample_params::BOB_ID;
 use serde_json::json;
 use test_network::*;
 
@@ -104,7 +105,7 @@ fn domain_owner_account_permissions() -> Result<()> {
     test_client.submit_blocking(RemoveKeyValue::account(mad_hatter_id.clone(), key))?;
 
     // check that "alice@wonderland" as owner of domain can grant and revoke account related permission tokens in her domain
-    let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
+    let bob_id = BOB_ID.clone();
     let token = PermissionToken::new(
         "CanUnregisterAccount".parse().unwrap(),
         &json!({ "account_id": mad_hatter_id }),

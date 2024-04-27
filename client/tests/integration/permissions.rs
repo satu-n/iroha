@@ -12,6 +12,7 @@ use iroha_data_model::{
 use iroha_genesis::GenesisNetwork;
 use iroha_sample_params::gen_account_in;
 use iroha_sample_params::ALICE_ID;
+use iroha_sample_params::BOB_ID;
 use serde_json::json;
 use test_network::{PeerBuilder, *};
 
@@ -74,7 +75,7 @@ fn permissions_disallow_asset_transfer() {
 
     // Given
     let alice_id = ALICE_ID.clone();
-    let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
+    let bob_id = BOB_ID.clone();
     let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
     let asset_definition_id: AssetDefinitionId = "xor#wonderland".parse().expect("Valid");
     let create_asset =
@@ -127,7 +128,7 @@ fn permissions_disallow_asset_burn() {
     let (_rt, _peer, iroha_client) = <PeerBuilder>::new().with_port(10_735).start_with_runtime();
 
     let alice_id = ALICE_ID.clone();
-    let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
+    let bob_id = BOB_ID.clone();
     let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset =
@@ -381,7 +382,7 @@ fn associated_permission_tokens_removed_on_unregister() {
     let (_rt, _peer, iroha_client) = <PeerBuilder>::new().with_port(11_240).start_with_runtime();
     wait_for_genesis_committed(&[iroha_client.clone()], 0);
 
-    let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
+    let bob_id = BOB_ID.clone();
     let kingdom_id: DomainId = "kingdom".parse().expect("Valid");
     let kingdom = Domain::new(kingdom_id.clone());
 

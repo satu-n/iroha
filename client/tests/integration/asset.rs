@@ -14,6 +14,7 @@ use iroha_data_model::{
 };
 use iroha_sample_params::gen_account_in;
 use iroha_sample_params::ALICE_ID;
+use iroha_sample_params::BOB_ID;
 use serde_json::json;
 use test_network::*;
 
@@ -361,7 +362,7 @@ fn transfer_asset_definition() {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let alice_id = ALICE_ID.clone();
-    let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
+    let bob_id = BOB_ID.clone();
     let asset_definition_id: AssetDefinitionId = "asset#wonderland".parse().expect("Valid");
 
     test_client
@@ -395,7 +396,7 @@ fn fail_if_dont_satisfy_spec() {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let alice_id = ALICE_ID.clone();
-    let (bob_id, _bob_keypair) = gen_account_in("wonderland"); // ACC_NAME bob
+    let bob_id = BOB_ID.clone();
     let asset_definition_id: AssetDefinitionId = "asset#wonderland".parse().expect("Valid");
     let asset_id: AssetId = AssetId::new(asset_definition_id.clone(), alice_id.clone());
     // Create asset definition which accepts only integers

@@ -5,8 +5,8 @@ use iroha_client::{
     client::QueryResult,
     data_model::{prelude::*, query::asset::FindAllAssetsDefinitions, trigger::TriggerId},
 };
-use test_samples::ALICE_ID;
 use test_network::*;
+use test_samples::ALICE_ID;
 
 #[test]
 fn failed_trigger_revert() -> Result<()> {

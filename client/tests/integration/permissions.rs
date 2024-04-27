@@ -10,9 +10,9 @@ use iroha_data_model::{
     permission::PermissionToken, role::RoleId, transaction::error::TransactionRejectionReason,
 };
 use iroha_genesis::GenesisNetwork;
-use test_samples::{gen_account_in, ALICE_ID, BOB_ID};
 use serde_json::json;
 use test_network::{PeerBuilder, *};
+use test_samples::{gen_account_in, ALICE_ID, BOB_ID};
 
 #[test]
 fn genesis_transactions_are_validated() {

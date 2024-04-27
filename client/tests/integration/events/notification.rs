@@ -2,8 +2,8 @@ use std::{str::FromStr as _, sync::mpsc, thread, time::Duration};
 
 use eyre::{eyre, Result, WrapErr};
 use iroha_client::data_model::prelude::*;
-use test_samples::ALICE_ID;
 use test_network::*;
+use test_samples::ALICE_ID;
 
 #[test]
 fn trigger_completion_success_should_produce_event() -> Result<()> {

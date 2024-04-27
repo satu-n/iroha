@@ -1,8 +1,8 @@
 use eyre::Result;
 use iroha_client::{client, data_model::prelude::*};
 use iroha_data_model::asset::AssetValue;
-use test_samples::{gen_account_in, ALICE_ID};
 use test_network::*;
+use test_samples::{gen_account_in, ALICE_ID};
 
 #[test]
 fn must_execute_both_triggers() -> Result<()> {

@@ -23,8 +23,7 @@ struct Executor {
 }
 
 fn visit_instruction(executor: &mut Executor, authority: &AccountId, isi: &InstructionBox) {
-    if *ADMIN_ID == *authority
-    {
+    if *ADMIN_ID == *authority {
         execute!(executor, isi);
     }
 

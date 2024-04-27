@@ -9,8 +9,8 @@ use iroha_client::{
     },
 };
 use iroha_config::parameters::actual::Root as Config;
-use test_samples::gen_account_in;
 use test_network::*;
+use test_samples::gen_account_in;
 
 #[test]
 // This test is also covered at the UI level in the iroha_client_cli tests

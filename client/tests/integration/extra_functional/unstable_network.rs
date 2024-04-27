@@ -6,9 +6,9 @@ use iroha_client::{
     data_model::{prelude::*, Level},
 };
 use iroha_config::parameters::actual::Root as Config;
-use test_samples::ALICE_ID;
 use rand::seq::SliceRandom;
 use test_network::*;
+use test_samples::ALICE_ID;
 use tokio::runtime::Runtime;
 
 const MAX_TRANSACTIONS_IN_BLOCK: u32 = 5;

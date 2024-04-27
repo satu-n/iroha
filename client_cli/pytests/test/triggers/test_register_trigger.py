@@ -18,6 +18,12 @@ def test_register_trigger(GIVEN_currently_authorized_account):
     ):
         client_cli.register_trigger(GIVEN_currently_authorized_account)
     with allure.step(
-        "THEN Iroha should have the asset with nft_number_1_for_genesis##ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B@genesis"
+        "THEN Iroha should have the asset with nft_number_1_for_genesis##\
+        ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B@genesis"
     ):
-        iroha.should(have.asset("nft_number_1_for_genesis##ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B@genesis"))
+        iroha.should(
+            have.asset(
+                "nft_number_1_for_genesis##\
+                ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B@genesis"
+            )
+        )

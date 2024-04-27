@@ -380,9 +380,9 @@ pub mod tests {
     use std::{str::FromStr, sync::Arc, thread, time::Duration};
 
     use iroha_data_model::{prelude::*, transaction::TransactionLimits};
-    use test_samples::gen_account_in;
     use nonzero_ext::nonzero;
     use rand::Rng as _;
+    use test_samples::gen_account_in;
     use tokio::test;
 
     use super::*;

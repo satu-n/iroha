@@ -11,8 +11,8 @@ use iroha_client::{
 };
 use iroha_genesis::GenesisNetwork;
 use iroha_logger::info;
-use test_samples::ALICE_ID;
 use test_network::*;
+use test_samples::ALICE_ID;
 
 const TRIGGER_NAME: &str = "mint_rose";
 

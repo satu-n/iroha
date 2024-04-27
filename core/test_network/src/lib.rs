@@ -23,10 +23,10 @@ use iroha_primitives::{
     unique_vec,
     unique_vec::UniqueVec,
 };
-use test_samples::{ALICE_ID, ALICE_KEYPAIR, PEER_KEYPAIR};
 use rand::{seq::IteratorRandom, thread_rng};
 use serde_json::json;
 use tempfile::TempDir;
+use test_samples::{ALICE_ID, ALICE_KEYPAIR, PEER_KEYPAIR};
 use tokio::{
     runtime::{self, Runtime},
     task::{self, JoinHandle},

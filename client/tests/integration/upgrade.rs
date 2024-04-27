@@ -6,9 +6,9 @@ use iroha_client::{
     data_model::prelude::*,
 };
 use iroha_logger::info;
-use test_samples::{ADMIN_ID, ADMIN_KEYPAIR, ALICE_ID};
 use serde_json::json;
 use test_network::*;
+use test_samples::{ADMIN_ID, ADMIN_KEYPAIR, ALICE_ID};
 
 #[test]
 fn executor_upgrade_should_work() -> Result<()> {

@@ -6,8 +6,8 @@ use iroha_client::{
     data_model::{metadata::UnlimitedMetadata, prelude::*},
 };
 use iroha_data_model::isi::InstructionBox;
-use test_samples::ALICE_ID;
 use test_network::*;
+use test_samples::ALICE_ID;
 
 #[test]
 fn non_mintable_asset_can_be_minted_once_but_not_twice() -> Result<()> {

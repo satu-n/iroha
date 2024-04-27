@@ -12,9 +12,9 @@ use iroha_data_model::{
     isi::error::{InstructionEvaluationError, InstructionExecutionError, Mismatch, TypeError},
     transaction::error::TransactionRejectionReason,
 };
-use test_samples::{gen_account_in, ALICE_ID, BOB_ID};
 use serde_json::json;
 use test_network::*;
+use test_samples::{gen_account_in, ALICE_ID, BOB_ID};
 
 #[test]
 // This test is also covered at the UI level in the iroha_client_cli tests

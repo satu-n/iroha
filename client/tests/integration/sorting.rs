@@ -13,10 +13,10 @@ use iroha_client::{
     },
 };
 use iroha_crypto::KeyPair;
-use test_samples::ALICE_ID;
 use nonzero_ext::nonzero;
 use rand::{seq::SliceRandom, thread_rng};
 use test_network::*;
+use test_samples::ALICE_ID;
 
 #[test]
 #[allow(clippy::cast_possible_truncation)]

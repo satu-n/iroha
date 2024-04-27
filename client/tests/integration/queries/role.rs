@@ -5,9 +5,9 @@ use iroha_client::{
     client::{self, QueryResult},
     data_model::{prelude::*, query::error::QueryExecutionFail},
 };
-use test_samples::ALICE_ID;
 use serde_json::json;
 use test_network::*;
+use test_samples::ALICE_ID;
 
 fn create_role_ids() -> [RoleId; 5] {
     [

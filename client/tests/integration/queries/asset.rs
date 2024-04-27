@@ -8,8 +8,8 @@ use iroha_client::{
         query::{asset::FindTotalAssetQuantityByAssetDefinitionId, error::QueryExecutionFail},
     },
 };
-use test_samples::{gen_account_in, ALICE_ID};
 use test_network::*;
+use test_samples::{gen_account_in, ALICE_ID};
 
 #[test]
 #[allow(clippy::too_many_lines)]

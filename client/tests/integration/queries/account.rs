@@ -5,8 +5,8 @@ use iroha_client::{
     client::{self, QueryResult},
     data_model::prelude::*,
 };
-use test_samples::{gen_account_in, ALICE_ID};
 use test_network::*;
+use test_samples::{gen_account_in, ALICE_ID};
 
 #[test]
 fn find_accounts_with_asset() -> Result<()> {

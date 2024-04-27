@@ -9,8 +9,8 @@ use iroha_client::{
     },
 };
 use iroha_config::parameters::actual::Root as Config;
-use test_samples::gen_account_in;
 use test_network::*;
+use test_samples::gen_account_in;
 
 const N_BLOCKS: usize = 510;
 

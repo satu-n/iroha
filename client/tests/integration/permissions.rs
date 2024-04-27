@@ -318,7 +318,7 @@ fn stored_vs_granted_token_payload() -> Result<()> {
         PermissionToken::from_str_unchecked(
             "CanSetKeyValueInUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            "{ \"asset_id\" : \"xor#wonderland#ed012014A2900349A8CB6250D8CE5399D1964766B559A37F48E8C98C1EA83F365D8A72@wonderland\" }",
+            &*["{ \"asset_id\" : \"xor#wonderland#", &*mouse_id.to_string(), "\" }"].join(""),
         ),
         alice_id,
     );
@@ -352,7 +352,7 @@ fn permission_tokens_are_unified() {
         PermissionToken::from_str_unchecked(
             "CanTransferUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            "{ \"asset_id\" : \"rose#wonderland#ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland\" }",
+            &*["{ \"asset_id\" : \"rose#wonderland#", &*alice_id.to_string(), "\" }"].join(""),
         ),
         alice_id.clone(),
     );
@@ -361,7 +361,7 @@ fn permission_tokens_are_unified() {
         PermissionToken::from_str_unchecked(
             "CanTransferUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            "{ \"asset_id\" : \"rose##ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03@wonderland\" }",
+            &*["{ \"asset_id\" : \"rose##", &*alice_id.to_string(), "\" }"].join(""),
         ),
         alice_id,
     );

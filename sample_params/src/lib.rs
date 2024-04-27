@@ -1,9 +1,9 @@
 //! Utility crate for standardized and random signatories.
 
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use iroha_crypto::KeyPair;
-use iroha_data_model::prelude::{AccountId, DomainId};
+use iroha_data_model::prelude::AccountId;
 use once_cell::sync::Lazy;
 
 /// Generate [`AccountId`](iroha_data_model::account::AccountId) in the given `domain`.
@@ -11,13 +11,11 @@ use once_cell::sync::Lazy;
 /// # Panics
 ///
 /// Panics if the given `domain` is invalid as [`Name`](iroha_data_model::name::Name).
-pub fn gen_account_in(domain: impl AsRef<str>) -> (AccountId, KeyPair) {
-    let domain_id: DomainId = domain
-        .as_ref()
+pub fn gen_account_in(domain: impl Display) -> (AccountId, KeyPair) {
+    let key_pair = KeyPair::random();
+    let account_id = format!("{}@{}", key_pair.public_key(), domain)
         .parse()
         .expect("domain name should be valid");
-    let key_pair = KeyPair::random();
-    let account_id = AccountId::new(domain_id, key_pair.public_key().clone());
     (account_id, key_pair)
 }
 

@@ -6,7 +6,6 @@ use iroha_config::parameters::defaults::chain_wide::{
     DEFAULT_METADATA_LIMITS, DEFAULT_TRANSACTION_LIMITS, DEFAULT_WASM_FUEL_LIMIT,
     DEFAULT_WASM_MAX_MEMORY_BYTES,
 };
-use iroha_crypto::KeyPair;
 use iroha_data_model::{
     asset::{AssetDefinitionId, AssetValueType},
     metadata::Limits,
@@ -14,7 +13,7 @@ use iroha_data_model::{
     prelude::AssetId,
 };
 use iroha_genesis::{executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile};
-use iroha_sample_params::{gen_account_in, ALICE_KEYPAIR, BOB_KEYPAIR, CARPENTER_KEYPAIR};
+use iroha_sample_params::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID, GENESIS_ID};
 use serde_json::json;
 
 use super::*;
@@ -83,15 +82,15 @@ pub fn generate_default(
 
     let mut genesis = builder
         .domain_with_metadata("wonderland".parse()?, meta.clone())
-        .account_with_metadata(ALICE_KEYPAIR.public_key().clone(), meta.clone())
-        .account_with_metadata(BOB_KEYPAIR.public_key().clone(), meta)
+        .account_with_metadata(ALICE_ID.signatory().clone(), meta.clone())
+        .account_with_metadata(BOB_ID.signatory().clone(), meta)
         .asset(
             "rose".parse()?,
             AssetValueType::Numeric(NumericSpec::default()),
         )
         .finish_domain()
         .domain("garden_of_live_flowers".parse()?)
-        .account(CARPENTER_KEYPAIR.public_key().clone())
+        .account(CARPENTER_ID.signatory().clone())
         .asset(
             "cabbage".parse()?,
             AssetValueType::Numeric(NumericSpec::default()),
@@ -99,33 +98,34 @@ pub fn generate_default(
         .finish_domain()
         .build();
 
-    let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
     let mint = Mint::asset_numeric(
         13u32,
-        AssetId::new("rose#wonderland".parse()?, alice_id.clone()),
+        AssetId::new("rose#wonderland".parse()?, ALICE_ID.clone()),
     );
     let mint_cabbage = Mint::asset_numeric(
         44u32,
-        AssetId::new("cabbage#garden_of_live_flowers".parse()?, alice_id.clone()),
+        AssetId::new("cabbage#garden_of_live_flowers".parse()?, ALICE_ID.clone()),
     );
     let grant_permission_to_set_parameters = Grant::permission(
         PermissionToken::new("CanSetParameters".parse()?, &json!(null)),
-        alice_id.clone(),
+        ALICE_ID.clone(),
     );
-    let transfer_domain_ownerhip = Transfer::domain(
-        gen_account_in("genesis").0, // ACC_NAME genesis
-        "wonderland".parse()?,
-        alice_id.clone(),
+    let transfer_rose_ownership = Transfer::asset_definition(
+        GENESIS_ID.clone(),
+        "rose#wonderland".parse()?,
+        ALICE_ID.clone(),
     );
+    let transfer_wonderland_ownership =
+        Transfer::domain(GENESIS_ID.clone(), "wonderland".parse()?, ALICE_ID.clone());
     let register_user_metadata_access = Register::role(
         Role::new("ALICE_METADATA_ACCESS".parse()?)
             .add_permission(PermissionToken::new(
                 "CanSetKeyValueInAccount".parse()?,
-                &json!({ "account_id": alice_id }),
+                &json!({ "account_id": ALICE_ID.clone() }),
             ))
             .add_permission(PermissionToken::new(
                 "CanRemoveKeyValueInAccount".parse()?,
-                &json!({ "account_id": alice_id }),
+                &json!({ "account_id": ALICE_ID.clone() }),
             )),
     )
     .into();
@@ -174,7 +174,8 @@ pub fn generate_default(
     for isi in [
         mint.into(),
         mint_cabbage.into(),
-        transfer_domain_ownerhip.into(),
+        transfer_rose_ownership.into(),
+        transfer_wonderland_ownership.into(),
         grant_permission_to_set_parameters.into(),
     ]
     .into_iter()
@@ -206,8 +207,7 @@ fn generate_synthetic(
             .append_instruction(Register::domain(Domain::new(domain_id.clone())).into());
 
         for _ in 0..accounts_per_domain {
-            let account_id: AccountId =
-                format!("{}@{domain_id}", KeyPair::random().into_parts().0).parse()?;
+            let (account_id, _account_keypair) = gen_account_in(domain_id.clone());
             first_transaction
                 .append_instruction(Register::account(Account::new(account_id.clone())).into());
         }

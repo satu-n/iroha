@@ -23,7 +23,7 @@ use iroha_primitives::{
     unique_vec,
     unique_vec::UniqueVec,
 };
-use iroha_sample_params::{gen_account_in, ALICE_KEYPAIR, GENESIS_KEYPAIR, PEER_KEYPAIR};
+use iroha_sample_params::{ALICE_ID, ALICE_KEYPAIR, GENESIS_KEYPAIR, PEER_KEYPAIR};
 use rand::{seq::IteratorRandom, thread_rng};
 use serde_json::json;
 use tempfile::TempDir;
@@ -90,7 +90,6 @@ impl TestGenesis for GenesisNetwork {
 
         let rose_definition_id =
             AssetDefinitionId::from_str("rose#wonderland").expect("valid names");
-        let (alice_id, _alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
 
         let mint_rose_permission = PermissionToken::new(
             "CanMintAssetWithDefinition".parse().unwrap(),
@@ -123,7 +122,7 @@ impl TestGenesis for GenesisNetwork {
             upgrade_executor_permission,
         ] {
             first_transaction
-                .append_instruction(Grant::permission(permission, alice_id.clone()).into());
+                .append_instruction(Grant::permission(permission, ALICE_ID.clone()).into());
         }
 
         for isi in extra_isi.into_iter() {

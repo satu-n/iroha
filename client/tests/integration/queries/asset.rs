@@ -8,8 +8,7 @@ use iroha_client::{
         query::{asset::FindTotalAssetQuantityByAssetDefinitionId, error::QueryExecutionFail},
     },
 };
-use iroha_sample_params::gen_account_in;
-use iroha_sample_params::ALICE_ID;
+use iroha_sample_params::{gen_account_in, ALICE_ID};
 use test_network::*;
 
 #[test]

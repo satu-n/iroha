@@ -7,7 +7,6 @@ use iroha_client::{
 };
 use iroha_config::parameters::actual::Root as Config;
 use iroha_sample_params::ALICE_ID;
-
 use nonzero_ext::nonzero;
 use test_network::*;
 

@@ -14,7 +14,6 @@ use iroha_client::{
 };
 use iroha_crypto::KeyPair;
 use iroha_sample_params::ALICE_ID;
-
 use nonzero_ext::nonzero;
 use rand::{seq::SliceRandom, thread_rng};
 use test_network::*;

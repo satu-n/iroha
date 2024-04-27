@@ -6,7 +6,6 @@ use iroha_client::{
     data_model::{prelude::*, query::asset::FindAllAssetsDefinitions, trigger::TriggerId},
 };
 use iroha_sample_params::ALICE_ID;
-
 use test_network::*;
 
 #[test]

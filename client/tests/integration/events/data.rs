@@ -2,7 +2,7 @@ use std::{fmt::Write as _, str::FromStr, sync::mpsc, thread};
 
 use eyre::Result;
 use iroha_client::data_model::{prelude::*, transaction::WasmSmartContract};
-use iroha_sample_params::{ALICE_ID, BOB_ID};
+use test_samples::{ALICE_ID, BOB_ID};
 use parity_scale_codec::Encode as _;
 use serde_json::json;
 use test_network::*;

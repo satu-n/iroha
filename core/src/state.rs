@@ -1766,7 +1766,7 @@ pub(crate) mod deserialize {
 mod tests {
     use iroha_data_model::block::BlockPayload;
     use iroha_primitives::unique_vec::UniqueVec;
-    use iroha_sample_params::gen_account_in;
+    use test_samples::gen_account_in;
 
     use super::*;
     use crate::{

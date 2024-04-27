@@ -14,7 +14,7 @@ use iroha_data_model::{
     account::AccountId, isi::InstructionBox, prelude::*, transaction::TransactionLimits,
 };
 use iroha_primitives::unique_vec::UniqueVec;
-use iroha_sample_params::gen_account_in;
+use test_samples::gen_account_in;
 use once_cell::sync::Lazy;
 
 static STARTER_DOMAIN: Lazy<DomainId> = Lazy::new(|| "start".parse().unwrap());

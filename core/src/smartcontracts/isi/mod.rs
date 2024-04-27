@@ -241,7 +241,7 @@ mod tests {
 
     use iroha_data_model::metadata::MetadataValueBox;
     use iroha_genesis::GENESIS_ACCOUNT_ID;
-    use iroha_sample_params::gen_account_in;
+    use test_samples::gen_account_in;
     use tokio::test;
 
     use super::*;

@@ -456,7 +456,7 @@ mod tests {
     use core::{mem::ManuallyDrop, slice};
 
     use data_model::{prelude::numeric, query::asset::FindAssetQuantityById, BatchedResponseV1};
-    use iroha_sample_params::gen_account_in;
+    use test_samples::gen_account_in;
     use iroha_smart_contract_utils::encode_with_length_prefix;
     use parity_scale_codec::Decode;
     use webassembly_test::webassembly_test;

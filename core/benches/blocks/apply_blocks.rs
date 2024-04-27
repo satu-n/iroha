@@ -1,6 +1,6 @@
 use eyre::Result;
 use iroha_core::{block::CommittedBlock, prelude::*, state::State};
-use iroha_sample_params::gen_account_in;
+use test_samples::gen_account_in;
 
 #[path = "./common.rs"]
 mod common;

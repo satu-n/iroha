@@ -796,7 +796,7 @@ mod tests {
     use iroha_crypto::SignatureVerificationFail;
     use iroha_data_model::prelude::*;
     use iroha_genesis::{GENESIS_ACCOUNT_ID, GENESIS_DOMAIN_ID};
-    use iroha_sample_params::gen_account_in;
+    use test_samples::gen_account_in;
 
     use super::*;
     use crate::{

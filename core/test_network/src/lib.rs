@@ -23,7 +23,7 @@ use iroha_primitives::{
     unique_vec,
     unique_vec::UniqueVec,
 };
-use iroha_sample_params::{ALICE_ID, ALICE_KEYPAIR, PEER_KEYPAIR};
+use test_samples::{ALICE_ID, ALICE_KEYPAIR, PEER_KEYPAIR};
 use rand::{seq::IteratorRandom, thread_rng};
 use serde_json::json;
 use tempfile::TempDir;

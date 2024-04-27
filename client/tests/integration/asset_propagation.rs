@@ -9,7 +9,7 @@ use iroha_client::{
     },
 };
 use iroha_config::parameters::actual::Root as Config;
-use iroha_sample_params::gen_account_in;
+use test_samples::gen_account_in;
 use test_network::*;
 
 #[test]

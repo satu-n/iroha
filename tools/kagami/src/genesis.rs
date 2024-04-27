@@ -15,7 +15,7 @@ use iroha_data_model::{
 use iroha_genesis::{
     executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile, GENESIS_ACCOUNT_ID,
 };
-use iroha_sample_params::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID};
+use test_samples::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID};
 use serde_json::json;
 
 use super::*;

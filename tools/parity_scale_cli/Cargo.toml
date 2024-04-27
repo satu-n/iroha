@@ -40,4 +40,4 @@ serde = { workspace = true }
 eyre = { workspace = true }
 
 [dev-dependencies]
-iroha_sample_params = { workspace = true }
+test_samples = { workspace = true }

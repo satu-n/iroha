@@ -8,7 +8,7 @@ extern crate panic_halt;
 
 use iroha_executor::{parse, prelude::*};
 use lol_alloc::{FreeListAllocator, LockedAllocator};
-use iroha_sample_params::ADMIN_ID;
+use test_samples::ADMIN_ID;
 
 #[global_allocator]
 static ALLOC: LockedAllocator<FreeListAllocator> = LockedAllocator::new(FreeListAllocator::new());

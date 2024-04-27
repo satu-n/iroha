@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::prelude::*,
 };
 use iroha_data_model::transaction::error::TransactionRejectionReason;
-use iroha_sample_params::{gen_account_in, ALICE_ID};
+use test_samples::{gen_account_in, ALICE_ID};
 use serde_json::json;
 use test_network::*;
 

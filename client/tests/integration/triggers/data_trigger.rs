@@ -1,7 +1,7 @@
 use eyre::Result;
 use iroha_client::{client, data_model::prelude::*};
 use iroha_data_model::asset::AssetValue;
-use iroha_sample_params::{gen_account_in, ALICE_ID};
+use test_samples::{gen_account_in, ALICE_ID};
 use test_network::*;
 
 #[test]

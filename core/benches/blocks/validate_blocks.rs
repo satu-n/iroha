@@ -1,6 +1,6 @@
 use iroha_core::{prelude::*, state::State};
 use iroha_data_model::{isi::InstructionBox, prelude::*};
-use iroha_sample_params::gen_account_in;
+use test_samples::gen_account_in;
 
 #[path = "./common.rs"]
 mod common;

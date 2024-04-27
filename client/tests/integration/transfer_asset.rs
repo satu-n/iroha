@@ -10,7 +10,7 @@ use iroha_data_model::{
     isi::InstructionBox,
     name::Name,
 };
-use iroha_sample_params::{gen_account_in, ALICE_ID};
+use test_samples::{gen_account_in, ALICE_ID};
 use test_network::*;
 
 #[test]

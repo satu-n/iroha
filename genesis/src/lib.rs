@@ -351,7 +351,7 @@ impl<S> RawGenesisDomainBuilder<S> {
 
 #[cfg(test)]
 mod tests {
-    use iroha_sample_params::{ALICE_KEYPAIR, BOB_KEYPAIR};
+    use test_samples::{ALICE_KEYPAIR, BOB_KEYPAIR};
 
     use super::*;
 

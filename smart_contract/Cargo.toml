@@ -26,7 +26,7 @@ derive_more.workspace = true
 getrandom = "0.2"
 
 [dev-dependencies]
-iroha_sample_params.workspace = true
+test_samples.workspace = true
 
 webassembly-test = "0.1.0"
 # Not used directly but required for compilation

@@ -5,7 +5,7 @@ use iroha_client::{
     client::{self, QueryResult},
     data_model::prelude::*,
 };
-use iroha_sample_params::ALICE_ID;
+use test_samples::ALICE_ID;
 use test_network::*;
 
 #[test]

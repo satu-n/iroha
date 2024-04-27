@@ -1202,7 +1202,7 @@ fn handle_block_sync<'state, F: Fn(PipelineEventBox)>(
 #[cfg(test)]
 mod tests {
     use iroha_primitives::{unique_vec, unique_vec::UniqueVec};
-    use iroha_sample_params::gen_account_in;
+    use test_samples::gen_account_in;
     use tokio::test;
 
     use super::*;

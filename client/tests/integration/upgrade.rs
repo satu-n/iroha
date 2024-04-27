@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::prelude::*,
 };
 use iroha_logger::info;
-use iroha_sample_params::{ADMIN_ID, ADMIN_KEYPAIR, ALICE_ID};
+use test_samples::{ADMIN_ID, ADMIN_KEYPAIR, ALICE_ID};
 use serde_json::json;
 use test_network::*;
 

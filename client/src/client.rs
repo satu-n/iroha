@@ -1575,7 +1575,7 @@ mod tests {
     use std::str::FromStr;
 
     use iroha_primitives::small::SmallStr;
-    use iroha_sample_params::gen_account_in;
+    use test_samples::gen_account_in;
 
     use super::*;
     use crate::config::{BasicAuth, Config, WebLogin};

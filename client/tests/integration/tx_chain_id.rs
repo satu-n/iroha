@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use iroha_data_model::prelude::*;
 use iroha_primitives::numeric::numeric;
-use iroha_sample_params::gen_account_in;
+use test_samples::gen_account_in;
 use test_network::*;
 
 #[test]

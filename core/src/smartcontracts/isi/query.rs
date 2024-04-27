@@ -187,7 +187,7 @@ mod tests {
         metadata::MetadataValueBox, query::error::FindError, transaction::TransactionLimits,
     };
     use iroha_primitives::unique_vec::UniqueVec;
-    use iroha_sample_params::{gen_account_in, ALICE_ID, ALICE_KEYPAIR};
+    use test_samples::{gen_account_in, ALICE_ID, ALICE_KEYPAIR};
     use tokio::test;
 
     use super::*;

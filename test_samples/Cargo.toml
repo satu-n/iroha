@@ -1,5 +1,5 @@
 [package]
-name = "iroha_sample_params"
+name = "test_samples"
 edition.workspace = true
 version.workspace = true
 authors.workspace = true

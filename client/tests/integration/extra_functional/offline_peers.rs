@@ -9,7 +9,7 @@ use iroha_client::{
 use iroha_config::parameters::actual::Root as Config;
 use iroha_crypto::KeyPair;
 use iroha_primitives::addr::socket_addr;
-use iroha_sample_params::ALICE_ID;
+use test_samples::ALICE_ID;
 use test_network::*;
 use tokio::runtime::Runtime;
 

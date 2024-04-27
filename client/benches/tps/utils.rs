@@ -10,7 +10,7 @@ use iroha_client::{
 };
 use iroha_crypto::KeyPair;
 use iroha_data_model::events::pipeline::{BlockEventFilter, BlockStatus};
-use iroha_sample_params::ALICE_ID;
+use test_samples::ALICE_ID;
 use nonzero_ext::nonzero;
 use serde::Deserialize;
 use test_network::*;

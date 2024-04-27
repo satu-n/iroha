@@ -16,7 +16,7 @@ use iroha_core::{
 use iroha_crypto::KeyPair;
 use iroha_data_model::{prelude::*, transaction::TransactionLimits};
 use iroha_primitives::unique_vec::UniqueVec;
-use iroha_sample_params::gen_account_in;
+use test_samples::gen_account_in;
 use tokio::{fs, runtime::Runtime};
 
 async fn measure_block_size_for_n_executors(n_executors: u32) {

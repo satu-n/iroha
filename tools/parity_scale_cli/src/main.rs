@@ -322,7 +322,7 @@ mod tests {
     use std::str::FromStr as _;
 
     use iroha_data_model::{ipfs::IpfsPath, prelude::*};
-    use iroha_sample_params::gen_account_in;
+    use test_samples::gen_account_in;
 
     use super::*;
 

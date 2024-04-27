@@ -5,7 +5,7 @@ use iroha_client::{
         query::error::{FindError, QueryExecutionFail},
     },
 };
-use iroha_sample_params::gen_account_in;
+use test_samples::gen_account_in;
 
 #[test]
 fn non_existent_account_is_specific_error() {

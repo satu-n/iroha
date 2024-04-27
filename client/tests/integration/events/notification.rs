@@ -2,7 +2,7 @@ use std::{str::FromStr as _, sync::mpsc, thread, time::Duration};
 
 use eyre::{eyre, Result, WrapErr};
 use iroha_client::data_model::prelude::*;
-use iroha_sample_params::ALICE_ID;
+use test_samples::ALICE_ID;
 use test_network::*;
 
 #[test]

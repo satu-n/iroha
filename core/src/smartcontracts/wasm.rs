@@ -1705,7 +1705,7 @@ impl<C: wasmtime::AsContextMut> GetExport for (&wasmtime::Instance, C) {
 #[cfg(test)]
 mod tests {
     use iroha_data_model::query::{sorting::Sorting, Pagination};
-    use iroha_sample_params::gen_account_in;
+    use test_samples::gen_account_in;
     use parity_scale_codec::Encode;
     use tokio::test;
 

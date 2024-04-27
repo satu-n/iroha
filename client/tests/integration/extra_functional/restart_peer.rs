@@ -6,7 +6,7 @@ use iroha_client::{
     data_model::prelude::*,
 };
 use iroha_config::parameters::actual::Root as Config;
-use iroha_sample_params::ALICE_ID;
+use test_samples::ALICE_ID;
 use rand::{seq::SliceRandom, thread_rng, Rng};
 use test_network::*;
 use tokio::runtime::Runtime;

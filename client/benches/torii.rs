@@ -10,7 +10,7 @@ use iroha_client::{
 };
 use iroha_genesis::{GenesisNetwork, RawGenesisBlockBuilder};
 use iroha_primitives::unique_vec;
-use iroha_sample_params::gen_account_in;
+use test_samples::gen_account_in;
 use iroha_version::Encode;
 use test_network::{get_chain_id, get_key_pair, Peer as TestPeer, PeerBuilder, TestRuntime};
 use tokio::runtime::Runtime;

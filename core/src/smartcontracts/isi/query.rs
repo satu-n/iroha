@@ -187,8 +187,7 @@ mod tests {
         metadata::MetadataValueBox, query::error::FindError, transaction::TransactionLimits,
     };
     use iroha_primitives::unique_vec::UniqueVec;
-    use iroha_sample_params::{gen_account_in, ALICE_KEYPAIR};
-    use once_cell::sync::Lazy;
+    use iroha_sample_params::{gen_account_in, ALICE_ID, ALICE_KEYPAIR};
     use tokio::test;
 
     use super::*;
@@ -202,12 +201,6 @@ mod tests {
         tx::AcceptedTransaction,
         PeersIds,
     };
-
-    static ALICE_ID: Lazy<AccountId> = Lazy::new(|| {
-        format!("{}@wonderland", ALICE_KEYPAIR.public_key())
-            .parse()
-            .expect("should be valid")
-    }); // ACC_NAME alice
 
     fn world_with_test_domains() -> World {
         let domain_id = DomainId::from_str("wonderland").expect("Valid");

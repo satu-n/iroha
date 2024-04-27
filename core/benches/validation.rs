@@ -1,7 +1,5 @@
 #![allow(missing_docs)]
 
-use std::str::FromStr as _;
-
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use iroha_core::{
     block::*,
@@ -12,48 +10,45 @@ use iroha_core::{
     sumeragi::network_topology::Topology,
     tx::TransactionExecutor,
 };
-use iroha_data_model::{isi::InstructionBox, prelude::*, transaction::TransactionLimits};
+use iroha_data_model::{account::AccountId, isi::InstructionBox, prelude::*, transaction::TransactionLimits};
 use iroha_primitives::unique_vec::UniqueVec;
 use iroha_sample_params::gen_account_in;
+use once_cell::sync::Lazy;
 
-const START_DOMAIN: &str = "start";
-const START_ACCOUNT: &str =
-    "ed0120F71BEB213D4E2963BA7CF9A358CCCBA2429D5AB28D00A468FFD56AFECFAD06C7"; // ACC_NAME starter
+static STARTER_DOMAIN: Lazy<DomainId> = Lazy::new(|| "start".parse().unwrap());
+static STARTER_KEYPAIR: Lazy<KeyPair> = Lazy::new(|| KeyPair::random());
+static STARTER_ID: Lazy<AccountId> = Lazy::new(|| AccountId::new(STARTER_DOMAIN.clone(), STARTER_KEYPAIR.public_key().clone()));
 
 const TRANSACTION_LIMITS: TransactionLimits = TransactionLimits {
     max_instruction_number: 4096,
     max_wasm_size_bytes: 0,
 };
 
-fn build_test_transaction(keys: &KeyPair, chain_id: ChainId) -> SignedTransaction {
-    let domain_id = "domain".parse().expect("Valid");
-    let create_domain: InstructionBox = Register::domain(Domain::new(domain_id)).into();
-    let create_account = Register::account(Account::new(gen_account_in("domain").0)).into(); // ACC_NAME account
-    let asset_definition_id = "xor#domain".parse().expect("Valid");
+fn build_test_transaction(chain_id: ChainId) -> SignedTransaction {
+    let domain_id: DomainId = "domain".parse().unwrap();
+    let create_domain: InstructionBox = Register::domain(Domain::new(domain_id.clone())).into();
+    let create_account = Register::account(Account::new(gen_account_in(&domain_id).0)).into();
+    let asset_definition_id = "xor#domain".parse().unwrap();
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id)).into();
     let instructions = [create_domain, create_account, create_asset];
 
     TransactionBuilder::new(
         chain_id,
-        format!("{START_ACCOUNT}@{START_DOMAIN}")
-            .parse()
-            .expect("should be valid"),
+        STARTER_ID.clone()
     )
     .with_instructions(instructions)
-    .sign(keys)
+    .sign(&STARTER_KEYPAIR)
 }
 
-fn build_test_and_transient_state(keys: KeyPair) -> State {
+fn build_test_and_transient_state() -> State {
     let kura = iroha_core::kura::Kura::blank_kura_for_testing();
     let query_handle = LiveQueryStore::test().start();
-    let (public_key, _) = keys.into_parts();
 
     let state = State::new(
         {
-            let domain_id = DomainId::from_str(START_DOMAIN).expect("Valid");
-            let account_id = AccountId::new(domain_id.clone(), public_key.clone());
-            let mut domain = Domain::new(domain_id).build(&account_id);
+            let (account_id, _account_keypair) = gen_account_in(&*STARTER_DOMAIN);
+            let mut domain = Domain::new(STARTER_DOMAIN.clone()).build(&account_id);
             let account = Account::new(account_id.clone()).build(&account_id);
             assert!(domain.add_account(account).is_none());
             World::with([domain], UniqueVec::new())
@@ -84,8 +79,7 @@ fn build_test_and_transient_state(keys: KeyPair) -> State {
 fn accept_transaction(criterion: &mut Criterion) {
     let chain_id = ChainId::from("0");
 
-    let keys = KeyPair::random();
-    let transaction = build_test_transaction(&keys, chain_id.clone());
+    let transaction = build_test_transaction(chain_id.clone());
     let mut success_count = 0;
     let mut failures_count = 0;
     let _ = criterion.bench_function("accept", |b| {
@@ -102,8 +96,7 @@ fn accept_transaction(criterion: &mut Criterion) {
 fn sign_transaction(criterion: &mut Criterion) {
     let chain_id = ChainId::from("0");
 
-    let keys = KeyPair::random();
-    let transaction = build_test_transaction(&keys, chain_id);
+    let transaction = build_test_transaction(chain_id);
     let key_pair = KeyPair::random();
     let mut count = 0;
     let _ = criterion.bench_function("sign", |b| {
@@ -122,16 +115,15 @@ fn sign_transaction(criterion: &mut Criterion) {
 fn validate_transaction(criterion: &mut Criterion) {
     let chain_id = ChainId::from("0");
 
-    let keys = KeyPair::random();
     let transaction = AcceptedTransaction::accept(
-        build_test_transaction(&keys, chain_id.clone()),
+        build_test_transaction(chain_id.clone()),
         &chain_id,
         &TRANSACTION_LIMITS,
     )
     .expect("Failed to accept transaction.");
     let mut success_count = 0;
     let mut failure_count = 0;
-    let state = build_test_and_transient_state(keys);
+    let state = build_test_and_transient_state();
     let _ = criterion.bench_function("validate", move |b| {
         let transaction_executor = TransactionExecutor::new(TRANSACTION_LIMITS);
         b.iter(|| {
@@ -148,9 +140,8 @@ fn validate_transaction(criterion: &mut Criterion) {
 fn sign_blocks(criterion: &mut Criterion) {
     let chain_id = ChainId::from("0");
 
-    let keys = KeyPair::random();
     let transaction = AcceptedTransaction::accept(
-        build_test_transaction(&keys, chain_id.clone()),
+        build_test_transaction(chain_id.clone()),
         &chain_id,
         &TRANSACTION_LIMITS,
     )

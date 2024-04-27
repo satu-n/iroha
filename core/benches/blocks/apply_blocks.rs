@@ -23,7 +23,7 @@ impl StateApplyBlocks {
         let domains = 100;
         let accounts_per_domain = 1000;
         let assets_per_domain = 1000;
-        let (alice_id, alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (alice_id, alice_keypair) = gen_account_in("wonderland");
         let state = build_state(rt, &alice_id);
 
         let nth = 100;

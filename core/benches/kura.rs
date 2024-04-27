@@ -22,15 +22,14 @@ use tokio::{fs, runtime::Runtime};
 async fn measure_block_size_for_n_executors(n_executors: u32) {
     let chain_id = ChainId::from("0");
 
-    let (alice_id, _alice_keypair) = gen_account_in("test"); // ACC_NAME alice
-    let (bob_id, _bob_keypair) = gen_account_in("test"); // ACC_NAME bob
+    let (alice_id, alice_keypair) = gen_account_in("test");
+    let (bob_id, _bob_keypair) = gen_account_in("test");
     let xor_id = AssetDefinitionId::from_str("xor#test").expect("tested");
-    let alice_xor_id = AssetId::new(xor_id, alice_id);
+    let alice_xor_id = AssetId::new(xor_id, alice_id.clone());
     let transfer = Transfer::asset_numeric(alice_xor_id, 10u32, bob_id);
-    let keypair = KeyPair::random();
-    let tx = TransactionBuilder::new(chain_id.clone(), gen_account_in("wonderland").0) // ACC_NAME alice
+    let tx = TransactionBuilder::new(chain_id.clone(), alice_id.clone())
         .with_instructions([transfer])
-        .sign(&keypair);
+        .sign(&alice_keypair);
     let transaction_limits = TransactionLimits {
         max_instruction_number: 4096,
         max_wasm_size_bytes: 0,

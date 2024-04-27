@@ -740,11 +740,10 @@ pub mod prelude {
         TriggerEventFilter,
     };
 }
-#[cfg_attr(not(compile_err), allow(unused_imports))] // FIXME the trait `Alias<AccountId>` is not implemented for `str`
 #[cfg(test)]
 #[cfg(feature = "transparent_api")]
 mod tests {
-    use iroha_sample_params::gen_account_in;
+    use iroha_crypto::KeyPair;
 
     use super::*;
     use crate::{
@@ -752,16 +751,13 @@ mod tests {
         asset::{AssetDefinitionsMap, AssetTotalQuantityMap},
     };
 
-    #[cfg(compile_err)] // FIXME the trait `Alias<AccountId>` is not implemented for `str`
     #[test]
     #[cfg(feature = "transparent_api")]
     fn entity_scope() {
-        let domain_id: DomainId = "wonderland".parse().expect("Valid");
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
-        let asset_id: AssetId = format!("rose##{}", gen_account_in("wonderland").0)
-            .parse()
-            .expect("should be valid"); // ACC_NAME alice
-        let (domain_owner_id, _domain_owner_keypair) = gen_account_in("genesis"); // ACC_NAME genesis
+        let domain_id: DomainId = "wonderland".parse().unwrap();
+        let account_id = AccountId::new(domain_id.clone(), KeyPair::random().into_parts().0);
+        let asset_id: AssetId = format!("rose##{account_id}").parse().unwrap();
+        let domain_owner_id = AccountId::new(domain_id.clone(), KeyPair::random().into_parts().0);
 
         let domain = Domain {
             id: domain_id.clone(),

@@ -74,28 +74,36 @@ pub fn stub_getrandom(_dest: &mut [u8]) -> Result<(), getrandom::Error> {
     unimplemented!("{ERROR_MESSAGE}")
 }
 
-/// Macro to parse literal as a type. Panics if failed.
+/// Parses input to specified type, or fails with [`dbg_expect`](debug::DebugExpectExt::dbg_expect) message.
+/// Head of input should annotate the type expected to return, entailing the rest similar to [`format!`](alloc::format) macro.
+/// Panics if the internal parsing based on [`FromStr`](core::str::FromStr) fails.
 ///
-/// # Example
+/// # Examples
 ///
-/// ```ignore
-/// use iroha_smart_contract::{prelude::*, parse};
+/// ```
+/// use iroha_smart_contract::{parse, prelude::*};
 ///
-/// let account_id = parse!("alice@wonderland" as AccountId);
+/// let domain_id = parse!(DomainId, "wonderland");
+/// let multihash = "ed0120CE7FA46C9DCE7EA4B125E2E36BDB63EA33073E7590AC92816AE1E861B7048B03";
+/// let account_id = parse!(AccountId, "{}@{}", multihash, domain_id);
+/// let asset_id = parse!(AssetId, "rose##{multihash}@{domain_id}");
 /// ```
 #[macro_export]
 macro_rules! parse {
-    ($l:literal as _) => {
+    (_, $($e:expr),+) => {
         compile_error!(
             "Don't use `_` as a type in this macro, \
              otherwise panic message would be less informative"
         )
     };
-    ($l:literal as $t:ty) => {
-        $crate::debug::DebugExpectExt::dbg_expect(
-            $l.parse::<$t>(),
-            concat!("Failed to parse `", $l, "` as `", stringify!($t), "`"),
-        )
+    ($t:ty, $($e:expr),+) => {
+        {
+            let lt = format!($($e),+);
+            $crate::debug::DebugExpectExt::dbg_expect(
+                lt.parse::<$t>(),
+                &*format!(r#"Failed to parse "{}" to `{}`"#, lt , stringify!($t)),
+            )
+        }
     };
 }
 

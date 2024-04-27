@@ -8,6 +8,7 @@ extern crate panic_halt;
 
 use iroha_executor::{parse, prelude::*};
 use lol_alloc::{FreeListAllocator, LockedAllocator};
+use iroha_sample_params::ADMIN_ID;
 
 #[global_allocator]
 static ALLOC: LockedAllocator<FreeListAllocator> = LockedAllocator::new(FreeListAllocator::new());
@@ -22,9 +23,7 @@ struct Executor {
 }
 
 fn visit_instruction(executor: &mut Executor, authority: &AccountId, isi: &InstructionBox) {
-    if parse!(
-        "ed012076E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC@admin" as AccountId
-    ) == *authority
+    if *ADMIN_ID == *authority
     {
         execute!(executor, isi);
     }

@@ -19,20 +19,27 @@ use iroha_data_model::{
 };
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
-/// [`DomainId`] of the genesis account.
-pub static GENESIS_DOMAIN_ID: Lazy<DomainId> = Lazy::new(|| "genesis".parse().expect("Valid"));
+/// [`DomainId`](iroha_data_model::domain::DomainId) of the genesis account.
+pub static GENESIS_DOMAIN_ID: Lazy<DomainId> = Lazy::new(|| "genesis".parse().unwrap());
 
-/// [`AccountId`] of the genesis account.
+/// [`AccountId`](iroha_data_model::account::AccountId) of the genesis account.
 /// TODO remove "genesis account" #4409
 pub static GENESIS_ACCOUNT_ID: Lazy<AccountId> = Lazy::new(|| {
     AccountId::new(
         GENESIS_DOMAIN_ID.clone(),
-        // FIXME An associated private key can exist and sign transactions even after genesis. Consider removing "genesis account" notion altogether
-        "ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B"
-            .parse()
-            .expect("Valid"),
+        GENESIS_ACCOUNT_KEYPAIR.public_key().clone(),
     )
+});
+
+/// [`KeyPair`] of the genesis account.
+pub static GENESIS_ACCOUNT_KEYPAIR: Lazy<KeyPair> = Lazy::new(|| {
+    KeyPair::new(
+        iroha_crypto::PublicKey::from_str("ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B").unwrap(),
+        iroha_crypto::PrivateKey::from_hex(iroha_crypto::Algorithm::Ed25519, "DD61D7A2244A504E78BA80383DFCC0228E25CA131E5A6AF503F71632D23BD76AE2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B").unwrap(),
+    )
+    .unwrap()
 });
 
 /// Genesis transaction

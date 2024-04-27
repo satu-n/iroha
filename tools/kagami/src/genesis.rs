@@ -12,8 +12,8 @@ use iroha_data_model::{
     parameter::{default::*, ParametersBuilder},
     prelude::AssetId,
 };
-use iroha_genesis::{executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile};
-use iroha_sample_params::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID, GENESIS_ID};
+use iroha_genesis::{executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile, GENESIS_ACCOUNT_ID};
+use iroha_sample_params::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID};
 use serde_json::json;
 
 use super::*;
@@ -111,12 +111,12 @@ pub fn generate_default(
         ALICE_ID.clone(),
     );
     let transfer_rose_ownership = Transfer::asset_definition(
-        GENESIS_ID.clone(),
+        GENESIS_ACCOUNT_ID.clone(),
         "rose#wonderland".parse()?,
         ALICE_ID.clone(),
     );
     let transfer_wonderland_ownership =
-        Transfer::domain(GENESIS_ID.clone(), "wonderland".parse()?, ALICE_ID.clone());
+        Transfer::domain(GENESIS_ACCOUNT_ID.clone(), "wonderland".parse()?, ALICE_ID.clone());
     let register_user_metadata_access = Register::role(
         Role::new("ALICE_METADATA_ACCESS".parse()?)
             .add_permission(PermissionToken::new(

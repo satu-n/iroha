@@ -10,14 +10,17 @@ use iroha_core::{
     sumeragi::network_topology::Topology,
     tx::TransactionExecutor,
 };
-use iroha_data_model::{account::AccountId, isi::InstructionBox, prelude::*, transaction::TransactionLimits};
+use iroha_data_model::{
+    account::AccountId, isi::InstructionBox, prelude::*, transaction::TransactionLimits,
+};
 use iroha_primitives::unique_vec::UniqueVec;
 use iroha_sample_params::gen_account_in;
 use once_cell::sync::Lazy;
 
 static STARTER_DOMAIN: Lazy<DomainId> = Lazy::new(|| "start".parse().unwrap());
 static STARTER_KEYPAIR: Lazy<KeyPair> = Lazy::new(|| KeyPair::random());
-static STARTER_ID: Lazy<AccountId> = Lazy::new(|| AccountId::new(STARTER_DOMAIN.clone(), STARTER_KEYPAIR.public_key().clone()));
+static STARTER_ID: Lazy<AccountId> =
+    Lazy::new(|| AccountId::new(STARTER_DOMAIN.clone(), STARTER_KEYPAIR.public_key().clone()));
 
 const TRANSACTION_LIMITS: TransactionLimits = TransactionLimits {
     max_instruction_number: 4096,
@@ -33,12 +36,9 @@ fn build_test_transaction(chain_id: ChainId) -> SignedTransaction {
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id)).into();
     let instructions = [create_domain, create_account, create_asset];
 
-    TransactionBuilder::new(
-        chain_id,
-        STARTER_ID.clone()
-    )
-    .with_instructions(instructions)
-    .sign(&STARTER_KEYPAIR)
+    TransactionBuilder::new(chain_id, STARTER_ID.clone())
+        .with_instructions(instructions)
+        .sign(&STARTER_KEYPAIR)
 }
 
 fn build_test_and_transient_state() -> State {

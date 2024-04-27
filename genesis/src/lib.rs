@@ -6,6 +6,7 @@ use std::{
     fs::File,
     io::BufReader,
     path::{Path, PathBuf},
+    str::FromStr,
 };
 
 use eyre::{eyre, Report, Result, WrapErr};
@@ -19,7 +20,6 @@ use iroha_data_model::{
 };
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 
 /// [`DomainId`](iroha_data_model::domain::DomainId) of the genesis account.
 pub static GENESIS_DOMAIN_ID: Lazy<DomainId> = Lazy::new(|| "genesis".parse().unwrap());

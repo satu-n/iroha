@@ -7,6 +7,8 @@ use iroha_client::{
 };
 use iroha_logger::info;
 use iroha_sample_params::gen_account_in;
+use iroha_sample_params::ALICE_ID;
+
 use serde_json::json;
 use test_network::*;
 

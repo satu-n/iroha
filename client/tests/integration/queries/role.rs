@@ -5,7 +5,7 @@ use iroha_client::{
     client::{self, QueryResult},
     data_model::{prelude::*, query::error::QueryExecutionFail},
 };
-use iroha_sample_params::gen_account_in;
+use iroha_sample_params::ALICE_ID;
 use serde_json::json;
 use test_network::*;
 

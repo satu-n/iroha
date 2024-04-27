@@ -6,7 +6,8 @@ use iroha_client::{
     data_model::{prelude::*, query::Pagination},
 };
 use iroha_config::parameters::actual::Root as Config;
-use iroha_sample_params::gen_account_in;
+use iroha_sample_params::ALICE_ID;
+
 use nonzero_ext::nonzero;
 use test_network::*;
 

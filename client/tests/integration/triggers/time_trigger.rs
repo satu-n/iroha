@@ -9,6 +9,8 @@ use iroha_config::parameters::defaults::chain_wide::DEFAULT_CONSENSUS_ESTIMATION
 use iroha_data_model::events::pipeline::{BlockEventFilter, BlockStatus};
 use iroha_logger::info;
 use iroha_sample_params::gen_account_in;
+use iroha_sample_params::ALICE_ID;
+
 use test_network::*;
 
 fn curr_time() -> core::time::Duration {

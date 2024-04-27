@@ -13,6 +13,7 @@ use iroha_data_model::{
     transaction::error::TransactionRejectionReason,
 };
 use iroha_sample_params::gen_account_in;
+use iroha_sample_params::ALICE_ID;
 use serde_json::json;
 use test_network::*;
 

@@ -121,7 +121,7 @@ fn init() -> Result<(
         .add_parameter(MAX_TRANSACTIONS_IN_BLOCK, 1u32)?
         .into_set_parameters();
     let create_domain = Register::domain(Domain::new("domain".parse()?));
-    let (account_id, _account_keypair) = gen_account_in("domain"); // ACC_NAME account
+    let (account_id, _account_keypair) = gen_account_in("domain");
     let create_account = Register::account(Account::new(account_id.clone()));
     let asset_definition_id: AssetDefinitionId = "xor#domain".parse()?;
     let create_asset =

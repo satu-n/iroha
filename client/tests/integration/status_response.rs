@@ -30,7 +30,7 @@ fn json_and_scale_statuses_equality() -> Result<()> {
 
     let coins = ["xor", "btc", "eth", "doge"];
 
-    let (account_id, _account_keypair) = gen_account_in("domain"); // ACC_NAME account
+    let (account_id, _account_keypair) = gen_account_in("domain");
 
     for coin in coins {
         let asset_definition_id = AssetDefinitionId::from_str(&format!("{coin}#wonderland"))?;

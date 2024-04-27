@@ -501,7 +501,7 @@ mod tests {
     fn get_test_instruction() -> InstructionBox {
         let new_asset_id: AssetId = format!("tulip##{}", gen_account_in("wonderland").0)
             .parse()
-            .expect("should be valid"); // ACC_NAME alice
+            .expect("should be valid");
         let register_isi = Register::asset(Asset::new(new_asset_id, 1_u32));
 
         register_isi.into()
@@ -510,7 +510,7 @@ mod tests {
     fn get_test_query() -> QueryBox {
         let asset_id: AssetId = format!("rose##{}", gen_account_in("wonderland").0)
             .parse()
-            .expect("should be valid"); // ACC_NAME alice
+            .expect("should be valid");
         FindAssetQuantityById::new(asset_id).into()
     }
 

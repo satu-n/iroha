@@ -822,7 +822,7 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let (alice_id, alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (alice_id, alice_keypair) = gen_account_in("wonderland");
         let account = Account::new(alice_id.clone()).build(&alice_id);
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
@@ -877,7 +877,7 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let (alice_id, alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (alice_id, alice_keypair) = gen_account_in("wonderland");
         let account = Account::new(alice_id.clone()).build(&alice_id);
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
@@ -950,7 +950,7 @@ mod tests {
         let chain_id = ChainId::from("0");
 
         // Predefined world state
-        let (alice_id, alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (alice_id, alice_keypair) = gen_account_in("wonderland");
         let account = Account::new(alice_id.clone()).build(&alice_id);
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);

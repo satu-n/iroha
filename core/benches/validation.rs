@@ -65,7 +65,7 @@ fn build_test_and_transient_state() -> State {
         let wasm = std::fs::read(&path_to_executor)
             .unwrap_or_else(|_| panic!("Failed to read file: {}", path_to_executor.display()));
         let executor = Executor::new(WasmSmartContract::from_compiled(wasm));
-        let (authority, _authority_keypair) = gen_account_in("genesis"); // ACC_NAME genesis
+        let (authority, _authority_keypair) = gen_account_in("genesis");
         Upgrade::new(executor)
             .execute(&authority, &mut state_transaction)
             .expect("Failed to load executor");

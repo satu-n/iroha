@@ -74,7 +74,7 @@ fn permissions_disallow_asset_transfer() {
     // Given
     let alice_id = ALICE_ID.clone();
     let bob_id = BOB_ID.clone();
-    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland");
     let asset_definition_id: AssetDefinitionId = "xor#wonderland".parse().expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));
@@ -127,7 +127,7 @@ fn permissions_disallow_asset_burn() {
 
     let alice_id = ALICE_ID.clone();
     let bob_id = BOB_ID.clone();
-    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland");
     let asset_definition_id = AssetDefinitionId::from_str("xor#wonderland").expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::numeric(asset_definition_id.clone()));
@@ -199,7 +199,7 @@ fn permissions_differ_not_only_by_names() {
     let (_rt, _not_drop, client) = <PeerBuilder>::new().with_port(10_745).start_with_runtime();
 
     let alice_id = ALICE_ID.clone();
-    let (mouse_id, mouse_keypair) = gen_account_in("outfit"); // ACC_NAME mouse
+    let (mouse_id, mouse_keypair) = gen_account_in("outfit");
 
     // Registering mouse
     let outfit_domain: DomainId = "outfit".parse().unwrap();
@@ -302,7 +302,7 @@ fn stored_vs_granted_token_payload() -> Result<()> {
     let asset_definition_id: AssetDefinitionId = "xor#wonderland".parse().expect("Valid");
     let create_asset =
         Register::asset_definition(AssetDefinition::store(asset_definition_id.clone()));
-    let (mouse_id, mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, mouse_keypair) = gen_account_in("wonderland");
     let new_mouse_account = Account::new(mouse_id.clone());
     let instructions: [InstructionBox; 2] = [
         Register::account(new_mouse_account).into(),

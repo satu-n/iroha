@@ -53,7 +53,7 @@ fn register_and_grant_role_for_metadata_access() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let alice_id = ALICE_ID.clone();
-    let (mouse_id, mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, mouse_keypair) = gen_account_in("wonderland");
 
     // Registering Mouse
     let register_mouse = Register::account(Account::new(mouse_id.clone()));
@@ -104,7 +104,7 @@ fn unregistered_role_removed_from_account() -> Result<()> {
 
     let role_id: RoleId = "root".parse().expect("Valid");
     let alice_id = ALICE_ID.clone();
-    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland");
 
     // Registering Mouse
     let register_mouse = Register::account(Account::new(mouse_id.clone()));
@@ -219,7 +219,7 @@ fn grant_revoke_role_permissions() -> Result<()> {
     wait_for_genesis_committed(&vec![test_client.clone()], 0);
 
     let alice_id = ALICE_ID.clone();
-    let (mouse_id, mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, mouse_keypair) = gen_account_in("wonderland");
 
     // Registering Mouse
     let register_mouse = Register::account(Account::new(mouse_id.clone()));

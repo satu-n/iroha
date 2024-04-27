@@ -1845,14 +1845,14 @@ mod tests {
 
     #[test]
     fn role_account_range() {
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
         let roles = [
             RoleIdWithOwner::new(account_id.clone(), "1".parse().unwrap()),
             RoleIdWithOwner::new(account_id.clone(), "2".parse().unwrap()),
-            RoleIdWithOwner::new(gen_account_in("wonderland").0, "3".parse().unwrap()), // ACC_NAME bob
-            RoleIdWithOwner::new(gen_account_in("wonderland").0, "4".parse().unwrap()), // ACC_NAME a
-            RoleIdWithOwner::new(gen_account_in("0").0, "5".parse().unwrap()), // ACC_NAME 0
-            RoleIdWithOwner::new(gen_account_in("1").0, "6".parse().unwrap()), // ACC_NAME 1
+            RoleIdWithOwner::new(gen_account_in("wonderland").0, "3".parse().unwrap()),
+            RoleIdWithOwner::new(gen_account_in("wonderland").0, "4".parse().unwrap()),
+            RoleIdWithOwner::new(gen_account_in("0").0, "5".parse().unwrap()),
+            RoleIdWithOwner::new(gen_account_in("1").0, "6".parse().unwrap()),
         ];
         let map = BTreeSet::from(roles);
 

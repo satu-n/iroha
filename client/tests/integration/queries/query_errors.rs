@@ -15,7 +15,7 @@ fn non_existent_account_is_specific_error() {
     // we cannot wait for genesis committment
 
     let err = client
-        .request(client::account::by_id(gen_account_in("regalia").0)) // ACC_NAME john_doe
+        .request(client::account::by_id(gen_account_in("regalia").0))
         .expect_err("Should error");
 
     match err {

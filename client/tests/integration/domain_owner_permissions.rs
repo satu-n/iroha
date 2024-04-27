@@ -13,7 +13,7 @@ fn domain_owner_domain_permissions() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let (bob_id, bob_keypair) = gen_account_in("kingdom"); // ACC_NAME bob
+    let (bob_id, bob_keypair) = gen_account_in("kingdom");
     let coin_id: AssetDefinitionId = "coin#kingdom".parse()?;
     let coin = AssetDefinition::numeric(coin_id.clone());
 
@@ -83,7 +83,7 @@ fn domain_owner_account_permissions() -> Result<()> {
     wait_for_genesis_committed(&[test_client.clone()], 0);
 
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let (mad_hatter_id, _mad_hatter_keypair) = gen_account_in("kingdom"); // ACC_NAME mad_hatter
+    let (mad_hatter_id, _mad_hatter_keypair) = gen_account_in("kingdom");
 
     // "alice@wonderland" is owner of "kingdom" domain
     let kingdom = Domain::new(kingdom_id);
@@ -124,8 +124,8 @@ fn domain_owner_asset_definition_permissions() -> Result<()> {
 
     let chain_id = ChainId::from("0");
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let (bob_id, bob_keypair) = gen_account_in("kingdom"); // ACC_NAME bob
-    let (rabbit_id, _rabbit_keypair) = gen_account_in("kingdom"); // ACC_NAME white_rabbit
+    let (bob_id, bob_keypair) = gen_account_in("kingdom");
+    let (rabbit_id, _rabbit_keypair) = gen_account_in("kingdom");
     let coin_id: AssetDefinitionId = "coin#kingdom".parse()?;
 
     // "alice@wonderland" is owner of "kingdom" domain
@@ -192,7 +192,7 @@ fn domain_owner_asset_permissions() -> Result<()> {
 
     let alice_id = ALICE_ID.clone();
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let (bob_id, bob_keypair) = gen_account_in("kingdom"); // ACC_NAME bob
+    let (bob_id, bob_keypair) = gen_account_in("kingdom");
     let coin_id: AssetDefinitionId = "coin#kingdom".parse()?;
     let store_id: AssetDefinitionId = "store#kingdom".parse()?;
 
@@ -257,7 +257,7 @@ fn domain_owner_trigger_permissions() -> Result<()> {
 
     let alice_id = ALICE_ID.clone();
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let (bob_id, _bob_keypair) = gen_account_in("kingdom"); // ACC_NAME bob
+    let (bob_id, _bob_keypair) = gen_account_in("kingdom");
 
     // "alice@wonderland" is owner of "kingdom" domain
     let kingdom = Domain::new(kingdom_id);
@@ -312,7 +312,7 @@ fn domain_owner_transfer() -> Result<()> {
 
     let alice_id = ALICE_ID.clone();
     let kingdom_id: DomainId = "kingdom".parse()?;
-    let (bob_id, _bob_keypair) = gen_account_in("kingdom"); // ACC_NAME bob
+    let (bob_id, _bob_keypair) = gen_account_in("kingdom");
 
     // "alice@wonderland" is owner of "kingdom" domain
     let kingdom = Domain::new(kingdom_id.clone());

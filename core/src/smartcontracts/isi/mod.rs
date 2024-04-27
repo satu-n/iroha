@@ -257,8 +257,8 @@ mod tests {
         let world = World::with([], PeersIds::new());
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world, kura.clone(), query_handle);
-        let (genesis_account_id, _genesis_account_keypair) = gen_account_in("genesis"); // ACC_NAME genesis
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (genesis_account_id, _genesis_account_keypair) = gen_account_in("genesis");
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
@@ -279,7 +279,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut staet_block = state.block();
         let mut state_transaction = staet_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
         let asset_id = AssetId::new(asset_definition_id, account_id.clone());
         SetKeyValue::asset(
@@ -310,7 +310,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
         SetKeyValue::account(
             account_id.clone(),
             Name::from_str("Bytes")?,
@@ -343,7 +343,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
         SetKeyValue::asset_definition(
             definition_id.clone(),
             Name::from_str("Bytes")?,
@@ -374,7 +374,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let domain_id = DomainId::from_str("wonderland")?;
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
         SetKeyValue::domain(
             domain_id.clone(),
             Name::from_str("Bytes")?,
@@ -404,7 +404,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
         let trigger_id = TriggerId::from_str("test_trigger_id")?;
 
         assert!(matches!(
@@ -423,8 +423,8 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
-        let (fake_account_id, _fake_account_keypair) = gen_account_in("wonderland"); // ACC_NAME john_doe
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
+        let (fake_account_id, _fake_account_keypair) = gen_account_in("wonderland");
         let trigger_id = TriggerId::from_str("test_trigger_id")?;
 
         // register fake account
@@ -466,7 +466,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut staet_block = state.block();
         let mut state_transaction = staet_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (account_id, _account_keypair) = gen_account_in("wonderland");
         assert!(matches!(
             Register::domain(Domain::new(DomainId::from_str("genesis")?))
                 .execute(&account_id, &mut state_transaction)

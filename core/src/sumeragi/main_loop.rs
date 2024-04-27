@@ -1220,7 +1220,7 @@ mod tests {
         leader_key_pair: &KeyPair,
     ) -> (State, Arc<Kura>, SignedBlock, PublicKey) {
         // Predefined world state
-        let (alice_id, alice_keypair) = gen_account_in("wonderland"); // ACC_NAME alice
+        let (alice_id, alice_keypair) = gen_account_in("wonderland");
         let genesis_public_key = alice_keypair.public_key().clone();
         let account = Account::new(alice_id.clone()).build(&alice_id);
         let domain_id = "wonderland".parse().expect("Valid");

@@ -472,7 +472,7 @@ mod tests {
         let state_view = state.view();
 
         let unapplied_tx = TransactionBuilder::new(chain_id, ALICE_ID.clone())
-            .with_instructions([Unregister::account(gen_account_in("domain").0)]) // ACC_NAME account
+            .with_instructions([Unregister::account(gen_account_in("domain").0)])
             .sign(&ALICE_KEYPAIR);
         let wrong_hash = unapplied_tx.hash();
         let not_found = FindTransactionByHash::new(wrong_hash).execute(&state_view);

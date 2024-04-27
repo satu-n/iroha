@@ -196,10 +196,10 @@ fn mint_nft_for_every_user_every_1_sec() -> Result<()> {
 
     let accounts: Vec<AccountId> = vec![
         alice_id.clone(),
-        gen_account_in("wonderland").0, // ACC_NAME mad_hatter
-        gen_account_in("wonderland").0, // ACC_NAME cheshire_cat
-        gen_account_in("wonderland").0, // ACC_NAME caterpillar
-        gen_account_in("wonderland").0, // ACC_NAME white_rabbit
+        gen_account_in("wonderland").0,
+        gen_account_in("wonderland").0,
+        gen_account_in("wonderland").0,
+        gen_account_in("wonderland").0,
     ];
 
     // Registering accounts

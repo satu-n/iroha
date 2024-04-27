@@ -39,7 +39,7 @@ fn must_execute_both_triggers() -> Result<()> {
     test_client.submit_blocking(register_trigger)?;
 
     test_client.submit_blocking(Register::account(Account::new(
-        gen_account_in("wonderland").0, // ACC_NAME white_rabbit
+        gen_account_in("wonderland").0,
     )))?;
     test_client.submit_blocking(Register::domain(Domain::new("neverland".parse()?)))?;
 
@@ -57,7 +57,7 @@ fn domain_scoped_trigger_must_be_executed_only_on_events_in_its_domain() -> Resu
     let create_neverland_domain: InstructionBox =
         Register::domain(Domain::new("neverland".parse()?)).into();
 
-    let (account_id, _account_keypair) = gen_account_in("neverland"); // ACC_NAME sapporo
+    let (account_id, _account_keypair) = gen_account_in("neverland");
     let create_sapporo_account = Register::account(Account::new(account_id.clone())).into();
 
     let asset_definition_id: AssetDefinitionId = "sakura#neverland".parse()?;
@@ -88,11 +88,11 @@ fn domain_scoped_trigger_must_be_executed_only_on_events_in_its_domain() -> Resu
     test_client.submit_blocking(register_trigger)?;
 
     test_client.submit_blocking(Register::account(Account::new(
-        gen_account_in("wonderland").0, // ACC_NAME asahi
+        gen_account_in("wonderland").0,
     )))?;
 
     test_client.submit_blocking(Register::account(Account::new(
-        gen_account_in("neverland").0, // ACC_NAME asahi
+        gen_account_in("neverland").0,
     )))?;
 
     let new_value = get_asset_value(&test_client, asset_id);

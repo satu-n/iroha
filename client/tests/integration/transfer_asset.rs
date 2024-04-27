@@ -136,7 +136,7 @@ fn simulate_transfer<T>(
 
 fn generate_two_ids() -> (AccountId, AccountId) {
     let alice_id = ALICE_ID.clone();
-    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland"); // ACC_NAME mouse
+    let (mouse_id, _mouse_keypair) = gen_account_in("wonderland");
     (alice_id, mouse_id)
 }
 

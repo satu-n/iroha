@@ -10,8 +10,8 @@ fn send_tx_with_different_chain_id() {
     let (_rt, _peer, test_client) = <PeerBuilder>::new().with_port(11_250).start_with_runtime();
     wait_for_genesis_committed(&[test_client.clone()], 0);
     // Given
-    let (sender_id, sender_keypair) = gen_account_in("wonderland"); // ACC_NAME sender
-    let (receiver_id, _receiver_keypair) = gen_account_in("wonderland"); // ACC_NAME receiver
+    let (sender_id, sender_keypair) = gen_account_in("wonderland");
+    let (receiver_id, _receiver_keypair) = gen_account_in("wonderland");
     let asset_definition_id = AssetDefinitionId::from_str("test_asset#wonderland").unwrap();
     let to_transfer = numeric!(1);
 

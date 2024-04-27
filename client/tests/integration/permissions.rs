@@ -318,7 +318,8 @@ fn stored_vs_granted_token_payload() -> Result<()> {
         PermissionToken::from_str_unchecked(
             "CanSetKeyValueInUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            &*["{ \"asset_id\" : \"xor#wonderland#", &*mouse_id.to_string(), "\" }"].join(""),
+            &*format!(r###"{{ "asset_id" : "xor#wonderland#{mouse_id}" }}"###)
+
         ),
         alice_id,
     );
@@ -352,7 +353,8 @@ fn permission_tokens_are_unified() {
         PermissionToken::from_str_unchecked(
             "CanTransferUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            &*["{ \"asset_id\" : \"rose#wonderland#", &*alice_id.to_string(), "\" }"].join(""),
+            &*format!(r###"{{ "asset_id" : "rose#wonderland#{alice_id}" }}"###)
+
         ),
         alice_id.clone(),
     );
@@ -361,7 +363,7 @@ fn permission_tokens_are_unified() {
         PermissionToken::from_str_unchecked(
             "CanTransferUserAsset".parse().unwrap(),
             // NOTE: Introduced additional whitespaces in the serialized form
-            &*["{ \"asset_id\" : \"rose##", &*alice_id.to_string(), "\" }"].join(""),
+            &*format!(r###"{{ "asset_id" : "rose##{alice_id}" }}"###)
         ),
         alice_id,
     );

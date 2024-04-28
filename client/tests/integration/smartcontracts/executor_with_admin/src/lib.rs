@@ -6,6 +6,8 @@
 #[cfg(not(test))]
 extern crate panic_halt;
 
+extern crate alloc;
+
 use iroha_executor::{parse, prelude::*};
 use lol_alloc::{FreeListAllocator, LockedAllocator};
 

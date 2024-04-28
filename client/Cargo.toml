@@ -53,10 +53,10 @@ iroha_crypto = { workspace = true }
 iroha_data_model = { workspace = true, features = ["http"] }
 iroha_primitives = { workspace = true }
 iroha_logger = { workspace = true }
-test_samples = { workspace = true }
 iroha_telemetry = { workspace = true }
 iroha_torii_const = { workspace = true }
 iroha_version = { workspace = true, features = ["http"] }
+test_samples = { workspace = true }
 
 attohttpc = { version = "0.28.0", default-features = false }
 eyre = { workspace = true }

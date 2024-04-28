@@ -11,7 +11,6 @@ use once_cell::sync::Lazy;
 /// # Panics
 ///
 /// Panics if the given `domain` is invalid as [`Name`](iroha_data_model::name::Name).
-#[cfg(feature = "rand")]
 pub fn gen_account_in(domain: impl core::fmt::Display) -> (AccountId, KeyPair) {
     let key_pair = KeyPair::random();
     let account_id = format!("{}@{}", key_pair.public_key(), domain)

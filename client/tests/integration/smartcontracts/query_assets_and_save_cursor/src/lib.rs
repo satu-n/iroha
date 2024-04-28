@@ -46,7 +46,7 @@ fn main(owner: AccountId) {
 
     SetKeyValue::account(
         owner,
-        parse!(Name, "cursor"),
+        parse!("cursor" as Name),
         MetadataValueBox::String(
             serde_json::to_value(&asset_cursor.cursor)
                 .dbg_expect("Failed to convert cursor to JSON")

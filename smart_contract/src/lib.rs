@@ -94,7 +94,7 @@ macro_rules! parse {
     ($l:literal as $t:ty) => {
         $crate::debug::DebugExpectExt::dbg_expect(
             $l.parse::<$t>(),
-            concat!("Failed to parse `", $l, "` as `", stringify!($t), "`"),
+            &*alloc::format!("Failed to parse {} as {}", $l, stringify!($t)),
         )
     };
 }

@@ -22,13 +22,8 @@ struct Executor {
 }
 
 fn visit_instruction(executor: &mut Executor, authority: &AccountId, isi: &InstructionBox) {
-    // crate::integration::upgrade::ADMIN_ID
-    if *authority
-        == parse!(
-            AccountId,
-            "ed012076E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC@admin"
-        )
-    {
+    let admin_id = "ed012076E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC@admin"; // equals to integration::upgrade::ADMIN_ID
+    if *authority == parse!(AccountId, admin_id) {
         execute!(executor, isi);
     }
 

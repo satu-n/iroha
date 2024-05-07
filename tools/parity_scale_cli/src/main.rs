@@ -321,7 +321,7 @@ mod tests {
     use std::str::FromStr as _;
 
     use iroha_data_model::{ipfs::IpfsPath, prelude::*};
-    use test_samples::gen_account_in;
+    use test_samples::ALICE_ID;
 
     use super::*;
 
@@ -336,7 +336,7 @@ mod tests {
                 limits,
             )
             .expect("Valid");
-        let account = Account::new(gen_account_in("wonderland").0).with_metadata(metadata);
+        let account = Account::new(ALICE_ID.clone()).with_metadata(metadata);
 
         decode_sample("account.bin", String::from("NewAccount"), &account);
     }
@@ -360,17 +360,16 @@ mod tests {
 
     #[test]
     fn decode_trigger_sample() {
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
         let rose_definition_id = AssetDefinitionId::new(
             "wonderland".parse().expect("Valid"),
             "rose".parse().expect("Valid"),
         );
-        let rose_id = AssetId::new(rose_definition_id, account_id.clone());
+        let rose_id = AssetId::new(rose_definition_id, ALICE_ID.clone());
         let trigger_id = "mint_rose".parse().expect("Valid");
         let action = Action::new(
             vec![Mint::asset_numeric(1u32, rose_id)],
             Repeats::Indefinitely,
-            account_id,
+            ALICE_ID.clone(),
             DomainEventFilter::new().for_events(DomainEventSet::AnyAccount),
         );
         let trigger = Trigger::new(trigger_id, action);

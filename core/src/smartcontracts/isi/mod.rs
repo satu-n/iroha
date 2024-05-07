@@ -241,8 +241,8 @@ mod tests {
     use std::sync::Arc;
 
     use iroha_data_model::metadata::MetadataValueBox;
-    use iroha_genesis::GENESIS_ACCOUNT_ID;
-    use test_samples::gen_account_in;
+    use iroha_genesis::{GENESIS_ACCOUNT_ID, GENESIS_ACCOUNT_KEYPAIR};
+    use test_samples::{gen_account_in, ALICE_ID};
     use tokio::test;
 
     use super::*;
@@ -258,17 +258,15 @@ mod tests {
         let world = World::with([], PeersIds::new());
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world, kura.clone(), query_handle);
-        let (genesis_account_id, _genesis_account_keypair) = gen_account_in("genesis");
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         Register::domain(Domain::new(DomainId::from_str("wonderland")?))
-            .execute(&genesis_account_id, &mut state_transaction)?;
-        Register::account(Account::new(account_id))
-            .execute(&genesis_account_id, &mut state_transaction)?;
+            .execute(&GENESIS_ACCOUNT_ID, &mut state_transaction)?;
+        Register::account(Account::new(ALICE_ID.clone()))
+            .execute(&GENESIS_ACCOUNT_ID, &mut state_transaction)?;
         Register::asset_definition(AssetDefinition::store(asset_definition_id))
-            .execute(&genesis_account_id, &mut state_transaction)?;
+            .execute(&GENESIS_ACCOUNT_ID, &mut state_transaction)?;
         state_transaction.apply();
         state_block.commit();
         Ok(state)
@@ -278,9 +276,9 @@ mod tests {
     async fn asset_store() -> Result<()> {
         let kura = Kura::blank_kura_for_testing();
         let state = state_with_test_domains(&kura)?;
-        let mut staet_block = state.block();
-        let mut state_transaction = staet_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
+        let mut state_block = state.block();
+        let mut state_transaction = state_block.transaction();
+        let account_id = ALICE_ID.clone();
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
         let asset_id = AssetId::new(asset_definition_id, account_id.clone());
         SetKeyValue::asset(
@@ -311,7 +309,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
+        let account_id = ALICE_ID.clone();
         SetKeyValue::account(
             account_id.clone(),
             Name::from_str("Bytes")?,
@@ -344,7 +342,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
+        let account_id = ALICE_ID.clone();
         SetKeyValue::asset_definition(
             definition_id.clone(),
             Name::from_str("Bytes")?,
@@ -375,7 +373,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let domain_id = DomainId::from_str("wonderland")?;
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
+        let account_id = ALICE_ID.clone();
         SetKeyValue::domain(
             domain_id.clone(),
             Name::from_str("Bytes")?,
@@ -405,7 +403,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
+        let account_id = ALICE_ID.clone();
         let trigger_id = TriggerId::from_str("test_trigger_id")?;
 
         assert!(matches!(
@@ -424,7 +422,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
+        let account_id = ALICE_ID.clone();
         let (fake_account_id, _fake_account_keypair) = gen_account_in("wonderland");
         let trigger_id = TriggerId::from_str("test_trigger_id")?;
 
@@ -465,9 +463,9 @@ mod tests {
     async fn not_allowed_to_register_genesis_domain_or_account() -> Result<()> {
         let kura = Kura::blank_kura_for_testing();
         let state = state_with_test_domains(&kura)?;
-        let mut staet_block = state.block();
-        let mut state_transaction = staet_block.transaction();
-        let (account_id, _account_keypair) = gen_account_in("wonderland");
+        let mut state_block = state.block();
+        let mut state_transaction = state_block.transaction();
+        let account_id = ALICE_ID.clone();
         assert!(matches!(
             Register::domain(Domain::new(DomainId::from_str("genesis")?))
                 .execute(&account_id, &mut state_transaction)
@@ -492,10 +490,9 @@ mod tests {
         let state_block = state.block();
 
         let instructions: [InstructionBox; 0] = [];
-        let genesis_keys = KeyPair::random();
         let tx = TransactionBuilder::new(chain_id.clone(), GENESIS_ACCOUNT_ID.clone())
             .with_instructions(instructions)
-            .sign(&genesis_keys);
+            .sign(&GENESIS_ACCOUNT_KEYPAIR);
         let tx_limits = &state_block.transaction_executor().transaction_limits;
         assert!(matches!(
             AcceptedTransaction::accept(tx, &chain_id, tx_limits),

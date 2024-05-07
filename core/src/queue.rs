@@ -410,8 +410,16 @@ pub mod tests {
         }
     }
 
-    fn accepted_tx(time_source: &TimeSource) -> AcceptedTransaction {
+    fn accepted_tx_by_someone(time_source: &TimeSource) -> AcceptedTransaction {
         let (account_id, key_pair) = gen_account_in("wonderland");
+        accepted_tx_by(account_id, &key_pair, time_source)
+    }
+
+    fn accepted_tx_by(
+        account_id: AccountId,
+        key_pair: &KeyPair,
+        time_source: &TimeSource,
+    ) -> AcceptedTransaction {
         let chain_id = ChainId::from("0");
         let message = std::iter::repeat_with(rand::random::<char>)
             .take(16)
@@ -457,7 +465,7 @@ pub mod tests {
         let queue = Queue::test(config_factory(), &time_source);
 
         queue
-            .push(accepted_tx(&time_source), &state_view)
+            .push(accepted_tx_by_someone(&time_source), &state_view)
             .expect("Failed to push tx into queue");
     }
 
@@ -483,13 +491,13 @@ pub mod tests {
 
         for _ in 0..capacity.get() {
             queue
-                .push(accepted_tx(&time_source), &state_view)
+                .push(accepted_tx_by_someone(&time_source), &state_view)
                 .expect("Failed to push tx into queue");
             time_handle.advance(Duration::from_millis(10));
         }
 
         assert!(matches!(
-            queue.push(accepted_tx(&time_source), &state_view),
+            queue.push(accepted_tx_by_someone(&time_source), &state_view),
             Err(Failure {
                 err: Error::Full,
                 ..
@@ -516,7 +524,7 @@ pub mod tests {
         );
         for _ in 0..5 {
             queue
-                .push(accepted_tx(&time_source), &state_view)
+                .push(accepted_tx_by_someone(&time_source), &state_view)
                 .expect("Failed to push tx into queue");
             time_handle.advance(Duration::from_millis(10));
         }
@@ -531,7 +539,7 @@ pub mod tests {
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world_with_test_domains(), kura, query_handle);
         let (_time_handle, time_source) = TimeSource::new_mock(Duration::default());
-        let tx = accepted_tx(&time_source);
+        let tx = accepted_tx_by_someone(&time_source);
         let mut state_block = state.block();
         state_block.transactions.insert(tx.as_ref().hash(), 1);
         state_block.commit();
@@ -554,7 +562,7 @@ pub mod tests {
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world_with_test_domains(), kura, query_handle);
         let (_time_handle, time_source) = TimeSource::new_mock(Duration::default());
-        let tx = accepted_tx(&time_source);
+        let tx = accepted_tx_by_someone(&time_source);
         let queue = Queue::test(config_factory(), &time_source);
         queue.push(tx.clone(), &state.view()).unwrap();
         let mut state_block = state.block();
@@ -588,13 +596,13 @@ pub mod tests {
         );
         for _ in 0..(max_txs_in_block - 1) {
             queue
-                .push(accepted_tx(&time_source), &state_view)
+                .push(accepted_tx_by_someone(&time_source), &state_view)
                 .expect("Failed to push tx into queue");
             time_handle.advance(Duration::from_millis(100));
         }
 
         queue
-            .push(accepted_tx(&time_source), &state_view)
+            .push(accepted_tx_by_someone(&time_source), &state_view)
             .expect("Failed to push tx into queue");
         time_handle.advance(Duration::from_millis(101));
         assert_eq!(
@@ -605,7 +613,7 @@ pub mod tests {
         );
 
         queue
-            .push(accepted_tx(&time_source), &state_view)
+            .push(accepted_tx_by_someone(&time_source), &state_view)
             .expect("Failed to push tx into queue");
         time_handle.advance(Duration::from_millis(210));
         assert_eq!(
@@ -630,7 +638,7 @@ pub mod tests {
 
         let queue = Queue::test(config_factory(), &time_source);
         queue
-            .push(accepted_tx(&time_source), &state_view)
+            .push(accepted_tx_by_someone(&time_source), &state_view)
             .expect("Failed to push tx into queue");
 
         let a = queue
@@ -739,7 +747,7 @@ pub mod tests {
             // Spawn a thread where we push transactions
             thread::spawn(move || {
                 while start_time.elapsed() < run_for {
-                    let tx = accepted_tx(&time_source);
+                    let tx = accepted_tx_by_someone(&time_source);
                     match queue_arc_clone.push(tx, &state.view()) {
                         Ok(())
                         | Err(Failure {
@@ -802,12 +810,12 @@ pub mod tests {
             &time_source,
         );
 
-        let tx = accepted_tx(&time_source);
+        let tx = accepted_tx_by_someone(&time_source);
         assert!(queue.push(tx.clone(), &state_view).is_ok());
 
         // create the same tx but with timestamp in the future
         time_handle.advance(future_threshold * 2);
-        let tx = accepted_tx(&time_source);
+        let tx = accepted_tx_by_someone(&time_source);
         time_handle.rewind(future_threshold * 2);
 
         assert!(matches!(
@@ -823,10 +831,10 @@ pub mod tests {
     #[test]
     async fn queue_throttling() {
         let kura = Kura::blank_kura_for_testing();
+        let (alice_id, alice_keypair) = gen_account_in("wonderland");
+        let (bob_id, bob_keypair) = gen_account_in("wonderland");
         let world = {
             let domain_id = DomainId::from_str("wonderland").expect("Valid");
-            let (alice_id, _alice_keypair) = gen_account_in("wonderland");
-            let (bob_id, _bob_keypair) = gen_account_in("wonderland");
             let mut domain = Domain::new(domain_id).build(&alice_id);
             let alice_account = Account::new(alice_id.clone()).build(&alice_id);
             let bob_account = Account::new(bob_id.clone()).build(&bob_id);
@@ -851,11 +859,17 @@ pub mod tests {
 
         // First push by Alice should be fine
         queue
-            .push(accepted_tx(&time_source), &state.view())
+            .push(
+                accepted_tx_by(alice_id.clone(), &alice_keypair, &time_source),
+                &state.view(),
+            )
             .expect("Failed to push tx into queue");
 
         // Second push by Alice excide limit and will be rejected
-        let result = queue.push(accepted_tx(&time_source), &state.view());
+        let result = queue.push(
+            accepted_tx_by(alice_id.clone(), &alice_keypair, &time_source),
+            &state.view(),
+        );
         assert!(
             matches!(
                 result,
@@ -869,7 +883,10 @@ pub mod tests {
 
         // First push by Bob should be fine despite previous Alice error
         queue
-            .push(accepted_tx(&time_source), &state.view())
+            .push(
+                accepted_tx_by(bob_id.clone(), &bob_keypair, &time_source),
+                &state.view(),
+            )
             .expect("Failed to push tx into queue");
 
         let transactions = queue.collect_transactions_for_block(&state.view(), 10);
@@ -888,11 +905,17 @@ pub mod tests {
 
         // After cleanup Alice and Bob pushes should work fine
         queue
-            .push(accepted_tx(&time_source), &state.view())
+            .push(
+                accepted_tx_by(alice_id, &alice_keypair, &time_source),
+                &state.view(),
+            )
             .expect("Failed to push tx into queue");
 
         queue
-            .push(accepted_tx(&time_source), &state.view())
+            .push(
+                accepted_tx_by(bob_id, &bob_keypair, &time_source),
+                &state.view(),
+            )
             .expect("Failed to push tx into queue");
     }
 }

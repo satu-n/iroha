@@ -224,7 +224,7 @@ impl FromStr for AccountId {
             }),
             Some((signatory_candidate, domain_id_candidate)) => {
                 let signatory = signatory_candidate.parse().map_err(|_| ParseError {
-                    reason: "Failed to parse `signatory` part in `signatory@domain`. `signatory` should have multihash format e.g. `ed0120...`",
+                    reason: r#"Failed to parse `signatory` part in `signatory@domain`. `signatory` should have multihash format e.g. "ed0120...""#,
                 })?;
                 let domain_id = domain_id_candidate.parse().map_err(|_| ParseError {
                     reason: "Failed to parse `domain` part in `signatory@domain`",

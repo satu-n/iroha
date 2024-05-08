@@ -15,7 +15,7 @@ class Stderr(Enum):
     Enum for standard error messages.
     """
 
-    EMPTY = "mpty"
+    EMPTY = "Empty"
     REPETITION = "Repetition"
     TOO_LONG = "Name length violation"
     FAILED_TO_FIND_DOMAIN = "Failed to find domain"

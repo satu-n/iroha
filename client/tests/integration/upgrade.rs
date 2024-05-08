@@ -3,25 +3,27 @@ use std::{path::Path, str::FromStr as _};
 use eyre::Result;
 use iroha_client::{
     client::{self, Client, QueryResult},
+    crypto::KeyPair,
     data_model::prelude::*,
 };
-use iroha_crypto::{Algorithm, KeyPair, PrivateKey};
 use iroha_logger::info;
 use serde_json::json;
 use test_network::*;
 use test_samples::ALICE_ID;
 
-const ADMIN_ID: &str =
-    "ed012076E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC@admin";
-const ADMIN_SECRET: &str = "A4DE33BCA99A254ED6265D1F0FB69DFE42B77F89F6C2E478498E1831BF6D81F276E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC";
+const ADMIN_PUBLIC_KEY_MULTIHASH: &str =
+    "ed012076E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC";
+const ADMIN_PRIVATE_KEY_MULTIHASH: &str = "802640A4DE33BCA99A254ED6265D1F0FB69DFE42B77F89F6C2E478498E1831BF6D81F276E5CA9698296AF9BE2CA45F525CB3BCFDEB7EE068BA56F973E9DD90564EF4FC";
 
 #[test]
 fn executor_upgrade_should_work() -> Result<()> {
     let chain_id = ChainId::from("0");
-    let admin_id: AccountId = ADMIN_ID.parse().unwrap();
+    let admin_id: AccountId = format!("{ADMIN_PUBLIC_KEY_MULTIHASH}@admin")
+        .parse()
+        .unwrap();
     let admin_keypair = KeyPair::new(
         admin_id.signatory().clone(),
-        PrivateKey::from_hex(Algorithm::Ed25519, ADMIN_SECRET).unwrap(),
+        ADMIN_PRIVATE_KEY_MULTIHASH.parse().unwrap(),
     )
     .unwrap();
 

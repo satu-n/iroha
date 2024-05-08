@@ -75,8 +75,7 @@ fn domain_registration_test(config: Config) -> Result<(), Error> {
 
 fn account_definition_test() -> Result<(), Error> {
     // #region account_definition_comparison
-    use iroha_client::data_model::prelude::AccountId;
-    use iroha_crypto::KeyPair;
+    use iroha_client::{crypto::KeyPair, data_model::prelude::AccountId};
 
     // Generate a new public key for a new account
     let (public_key, _) = KeyPair::random().into_parts();
@@ -148,11 +147,11 @@ fn asset_registration_test(config: Config) -> Result<(), Error> {
 
     use iroha_client::{
         client::Client,
+        crypto::KeyPair,
         data_model::prelude::{
             numeric, AccountId, AssetDefinition, AssetDefinitionId, AssetId, Mint, Register,
         },
     };
-    use iroha_crypto::KeyPair;
     // #endregion register_asset_crates
 
     // Create an Iroha client

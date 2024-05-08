@@ -3,6 +3,7 @@ use std::{collections::HashSet, str::FromStr as _};
 use eyre::{Result, WrapErr as _};
 use iroha_client::{
     client::{self, QueryResult},
+    crypto::KeyPair,
     data_model::{
         account::Account,
         prelude::*,
@@ -12,7 +13,6 @@ use iroha_client::{
         },
     },
 };
-use iroha_crypto::KeyPair;
 use nonzero_ext::nonzero;
 use rand::{seq::SliceRandom, thread_rng};
 use test_network::*;

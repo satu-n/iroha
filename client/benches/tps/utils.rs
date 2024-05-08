@@ -3,12 +3,12 @@ use std::{fmt, fs::File, io::BufReader, path::Path, sync::mpsc, thread, time};
 use eyre::{Result, WrapErr};
 use iroha_client::{
     client::Client,
+    crypto::KeyPair,
     data_model::{
         parameter::{default::MAX_TRANSACTIONS_IN_BLOCK, ParametersBuilder},
         prelude::*,
     },
 };
-use iroha_crypto::KeyPair;
 use iroha_data_model::events::pipeline::{BlockEventFilter, BlockStatus};
 use nonzero_ext::nonzero;
 use serde::Deserialize;

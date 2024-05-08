@@ -50,9 +50,9 @@ pub mod isi {
             let account: Account = self.object.build(authority);
             let account_id = account.id().clone();
 
-            if account_id == *iroha_genesis::GENESIS_ACCOUNT_ID {
+            if *account_id.domain_id() == *iroha_genesis::GENESIS_DOMAIN_ID {
                 return Err(InstructionExecutionError::InvariantViolation(
-                    "Not allowed to register genesis account".to_owned(),
+                    "Not allowed to register account in genesis domain".to_owned(),
                 ));
             }
 

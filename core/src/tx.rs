@@ -94,7 +94,7 @@ impl AcceptedTransaction {
             }));
         }
 
-        if *iroha_genesis::GENESIS_ACCOUNT_ID == *tx.authority() {
+        if *iroha_genesis::GENESIS_DOMAIN_ID == *tx.authority().domain_id() {
             return Err(AcceptTransactionFail::UnexpectedGenesisAccountSignature);
         }
 

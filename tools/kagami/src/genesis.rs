@@ -13,7 +13,7 @@ use iroha_data_model::{
     prelude::AssetId,
 };
 use iroha_genesis::{
-    executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile, GENESIS_ACCOUNT_ID,
+    executor_state, RawGenesisBlockBuilder, RawGenesisBlockFile, GENESIS_DOMAIN_ID,
 };
 use serde_json::json;
 use test_samples::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID};
@@ -79,6 +79,14 @@ impl<T: Write> RunArgs<T> for Args {
 pub fn generate_default(
     builder: RawGenesisBlockBuilder<executor_state::SetPath>,
 ) -> color_eyre::Result<RawGenesisBlockFile> {
+    let genesis_account_id: AccountId = {
+        let multihash =
+            std::env::var("GENESIS_PUBLIC_KEY").wrap_err("GENESIS_PUBLIC_KEY should be set")?;
+        let domain = &*GENESIS_DOMAIN_ID;
+        format!("{multihash}@{domain}")
+            .parse()
+            .wrap_err("GENESIS_PUBLIC_KEY should be valid multihash")?
+    };
     let mut meta = Metadata::new();
     meta.insert_with_limits("key".parse()?, "value".to_owned(), Limits::new(1024, 1024))?;
 
@@ -113,12 +121,12 @@ pub fn generate_default(
         ALICE_ID.clone(),
     );
     let transfer_rose_ownership = Transfer::asset_definition(
-        GENESIS_ACCOUNT_ID.clone(),
+        genesis_account_id.clone(),
         "rose#wonderland".parse()?,
         ALICE_ID.clone(),
     );
     let transfer_wonderland_ownership = Transfer::domain(
-        GENESIS_ACCOUNT_ID.clone(),
+        genesis_account_id.clone(),
         "wonderland".parse()?,
         ALICE_ID.clone(),
     );

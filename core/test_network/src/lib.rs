@@ -16,7 +16,7 @@ use iroha_config::parameters::actual::Root as Config;
 pub use iroha_core::state::StateReadOnly;
 use iroha_crypto::KeyPair;
 use iroha_data_model::{query::QueryOutputBox, ChainId};
-use iroha_genesis::{GenesisNetwork, RawGenesisBlockFile, GENESIS_ACCOUNT_KEYPAIR};
+use iroha_genesis::{GenesisNetwork, RawGenesisBlockFile};
 use iroha_logger::{warn, InstrumentFutures};
 use iroha_primitives::{
     addr::{socket_addr, SocketAddr},
@@ -26,7 +26,7 @@ use iroha_primitives::{
 use rand::{seq::IteratorRandom, thread_rng};
 use serde_json::json;
 use tempfile::TempDir;
-use test_samples::{ALICE_ID, ALICE_KEYPAIR, PEER_KEYPAIR};
+use test_samples::{ALICE_ID, ALICE_KEYPAIR, PEER_KEYPAIR, SAMPLE_GENESIS_ACCOUNT_KEYPAIR};
 use tokio::{
     runtime::{self, Runtime},
     task::{self, JoinHandle},
@@ -53,7 +53,7 @@ pub fn get_chain_id() -> ChainId {
 pub fn get_key_pair(signatory: Signatory) -> KeyPair {
     match signatory {
         Signatory::Peer => &PEER_KEYPAIR,
-        Signatory::Genesis => &GENESIS_ACCOUNT_KEYPAIR,
+        Signatory::Genesis => &SAMPLE_GENESIS_ACCOUNT_KEYPAIR,
         Signatory::Alice => &ALICE_KEYPAIR,
     }
     .deref()

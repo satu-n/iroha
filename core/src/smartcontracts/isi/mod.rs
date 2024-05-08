@@ -241,8 +241,9 @@ mod tests {
     use std::sync::Arc;
 
     use iroha_data_model::metadata::MetadataValueBox;
-    use iroha_genesis::{GENESIS_ACCOUNT_ID, GENESIS_ACCOUNT_KEYPAIR};
-    use test_samples::{gen_account_in, ALICE_ID};
+    use test_samples::{
+        gen_account_in, ALICE_ID, SAMPLE_GENESIS_ACCOUNT_ID, SAMPLE_GENESIS_ACCOUNT_KEYPAIR,
+    };
     use tokio::test;
 
     use super::*;
@@ -262,11 +263,11 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         Register::domain(Domain::new(DomainId::from_str("wonderland")?))
-            .execute(&GENESIS_ACCOUNT_ID, &mut state_transaction)?;
+            .execute(&SAMPLE_GENESIS_ACCOUNT_ID, &mut state_transaction)?;
         Register::account(Account::new(ALICE_ID.clone()))
-            .execute(&GENESIS_ACCOUNT_ID, &mut state_transaction)?;
+            .execute(&SAMPLE_GENESIS_ACCOUNT_ID, &mut state_transaction)?;
         Register::asset_definition(AssetDefinition::store(asset_definition_id))
-            .execute(&GENESIS_ACCOUNT_ID, &mut state_transaction)?;
+            .execute(&SAMPLE_GENESIS_ACCOUNT_ID, &mut state_transaction)?;
         state_transaction.apply();
         state_block.commit();
         Ok(state)
@@ -472,7 +473,7 @@ mod tests {
                 .expect_err("Error expected"),
             Error::InvariantViolation(_)
         ));
-        let register_account = Register::account(Account::new(GENESIS_ACCOUNT_ID.clone()));
+        let register_account = Register::account(Account::new(SAMPLE_GENESIS_ACCOUNT_ID.clone()));
         assert!(matches!(
             register_account
                 .execute(&account_id, &mut state_transaction)
@@ -490,9 +491,9 @@ mod tests {
         let state_block = state.block();
 
         let instructions: [InstructionBox; 0] = [];
-        let tx = TransactionBuilder::new(chain_id.clone(), GENESIS_ACCOUNT_ID.clone())
+        let tx = TransactionBuilder::new(chain_id.clone(), SAMPLE_GENESIS_ACCOUNT_ID.clone())
             .with_instructions(instructions)
-            .sign(&GENESIS_ACCOUNT_KEYPAIR);
+            .sign(&SAMPLE_GENESIS_ACCOUNT_KEYPAIR);
         let tx_limits = &state_block.transaction_executor().transaction_limits;
         assert!(matches!(
             AcceptedTransaction::accept(tx, &chain_id, tx_limits),

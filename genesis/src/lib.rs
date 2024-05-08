@@ -6,7 +6,6 @@ use std::{
     fs::File,
     io::BufReader,
     path::{Path, PathBuf},
-    str::FromStr,
 };
 
 use eyre::{eyre, Report, Result, WrapErr};
@@ -23,23 +22,6 @@ use serde::{Deserialize, Serialize};
 
 /// [`DomainId`](iroha_data_model::domain::DomainId) of the genesis account.
 pub static GENESIS_DOMAIN_ID: Lazy<DomainId> = Lazy::new(|| "genesis".parse().unwrap());
-
-/// [`AccountId`](iroha_data_model::account::AccountId) of the genesis account.
-pub static GENESIS_ACCOUNT_ID: Lazy<AccountId> = Lazy::new(|| {
-    AccountId::new(
-        GENESIS_DOMAIN_ID.clone(),
-        GENESIS_ACCOUNT_KEYPAIR.public_key().clone(),
-    )
-});
-
-/// [`KeyPair`] of the genesis account.
-pub static GENESIS_ACCOUNT_KEYPAIR: Lazy<KeyPair> = Lazy::new(|| {
-    KeyPair::new(
-        iroha_crypto::PublicKey::from_str("ed0120E2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B").unwrap(),
-        iroha_crypto::PrivateKey::from_hex(iroha_crypto::Algorithm::Ed25519, "DD61D7A2244A504E78BA80383DFCC0228E25CA131E5A6AF503F71632D23BD76AE2ECD69DA5833EC10FB3DFAED83A07E5B9CBE9BC39484F0F7DDEC8B46253428B").unwrap(),
-    )
-    .unwrap()
-});
 
 /// Genesis transaction
 #[derive(Debug, Clone)]
@@ -182,7 +164,11 @@ impl GenesisTransactionBuilder {
     /// Convert [`GenesisTransactionBuilder`] into [`SignedTransaction`] with signature.
     #[must_use]
     fn sign(self, chain_id: ChainId, genesis_key_pair: &KeyPair) -> SignedTransaction {
-        TransactionBuilder::new(chain_id, GENESIS_ACCOUNT_ID.clone())
+        let genesis_account_id = AccountId::new(
+            GENESIS_DOMAIN_ID.clone(),
+            genesis_key_pair.public_key().clone(),
+        );
+        TransactionBuilder::new(chain_id, genesis_account_id)
             .with_instructions(self.isi)
             .sign(genesis_key_pair)
     }

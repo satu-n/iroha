@@ -800,7 +800,7 @@ mod tests {
 
     use iroha_crypto::SignatureVerificationFail;
     use iroha_data_model::prelude::*;
-    use iroha_genesis::{GENESIS_ACCOUNT_ID, GENESIS_DOMAIN_ID};
+    use iroha_genesis::GENESIS_DOMAIN_ID;
     use test_samples::gen_account_in;
 
     use super::*;
@@ -1031,11 +1031,16 @@ mod tests {
         // Predefined world state
         let genesis_correct_key = KeyPair::random();
         let genesis_wrong_key = KeyPair::random();
-        let mut genesis_domain = Domain::new(GENESIS_DOMAIN_ID.clone()).build(&GENESIS_ACCOUNT_ID);
-        let genesis_wrong_account_id: AccountId =
-            format!("{}@{}", genesis_wrong_key.public_key(), *GENESIS_DOMAIN_ID)
-                .parse()
-                .expect("should be valid");
+        let genesis_correct_account_id = AccountId::new(
+            GENESIS_DOMAIN_ID.clone(),
+            genesis_correct_key.public_key().clone(),
+        );
+        let genesis_wrong_account_id = AccountId::new(
+            GENESIS_DOMAIN_ID.clone(),
+            genesis_wrong_key.public_key().clone(),
+        );
+        let mut genesis_domain =
+            Domain::new(GENESIS_DOMAIN_ID.clone()).build(&genesis_correct_account_id);
         let genesis_wrong_account =
             Account::new(genesis_wrong_account_id.clone()).build(&genesis_wrong_account_id);
         assert!(genesis_domain.add_account(genesis_wrong_account).is_none(),);

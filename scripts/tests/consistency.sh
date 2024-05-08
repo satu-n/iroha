@@ -3,8 +3,9 @@ set -e
 
 case $1 in
     "genesis")
-        cargo run --release --bin kagami -- genesis --executor-path-in-genesis ./executor.wasm | diff - configs/swarm/genesis.json || {
-            echo 'Please re-generate the genesis with `cargo run --release --bin kagami -- genesis --executor-path-in-genesis ./executor.wasm > configs/swarm/genesis.json`'
+        GENESIS_PUBLIC_KEY=ed01204164BF554923ECE1FD412D241036D863A6AE430476C898248B8237D77534CFC4 cargo run --release --bin kagami -- genesis --executor-path-in-genesis ./executor.wasm | diff - configs/swarm/genesis.json || {
+            echo 'Please re-generate the default genesis with `GENESIS_PUBLIC_KEY=ed01204164BF554923ECE1FD412D241036D863A6AE430476C898248B8237D77534CFC4 cargo run --release --bin kagami -- genesis --executor-path-in-genesis ./executor.wasm > configs/swarm/genesis.json`'
+            echo 'The assumption here is that the authority of the default genesis transaction is `test_samples::SAMPLE_GENESIS_ACCOUNT_ID`'
             exit 1
         };;
     "schema")

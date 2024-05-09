@@ -36,6 +36,7 @@ jobs:
         if: always()
         run: ./scripts/tests/consistency.sh docker-compose
 
+  # exclude: client/tests/integration/
   with_coverage:
     runs-on: [self-hosted, Linux, iroha2]
     container:
@@ -44,7 +45,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Run tests, with coverage
-        run: mold --run cargo test --all-features --workspace --no-fail-fast
+        run: |
+          mold --run cargo test --all-features --no-fail-fast --workspace --exclude iroha_client
+          mold --run cargo test --all-features --no-fail-fast -p iroha_client -- --skip integration
         env:
           RUSTFLAGS: "-C instrument-coverage"
           LLVM_PROFILE_FILE: "iroha-%p-%m.profraw"
@@ -66,7 +69,10 @@ jobs:
           name: lcov.info
           path: lcov.info
 
-  integration:
+  # migrating to pytest
+  # include: client/tests/integration/
+  # exclude: "unstable_network"
+  client_integration:
     runs-on: [self-hosted, Linux, iroha2]
     container:
       image: hyperledger/iroha2-ci:nightly-2024-04-18
@@ -75,10 +81,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Run tests, with no-default-features
-        run: |
-          mold --run cargo test --test mod --no-default-features -- \
-          integration:: --skip unstable_network
+        run: mold --run cargo test --no-default-features --no-fail-fast -p iroha_client integration -- --skip unstable_network
 
+  # include: client/tests/integration/, "unstable_network"
   unstable:
     runs-on: [self-hosted, Linux, iroha2]
     container:
@@ -88,7 +93,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - name: Run tests
-        run: mold --run cargo test -p iroha_client --tests --no-default-features unstable_network --quiet
+        run: mold --run cargo test --no-default-features --no-fail-fast -p iroha_client unstable_network
 
   # Run the job to check that the docker containers are properly buildable
   pr-generator-build:

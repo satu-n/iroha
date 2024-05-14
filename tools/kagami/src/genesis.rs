@@ -25,6 +25,8 @@ pub struct Args {
     /// Specifies the `executor_file` <PATH> that will be inserted into the genesis JSON as-is.
     #[clap(long, value_name = "PATH")]
     executor_path_in_genesis: PathBuf,
+    #[clap(long, value_name = "MULTI_HASH")]
+    genesis_public_key: PublicKey,
     #[clap(subcommand)]
     mode: Option<Mode>,
 }
@@ -58,17 +60,24 @@ impl<T: Write> RunArgs<T> for Args {
     fn run(self, writer: &mut BufWriter<T>) -> Outcome {
         let Self {
             executor_path_in_genesis,
+            genesis_public_key,
             mode,
         } = self;
 
         let builder = RawGenesisBlockBuilder::default().executor_file(executor_path_in_genesis);
         let genesis = match mode.unwrap_or_default() {
-            Mode::Default => generate_default(builder),
+            Mode::Default => generate_default(builder, genesis_public_key),
             Mode::Synthetic {
                 domains,
                 accounts_per_domain,
                 assets_per_domain,
-            } => generate_synthetic(builder, domains, accounts_per_domain, assets_per_domain),
+            } => generate_synthetic(
+                builder,
+                genesis_public_key,
+                domains,
+                accounts_per_domain,
+                assets_per_domain,
+            ),
         }?;
         writeln!(writer, "{}", serde_json::to_string_pretty(&genesis)?)
             .wrap_err("failed to write serialized genesis to the buffer")
@@ -78,15 +87,9 @@ impl<T: Write> RunArgs<T> for Args {
 #[allow(clippy::too_many_lines)]
 pub fn generate_default(
     builder: RawGenesisBlockBuilder<executor_state::SetPath>,
+    genesis_public_key: PublicKey,
 ) -> color_eyre::Result<RawGenesisBlockFile> {
-    let genesis_account_id: AccountId = {
-        let multihash =
-            std::env::var("GENESIS_PUBLIC_KEY").wrap_err("GENESIS_PUBLIC_KEY should be set")?;
-        let domain = &*GENESIS_DOMAIN_ID;
-        format!("{multihash}@{domain}")
-            .parse()
-            .wrap_err("GENESIS_PUBLIC_KEY should be valid multihash")?
-    };
+    let genesis_account_id = AccountId::new(GENESIS_DOMAIN_ID.clone(), genesis_public_key);
     let mut meta = Metadata::new();
     meta.insert_with_limits("key".parse()?, "value".to_owned(), Limits::new(1024, 1024))?;
 
@@ -203,12 +206,13 @@ pub fn generate_default(
 
 fn generate_synthetic(
     builder: RawGenesisBlockBuilder<executor_state::SetPath>,
+    genesis_public_key: PublicKey,
     domains: u64,
     accounts_per_domain: u64,
     assets_per_domain: u64,
 ) -> color_eyre::Result<RawGenesisBlockFile> {
     // Synthetic genesis is extension of default one
-    let mut genesis = generate_default(builder)?;
+    let mut genesis = generate_default(builder, genesis_public_key)?;
 
     let first_transaction = genesis
         .first_transaction_mut()

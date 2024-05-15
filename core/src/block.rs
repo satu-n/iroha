@@ -961,7 +961,7 @@ mod tests {
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(
             domain.add_account(account).is_none(),
-            "`alice@wonderland` already exist in the blockchain"
+            "{alice_id} already exist in the blockchain"
         );
         let world = World::with([domain], UniqueVec::new());
         let kura = Kura::blank_kura_for_testing();

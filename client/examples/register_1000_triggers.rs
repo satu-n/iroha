@@ -11,6 +11,7 @@ use test_network::{
     get_chain_id, get_key_pair, wait_for_genesis_committed_with_max_retries, Peer as TestPeer,
     PeerBuilder, TestClient, TestRuntime,
 };
+use test_samples::gen_account_in;
 use tokio::runtime::Runtime;
 
 fn generate_genesis(num_triggers: u32) -> Result<RawGenesisBlock, Box<dyn std::error::Error>> {
@@ -23,7 +24,7 @@ fn generate_genesis(num_triggers: u32) -> Result<RawGenesisBlock, Box<dyn std::e
             .optimize()?
             .into_bytes()?;
     let wasm = WasmSmartContract::from_compiled(wasm);
-    let account_id = AccountId::from_str("alice@wonderland")?;
+    let (account_id, _account_keypair) = gen_account_in("wonderland");
 
     let build_trigger = |trigger_id: TriggerId| {
         Trigger::new(

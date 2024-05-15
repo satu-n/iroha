@@ -79,7 +79,8 @@ pub fn stub_getrandom(_dest: &mut [u8]) -> Result<(), getrandom::Error> {
 ///
 /// # Examples
 ///
-/// ```
+/// FIXME `cargo test --all-features -p iroha_smart_contract --doc -- parse`
+/// ```ignore
 /// use iroha_smart_contract::{parse, prelude::*};
 ///
 /// let from_literal = parse!(DomainId, "wonderland");

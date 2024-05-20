@@ -147,8 +147,7 @@ mod asset {
     data_event! {
         #[has_origin(origin = AssetPath)]
         pub enum AssetEvent {
-            #[has_origin(asset => &asset.id().clone().into())]
-            Created(Asset),
+            Created(AssetPath),
             Deleted(AssetPath),
             #[has_origin(asset_changed => &asset_changed.asset_path)]
             Added(AssetChanged),
@@ -163,17 +162,10 @@ mod asset {
 
     entity_path!(AssetPath: account::AccountPath > AssetDefinitionId);
 
-    impl From<AssetId> for AssetPath {
-        fn from(id: AssetId) -> Self {
-            Self::new(id.definition_id().clone(), id.account_id().clone().into())
-        }
-    }
-
     data_event! {
         #[has_origin(origin = AssetDefinitionPath)]
         pub enum AssetDefinitionEvent {
-            #[has_origin(asset_definition => &asset_definition.id().clone().into())]
-            Created(AssetDefinition),
+            Created(AssetDefinitionPath),
             MintabilityChanged(AssetDefinitionPath),
             #[has_origin(ownership_changed => &ownership_changed.asset_definition_path)]
             OwnerChanged(AssetDefinitionOwnerChanged),
@@ -188,12 +180,6 @@ mod asset {
     }
 
     entity_path!(AssetDefinitionPath: domain::DomainPath > Name);
-
-    impl From<AssetDefinitionId> for AssetDefinitionPath {
-        fn from(id: AssetDefinitionId) -> Self {
-            Self::new(id.name().clone(), id.domain_id().clone().into())
-        }
-    }
 
     #[model]
     mod model {
@@ -296,8 +282,7 @@ mod role {
     data_event! {
         #[has_origin(origin = RolePath)]
         pub enum RoleEvent {
-            #[has_origin(role => &role.id().clone().into())]
-            Created(Role),
+            Created(RolePath),
             Deleted(RolePath),
             /// [`PermissionToken`]s with particular [`Id`](crate::permission::token::PermissionTokenId)
             /// were removed from the role.
@@ -311,12 +296,6 @@ mod role {
     }
 
     entity_path!(RolePath: () > RoleId);
-
-    impl From<RoleId> for RolePath {
-        fn from(id: RoleId) -> Self {
-            Self::new(id.clone(), ())
-        }
-    }
 
     #[model]
     mod model {
@@ -402,8 +381,7 @@ mod account {
         pub enum AccountEvent {
             #[has_origin(asset_event => &asset_event.origin_path().tail())]
             Asset(AssetEvent),
-            #[has_origin(account => &account.id().clone().into())]
-            Created(Account),
+            Created(AccountPath),
             Deleted(AccountPath),
             AuthenticationAdded(AccountPath),
             AuthenticationRemoved(AccountPath),
@@ -423,12 +401,6 @@ mod account {
     }
 
     entity_path!(AccountPath: domain::DomainPath > PublicKey);
-
-    impl From<AccountId> for AccountPath {
-        fn from(id: AccountId) -> Self {
-            Self::new(id.signatory().clone(), id.domain_id().clone().into())
-        }
-    }
 
     #[model]
     mod model {
@@ -504,8 +476,7 @@ mod domain {
             Account(AccountEvent),
             #[has_origin(asset_definition_event => &asset_definition_event.origin_path().tail())]
             AssetDefinition(AssetDefinitionEvent),
-            #[has_origin(domain => &domain.id().clone().into())]
-            Created(Domain),
+            Created(DomainPath),
             Deleted(DomainPath),
             #[has_origin(metadata_changed => &metadata_changed.target_path)]
             MetadataInserted(DomainMetadataChanged),
@@ -517,12 +488,6 @@ mod domain {
     }
 
     entity_path!(DomainPath: () > DomainId);
-
-    impl From<DomainId> for DomainPath {
-        fn from(id: DomainId) -> Self {
-            Self::new(id.clone(), ())
-        }
-    }
 
     #[model]
     mod model {

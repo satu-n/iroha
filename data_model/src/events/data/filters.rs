@@ -73,7 +73,7 @@ mod model {
     )]
     pub struct PeerEventFilter {
         /// If specified matches only events originating from this peer
-        pub(super) id_matcher: Option<super::PeerId>,
+        pub(super) path_matcher: Option<super::PeerPath>,
         /// Matches only event from this set
         pub(super) event_set: PeerEventSet,
     }
@@ -95,7 +95,7 @@ mod model {
     )]
     pub struct DomainEventFilter {
         /// If specified matches only events originating from this domain
-        pub(super) id_matcher: Option<super::DomainId>,
+        pub(super) path_matcher: Option<super::DomainPath>,
         /// Matches only event from this set
         pub(super) event_set: DomainEventSet,
     }
@@ -117,7 +117,7 @@ mod model {
     )]
     pub struct AccountEventFilter {
         /// If specified matches only events originating from this account
-        pub(super) id_matcher: Option<super::AccountId>,
+        pub(super) path_matcher: Option<super::AccountPath>,
         /// Matches only event from this set
         pub(super) event_set: AccountEventSet,
     }
@@ -139,7 +139,7 @@ mod model {
     )]
     pub struct AssetEventFilter {
         /// If specified matches only events originating from this asset
-        pub(super) id_matcher: Option<super::AssetId>,
+        pub(super) path_matcher: Option<super::AssetPath>,
         /// Matches only event from this set
         pub(super) event_set: AssetEventSet,
     }
@@ -161,7 +161,7 @@ mod model {
     )]
     pub struct AssetDefinitionEventFilter {
         /// If specified matches only events originating from this asset definition
-        pub(super) id_matcher: Option<super::AssetDefinitionId>,
+        pub(super) path_matcher: Option<super::AssetDefinitionPath>,
         /// Matches only event from this set
         pub(super) event_set: AssetDefinitionEventSet,
     }
@@ -183,7 +183,7 @@ mod model {
     )]
     pub struct TriggerEventFilter {
         /// If specified matches only events originating from this trigger
-        pub(super) id_matcher: Option<super::TriggerId>,
+        pub(super) path_matcher: Option<super::TriggerPath>,
         /// Matches only event from this set
         pub(super) event_set: TriggerEventSet,
     }
@@ -205,7 +205,7 @@ mod model {
     )]
     pub struct RoleEventFilter {
         /// If specified matches only events originating from this role
-        pub(super) id_matcher: Option<super::RoleId>,
+        pub(super) path_matcher: Option<super::RolePath>,
         /// Matches only event from this set
         pub(super) event_set: RoleEventSet,
     }
@@ -227,7 +227,7 @@ mod model {
     )]
     pub struct ConfigurationEventFilter {
         /// If specified matches only events originating from this configuration
-        pub(super) id_matcher: Option<super::ParameterId>,
+        pub(super) path_matcher: Option<super::ParameterPath>,
         /// Matches only event from this set
         pub(super) event_set: ConfigurationEventSet,
     }
@@ -258,15 +258,15 @@ impl PeerEventFilter {
     /// Creates a new [`PeerEventFilter`] accepting all [`PeerEvent`]s.
     pub const fn new() -> Self {
         Self {
-            id_matcher: None,
+            path_matcher: None,
             event_set: PeerEventSet::all(),
         }
     }
 
-    /// Modifies a [`PeerEventFilter`] to accept only [`PeerEvent`]s originating from ids matching `id_matcher`.
+    /// Modifies a [`PeerEventFilter`] to accept only [`PeerEvent`]s originating from paths matching `path_matcher`.
     #[must_use]
-    pub fn for_peer(mut self, id_matcher: PeerId) -> Self {
-        self.id_matcher = Some(id_matcher);
+    pub fn for_peer(mut self, path_matcher: PeerPath) -> Self {
+        self.path_matcher = Some(path_matcher);
         self
     }
 
@@ -289,8 +289,8 @@ impl EventFilter for PeerEventFilter {
     type Event = super::PeerEvent;
 
     fn matches(&self, event: &Self::Event) -> bool {
-        if let Some(id_matcher) = &self.id_matcher {
-            if id_matcher != event.origin_id() {
+        if let Some(path_matcher) = &self.path_matcher {
+            if path_matcher != event.origin_path() {
                 return false;
             }
         }
@@ -307,15 +307,15 @@ impl DomainEventFilter {
     /// Creates a new [`DomainEventFilter`] accepting all [`DomainEvent`]s.
     pub const fn new() -> Self {
         Self {
-            id_matcher: None,
+            path_matcher: None,
             event_set: DomainEventSet::all(),
         }
     }
 
-    /// Modifies a [`DomainEventFilter`] to accept only [`DomainEvent`]s originating from ids matching `id_matcher`.
+    /// Modifies a [`DomainEventFilter`] to accept only [`DomainEvent`]s originating from paths matching `path_matcher`.
     #[must_use]
-    pub fn for_domain(mut self, id_matcher: DomainId) -> Self {
-        self.id_matcher = Some(id_matcher);
+    pub fn for_domain(mut self, path_matcher: DomainPath) -> Self {
+        self.path_matcher = Some(path_matcher);
         self
     }
 
@@ -338,8 +338,8 @@ impl EventFilter for DomainEventFilter {
     type Event = super::DomainEvent;
 
     fn matches(&self, event: &Self::Event) -> bool {
-        if let Some(id_matcher) = &self.id_matcher {
-            if id_matcher != event.origin_id() {
+        if let Some(path_matcher) = &self.path_matcher {
+            if path_matcher != event.origin_path() {
                 return false;
             }
         }
@@ -356,15 +356,15 @@ impl AccountEventFilter {
     /// Creates a new [`AccountEventFilter`] accepting all [`AccountEvent`]s.
     pub const fn new() -> Self {
         Self {
-            id_matcher: None,
+            path_matcher: None,
             event_set: AccountEventSet::all(),
         }
     }
 
-    /// Modifies a [`AccountEventFilter`] to accept only [`AccountEvent`]s originating from ids matching `id_matcher`.
+    /// Modifies a [`AccountEventFilter`] to accept only [`AccountEvent`]s originating from paths matching `path_matcher`.
     #[must_use]
-    pub fn for_account(mut self, id_matcher: AccountId) -> Self {
-        self.id_matcher = Some(id_matcher);
+    pub fn for_account(mut self, path_matcher: AccountPath) -> Self {
+        self.path_matcher = Some(path_matcher);
         self
     }
 
@@ -387,8 +387,8 @@ impl super::EventFilter for AccountEventFilter {
     type Event = super::AccountEvent;
 
     fn matches(&self, event: &Self::Event) -> bool {
-        if let Some(id_matcher) = &self.id_matcher {
-            if id_matcher != event.origin_id() {
+        if let Some(path_matcher) = &self.path_matcher {
+            if path_matcher != event.origin_path() {
                 return false;
             }
         }
@@ -405,15 +405,15 @@ impl AssetEventFilter {
     /// Creates a new [`AssetEventFilter`] accepting all [`AssetEvent`]s.
     pub const fn new() -> Self {
         Self {
-            id_matcher: None,
+            path_matcher: None,
             event_set: AssetEventSet::all(),
         }
     }
 
-    /// Modifies a [`AssetEventFilter`] to accept only [`AssetEvent`]s originating from ids matching `id_matcher`.
+    /// Modifies a [`AssetEventFilter`] to accept only [`AssetEvent`]s originating from paths matching `path_matcher`.
     #[must_use]
-    pub fn for_asset(mut self, id_matcher: AssetId) -> Self {
-        self.id_matcher = Some(id_matcher);
+    pub fn for_asset(mut self, path_matcher: AssetPath) -> Self {
+        self.path_matcher = Some(path_matcher);
         self
     }
 
@@ -436,8 +436,8 @@ impl super::EventFilter for AssetEventFilter {
     type Event = super::AssetEvent;
 
     fn matches(&self, event: &Self::Event) -> bool {
-        if let Some(id_matcher) = &self.id_matcher {
-            if id_matcher != event.origin_id() {
+        if let Some(path_matcher) = &self.path_matcher {
+            if path_matcher != event.origin_path() {
                 return false;
             }
         }
@@ -454,15 +454,15 @@ impl AssetDefinitionEventFilter {
     /// Creates a new [`AssetDefinitionEventFilter`] accepting all [`AssetDefinitionEvent`]s.
     pub const fn new() -> Self {
         Self {
-            id_matcher: None,
+            path_matcher: None,
             event_set: AssetDefinitionEventSet::all(),
         }
     }
 
-    /// Modifies a [`AssetDefinitionEventFilter`] to accept only [`AssetDefinitionEvent`]s originating from ids matching `id_matcher`.
+    /// Modifies a [`AssetDefinitionEventFilter`] to accept only [`AssetDefinitionEvent`]s originating from paths matching `path_matcher`.
     #[must_use]
-    pub fn for_asset_definition(mut self, id_matcher: AssetDefinitionId) -> Self {
-        self.id_matcher = Some(id_matcher);
+    pub fn for_asset_definition(mut self, path_matcher: AssetDefinitionPath) -> Self {
+        self.path_matcher = Some(path_matcher);
         self
     }
 
@@ -485,8 +485,8 @@ impl super::EventFilter for AssetDefinitionEventFilter {
     type Event = super::AssetDefinitionEvent;
 
     fn matches(&self, event: &Self::Event) -> bool {
-        if let Some(id_matcher) = &self.id_matcher {
-            if id_matcher != event.origin_id() {
+        if let Some(path_matcher) = &self.path_matcher {
+            if path_matcher != event.origin_path() {
                 return false;
             }
         }
@@ -503,15 +503,15 @@ impl TriggerEventFilter {
     /// Creates a new [`TriggerEventFilter`] accepting all [`TriggerEvent`]s.
     pub const fn new() -> Self {
         Self {
-            id_matcher: None,
+            path_matcher: None,
             event_set: TriggerEventSet::all(),
         }
     }
 
-    /// Modifies a [`TriggerEventFilter`] to accept only [`TriggerEvent`]s originating from ids matching `id_matcher`.
+    /// Modifies a [`TriggerEventFilter`] to accept only [`TriggerEvent`]s originating from paths matching `path_matcher`.
     #[must_use]
-    pub fn for_trigger(mut self, id_matcher: TriggerId) -> Self {
-        self.id_matcher = Some(id_matcher);
+    pub fn for_trigger(mut self, path_matcher: TriggerPath) -> Self {
+        self.path_matcher = Some(path_matcher);
         self
     }
 
@@ -534,8 +534,8 @@ impl super::EventFilter for TriggerEventFilter {
     type Event = super::TriggerEvent;
 
     fn matches(&self, event: &Self::Event) -> bool {
-        if let Some(id_matcher) = &self.id_matcher {
-            if id_matcher != event.origin_id() {
+        if let Some(path_matcher) = &self.path_matcher {
+            if path_matcher != event.origin_path() {
                 return false;
             }
         }
@@ -552,15 +552,15 @@ impl RoleEventFilter {
     /// Creates a new [`RoleEventFilter`] accepting all [`RoleEvent`]s.
     pub const fn new() -> Self {
         Self {
-            id_matcher: None,
+            path_matcher: None,
             event_set: RoleEventSet::all(),
         }
     }
 
-    /// Modifies a [`RoleEventFilter`] to accept only [`RoleEvent`]s originating from ids matching `id_matcher`.
+    /// Modifies a [`RoleEventFilter`] to accept only [`RoleEvent`]s originating from paths matching `path_matcher`.
     #[must_use]
-    pub fn for_role(mut self, id_matcher: RoleId) -> Self {
-        self.id_matcher = Some(id_matcher);
+    pub fn for_role(mut self, path_matcher: RolePath) -> Self {
+        self.path_matcher = Some(path_matcher);
         self
     }
 
@@ -583,8 +583,8 @@ impl super::EventFilter for RoleEventFilter {
     type Event = super::RoleEvent;
 
     fn matches(&self, event: &Self::Event) -> bool {
-        if let Some(id_matcher) = &self.id_matcher {
-            if id_matcher != event.origin_id() {
+        if let Some(path_matcher) = &self.path_matcher {
+            if path_matcher != event.origin_path() {
                 return false;
             }
         }
@@ -601,15 +601,15 @@ impl ConfigurationEventFilter {
     /// Creates a new [`ConfigurationEventFilter`] accepting all [`ConfigurationEvent`]s.
     pub const fn new() -> Self {
         Self {
-            id_matcher: None,
+            path_matcher: None,
             event_set: ConfigurationEventSet::all(),
         }
     }
 
-    /// Modifies a [`ConfigurationEventFilter`] to accept only [`ConfigurationEvent`]s originating from ids matching `id_matcher`.
+    /// Modifies a [`ConfigurationEventFilter`] to accept only [`ConfigurationEvent`]s originating from paths matching `path_matcher`.
     #[must_use]
-    pub fn for_parameter(mut self, id_matcher: ParameterId) -> Self {
-        self.id_matcher = Some(id_matcher);
+    pub fn for_parameter(mut self, path_matcher: ParameterPath) -> Self {
+        self.path_matcher = Some(path_matcher);
         self
     }
 
@@ -632,8 +632,8 @@ impl super::EventFilter for ConfigurationEventFilter {
     type Event = super::ConfigurationEvent;
 
     fn matches(&self, event: &Self::Event) -> bool {
-        if let Some(id_matcher) = &self.id_matcher {
-            if id_matcher != event.origin_id() {
+        if let Some(path_matcher) = &self.path_matcher {
+            if path_matcher != event.origin_path() {
                 return false;
             }
         }

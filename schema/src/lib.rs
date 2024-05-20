@@ -133,6 +133,8 @@ pub enum Metadata {
     String,
     /// Bool
     Bool,
+    /// ()
+    Unit,
     /// Number with fixed decimal precision
     FixedPoint(FixedMeta),
     /// Array
@@ -571,6 +573,22 @@ impl<T: IntoSchema> IntoSchema for RangeInclusive<T> {
             }));
 
             T::update_schema_map(metamap);
+        }
+    }
+}
+
+impl TypeId for () {
+    fn id() -> String {
+        "()".to_owned()
+    }
+}
+impl IntoSchema for () {
+    fn type_name() -> String {
+        "()".to_owned()
+    }
+    fn update_schema_map(map: &mut MetaMap) {
+        if !map.contains_key::<Self>() {
+            map.insert::<Self>(Metadata::Unit);
         }
     }
 }

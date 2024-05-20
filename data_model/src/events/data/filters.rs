@@ -746,45 +746,32 @@ mod tests {
     use iroha_crypto::KeyPair;
 
     use super::*;
-    use crate::{
-        account::AccountsMap,
-        asset::{AssetDefinitionsMap, AssetTotalQuantityMap},
-    };
 
     #[test]
     #[cfg(feature = "transparent_api")]
     fn entity_scope() {
         let domain_id: DomainId = "wonderland".parse().unwrap();
-        let account_id = AccountId::new(domain_id.clone(), KeyPair::random().into_parts().0);
-        let asset_id: AssetId = format!("rose##{account_id}").parse().unwrap();
-        let domain_owner_id = AccountId::new(domain_id.clone(), KeyPair::random().into_parts().0);
+        let account_signatory = KeyPair::random().into_parts().0;
+        let asset_definition_id: AssetDefinitionId = "rose#wonderland".parse().unwrap();
 
-        let domain = Domain {
-            id: domain_id.clone(),
-            accounts: AccountsMap::default(),
-            asset_definitions: AssetDefinitionsMap::default(),
-            asset_total_quantities: AssetTotalQuantityMap::default(),
-            logo: None,
-            metadata: Metadata::default(),
-            owned_by: domain_owner_id,
-        };
-        let account = Account::new(account_id.clone()).into_account();
-        let asset = Asset::new(asset_id.clone(), 0_u32);
+        let domain_path = DomainPath::new(domain_id, ());
+        let account_path = AccountPath::new(account_signatory, domain_path.clone());
+        let asset_path = AssetPath::new(asset_definition_id, account_path.clone());
 
         // Create three events with three levels of nesting
         // the first one is just a domain event
         // the second one is an account event with a domain event inside
         // the third one is an asset event with an account event with a domain event inside
-        let domain_created = DomainEvent::Created(domain).into();
-        let account_created = DomainEvent::Account(AccountEvent::Created(account)).into();
+        let domain_created = DomainEvent::Created(domain_path.clone()).into();
+        let account_created = DomainEvent::Account(AccountEvent::Created(account_path.clone())).into();
         let asset_created =
-            DomainEvent::Account(AccountEvent::Asset(AssetEvent::Created(asset))).into();
+            DomainEvent::Account(AccountEvent::Asset(AssetEvent::Created(asset_path.clone()))).into();
 
         // test how the differently nested filters with with the events
-        let domain_filter = DataEventFilter::Domain(DomainEventFilter::new().for_domain(domain_id));
+        let domain_filter = DataEventFilter::Domain(DomainEventFilter::new().for_domain(domain_path));
         let account_filter =
-            DataEventFilter::Account(AccountEventFilter::new().for_account(account_id));
-        let asset_filter = DataEventFilter::Asset(AssetEventFilter::new().for_asset(asset_id));
+            DataEventFilter::Account(AccountEventFilter::new().for_account(account_path));
+        let asset_filter = DataEventFilter::Asset(AssetEventFilter::new().for_asset(asset_path));
 
         // domain filter matches all of those, because all of those events happened in the same domain
         assert!(domain_filter.matches(&domain_created));

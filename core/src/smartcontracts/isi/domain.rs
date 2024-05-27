@@ -47,8 +47,7 @@ pub mod isi {
             authority: &AccountId,
             state_transaction: &mut StateTransaction<'_, '_>,
         ) -> Result<(), Error> {
-            let account: Account = self.object.build(authority);
-            let account_id = account.id().clone();
+            let account_id = self.object.id().clone();
 
             if *account_id.domain_id() == *iroha_genesis::GENESIS_DOMAIN_ID {
                 return Err(InstructionExecutionError::InvariantViolation(
@@ -56,19 +55,40 @@ pub mod isi {
                 ));
             }
 
-            let domain = state_transaction.world.domain_mut(&account_id.domain_id)?;
-            if domain.accounts.contains_key(&account_id) {
-                return Err(RepetitionError {
-                    instruction_type: InstructionType::Register,
-                    id: IdBox::AccountId(account_id),
+            match state_transaction.world.account_mut(&account_id) {
+                Ok(existing_account) => {
+                    if existing_account.is_active {
+                        return Err(RepetitionError {
+                            instruction_type: InstructionType::Register,
+                            id: IdBox::AccountId(account_id),
+                        }
+                        .into());
+                    }
+
+                    existing_account.activate();
                 }
-                .into());
-            }
-            domain.add_account(account.clone());
+                Err(_account_not_found) => {
+                    let mut account: Account = self.object.build(authority);
+                    account.activate();
+
+                    state_transaction
+                        .world
+                        .domain_mut(&account_id.domain_id)?
+                        .add_account(account);
+
+                    state_transaction
+                        .world
+                        .emit_events(Some(DomainEvent::Account(AccountEvent::Recognized(
+                            account_id.clone(),
+                        ))));
+                }
+            };
 
             state_transaction
                 .world
-                .emit_events(Some(DomainEvent::Account(AccountEvent::Created(account))));
+                .emit_events(Some(DomainEvent::Account(AccountEvent::Activated(
+                    account_id,
+                ))));
 
             Ok(())
         }
@@ -358,6 +378,9 @@ pub mod isi {
             } = self;
 
             let _ = state_transaction.world.account(&source_id)?;
+            // Exceptionally, the destination account should not be recognized here.
+            // Otherwise, the risk is that the previous owner can no longer activate the current owner who cannot yet take any action by oneself.
+            // Thus, the destination account should be explicitly registered before this transfer
             let _ = state_transaction.world.account(&destination_id)?;
 
             let domain = state_transaction.world.domain_mut(&object)?;
@@ -367,6 +390,7 @@ pub mod isi {
             }
 
             domain.owned_by = destination_id.clone();
+
             state_transaction
                 .world
                 .emit_events(Some(DomainEvent::OwnerChanged(DomainOwnerChanged {

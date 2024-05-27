@@ -1229,7 +1229,8 @@ mod tests {
         // Predefined world state
         let (alice_id, alice_keypair) = gen_account_in("wonderland");
         let genesis_public_key = alice_keypair.public_key().clone();
-        let account = Account::new(alice_id.clone()).build(&alice_id);
+        let mut account = Account::new(alice_id.clone()).build(&alice_id);
+        account.activate();
         let domain_id = "wonderland".parse().expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(domain.add_account(account).is_none());

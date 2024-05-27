@@ -172,12 +172,12 @@ impl_lazy! {
 pub struct ValidQueryRequest(SignedQuery);
 
 impl ValidQueryRequest {
-    /// Validate query.
+    /// Validate [`SignedQuery`] coming from clients.
     ///
     /// # Errors
-    /// - Account doesn't exist
-    /// - Account doesn't have the correct public key
-    /// - Account has incorrect permissions
+    ///
+    /// - Signatory does not fill the authority
+    /// - Internal [`validate_query`](crate::executor::Executor::validate_query) fails
     pub fn validate(
         query: SignedQuery,
         state_ro: &impl StateReadOnly,
@@ -317,7 +317,8 @@ mod tests {
     fn world_with_test_domains() -> World {
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&ALICE_ID);
-        let account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
+        let mut account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
+        account.activate();
         assert!(domain.add_account(account).is_none());
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland").expect("Valid");
         assert!(domain
@@ -331,6 +332,7 @@ mod tests {
         let mut domain =
             Domain::new(DomainId::from_str("wonderland").expect("Valid")).build(&ALICE_ID);
         let mut account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
+        account.activate();
         assert!(domain
             .add_asset_definition(
                 AssetDefinition::numeric(asset_definition_id.clone()).build(&ALICE_ID)
@@ -362,9 +364,10 @@ mod tests {
         )?;
 
         let mut domain = Domain::new(DomainId::from_str("wonderland")?).build(&ALICE_ID);
-        let account = Account::new(ALICE_ID.clone())
+        let mut account = Account::new(ALICE_ID.clone())
             .with_metadata(metadata)
             .build(&ALICE_ID);
+        account.activate();
         assert!(domain.add_account(account).is_none());
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland").expect("Valid");
         assert!(domain
@@ -617,7 +620,8 @@ mod tests {
             let mut domain = Domain::new(DomainId::from_str("wonderland")?)
                 .with_metadata(metadata)
                 .build(&ALICE_ID);
-            let account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
+            let mut account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
+            account.activate();
             assert!(domain.add_account(account).is_none());
             let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
             assert!(domain

@@ -799,7 +799,7 @@ mod tests {
     use super::*;
     use crate::{
         kura::Kura, query::store::LiveQueryStore, smartcontracts::isi::Registrable as _,
-        state::State,
+        state::State, tests::test_account,
     };
 
     #[test]
@@ -821,8 +821,7 @@ mod tests {
 
         // Predefined world state
         let (alice_id, alice_keypair) = gen_account_in("wonderland");
-        let mut account = Account::new(alice_id.clone()).build(&alice_id);
-        account.activate();
+        let account = test_account(&alice_id).activate();
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(domain.add_account(account).is_none());
@@ -877,8 +876,7 @@ mod tests {
 
         // Predefined world state
         let (alice_id, alice_keypair) = gen_account_in("wonderland");
-        let mut account = Account::new(alice_id.clone()).build(&alice_id);
-        account.activate();
+        let account = test_account(&alice_id).activate();
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(domain.add_account(account).is_none());
@@ -951,8 +949,7 @@ mod tests {
 
         // Predefined world state
         let (alice_id, alice_keypair) = gen_account_in("wonderland");
-        let mut account = Account::new(alice_id.clone()).build(&alice_id);
-        account.activate();
+        let account = test_account(&alice_id).activate();
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&alice_id);
         assert!(
@@ -1037,9 +1034,7 @@ mod tests {
         );
         let mut genesis_domain =
             Domain::new(GENESIS_DOMAIN_ID.clone()).build(&genesis_correct_account_id);
-        let mut genesis_wrong_account =
-            Account::new(genesis_wrong_account_id.clone()).build(&genesis_wrong_account_id);
-        genesis_wrong_account.activate();
+        let genesis_wrong_account = test_account(&genesis_wrong_account_id).activate();
         assert!(genesis_domain.add_account(genesis_wrong_account).is_none(),);
         let world = World::with([genesis_domain], UniqueVec::new());
         let kura = Kura::blank_kura_for_testing();

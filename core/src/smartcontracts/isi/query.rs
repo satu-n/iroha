@@ -310,6 +310,7 @@ mod tests {
         smartcontracts::isi::Registrable as _,
         state::{State, World},
         sumeragi::network_topology::Topology,
+        tests::test_account,
         tx::AcceptedTransaction,
         PeersIds,
     };
@@ -317,8 +318,7 @@ mod tests {
     fn world_with_test_domains() -> World {
         let domain_id = DomainId::from_str("wonderland").expect("Valid");
         let mut domain = Domain::new(domain_id).build(&ALICE_ID);
-        let mut account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
-        account.activate();
+        let account = test_account(&*ALICE_ID).activate();
         assert!(domain.add_account(account).is_none());
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland").expect("Valid");
         assert!(domain
@@ -331,8 +331,7 @@ mod tests {
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland").expect("Valid");
         let mut domain =
             Domain::new(DomainId::from_str("wonderland").expect("Valid")).build(&ALICE_ID);
-        let mut account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
-        account.activate();
+        let mut account = test_account(&*ALICE_ID).activate();
         assert!(domain
             .add_asset_definition(
                 AssetDefinition::numeric(asset_definition_id.clone()).build(&ALICE_ID)
@@ -364,10 +363,7 @@ mod tests {
         )?;
 
         let mut domain = Domain::new(DomainId::from_str("wonderland")?).build(&ALICE_ID);
-        let mut account = Account::new(ALICE_ID.clone())
-            .with_metadata(metadata)
-            .build(&ALICE_ID);
-        account.activate();
+        let account = test_account(&*ALICE_ID).with_metadata(metadata).activate();
         assert!(domain.add_account(account).is_none());
         let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland").expect("Valid");
         assert!(domain
@@ -620,8 +616,7 @@ mod tests {
             let mut domain = Domain::new(DomainId::from_str("wonderland")?)
                 .with_metadata(metadata)
                 .build(&ALICE_ID);
-            let mut account = Account::new(ALICE_ID.clone()).build(&ALICE_ID);
-            account.activate();
+            let account = test_account(&*ALICE_ID).activate();
             assert!(domain.add_account(account).is_none());
             let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
             assert!(domain

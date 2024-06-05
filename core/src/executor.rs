@@ -144,14 +144,7 @@ impl Executor {
     ) -> Result<(), ValidationFail> {
         trace!("Running transaction validation");
 
-        if 0 != state_transaction.height() {
-            let Ok(authority_account) = state_transaction.world.account(authority) else {
-                return Err(ValidationFail::UnrecognizedAuthority);
-            };
-            if !authority_account.is_active {
-                return Err(ValidationFail::InactiveAuthority);
-            }
-        }
+        check_authority(state_transaction, authority)?;
 
         match self {
             Self::Initial => {
@@ -198,14 +191,7 @@ impl Executor {
     ) -> Result<(), ValidationFail> {
         trace!("Running instruction validation");
 
-        if 0 != state_transaction.height() {
-            let Ok(authority_account) = state_transaction.world.account(authority) else {
-                return Err(ValidationFail::UnrecognizedAuthority);
-            };
-            if !authority_account.is_active {
-                return Err(ValidationFail::InactiveAuthority);
-            }
-        }
+        check_authority(state_transaction, authority)?;
 
         match self {
             Self::Initial => instruction
@@ -245,13 +231,7 @@ impl Executor {
     ) -> Result<(), ValidationFail> {
         trace!("Running query validation");
 
-        // assuming the genesis transaction does not include queries
-        let Ok(authority_account) = state_ro.world().account(authority) else {
-            return Err(ValidationFail::UnrecognizedAuthority);
-        };
-        if !authority_account.is_active {
-            return Err(ValidationFail::InactiveAuthority);
-        }
+        check_authority(state_ro, authority)?;
 
         match self {
             Self::Initial => Ok(()),
@@ -368,4 +348,18 @@ impl<'de> DeserializeSeed<'de> for WasmSeed<'_, LoadedExecutor> {
             LoadedExecutorVisitor { loader: &self },
         )
     }
+}
+
+#[inline]
+fn check_authority(
+    state_ro: &impl StateReadOnly,
+    authority: &AccountId,
+) -> Result<(), ValidationFail> {
+    let Ok(authority_account) = state_ro.world().account(authority) else {
+        return Err(ValidationFail::UnrecognizedAuthority);
+    };
+    if !authority_account.is_active {
+        return Err(ValidationFail::InactiveAuthority);
+    }
+    Ok(())
 }

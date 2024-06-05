@@ -23,7 +23,7 @@ use test_samples::{gen_account_in, ALICE_ID};
 /// 0. carol tries transaction ... ok
 #[test]
 fn on_transfer_asset_numeric() -> Result<()> {
-    let (_rt, _peer, client_alice) = <PeerBuilder>::new().with_port(10_810).start_with_runtime();
+    let (_rt, _peer, client_alice) = <PeerBuilder>::new().with_port(11_310).start_with_runtime();
     wait_for_genesis_committed(&[client_alice.clone()], 0);
     let observer = client_alice.clone();
 

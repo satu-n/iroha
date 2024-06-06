@@ -281,14 +281,20 @@ mod tests {
         let world = World::with([], PeersIds::new());
         let query_handle = LiveQueryStore::test().start();
         let state = State::new(world, kura.clone(), query_handle);
-        let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
+        let store_definition_id = AssetDefinitionId::from_str("store#wonderland")?;
+        let rose_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
+        let rose_id = AssetId::new(rose_definition_id.clone(), ALICE_ID.clone());
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         Register::domain(Domain::new(DomainId::from_str("wonderland")?))
             .execute(&SAMPLE_GENESIS_ACCOUNT_ID, &mut state_transaction)?;
         Register::account(Account::new(ALICE_ID.clone()))
             .execute(&SAMPLE_GENESIS_ACCOUNT_ID, &mut state_transaction)?;
-        Register::asset_definition(AssetDefinition::store(asset_definition_id))
+        Register::asset_definition(AssetDefinition::store(store_definition_id))
+            .execute(&SAMPLE_GENESIS_ACCOUNT_ID, &mut state_transaction)?;
+        Register::asset_definition(AssetDefinition::numeric(rose_definition_id))
+            .execute(&SAMPLE_GENESIS_ACCOUNT_ID, &mut state_transaction)?;
+        Mint::asset_numeric(13_u32, rose_id)
             .execute(&SAMPLE_GENESIS_ACCOUNT_ID, &mut state_transaction)?;
         state_transaction.apply();
         state_block.commit();
@@ -302,7 +308,7 @@ mod tests {
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
         let account_id = ALICE_ID.clone();
-        let asset_definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
+        let asset_definition_id = AssetDefinitionId::from_str("store#wonderland")?;
         let asset_id = AssetId::new(asset_definition_id, account_id.clone());
         SetKeyValue::asset(
             asset_id.clone(),
@@ -364,7 +370,7 @@ mod tests {
         let state = state_with_test_domains(&kura)?;
         let mut state_block = state.block();
         let mut state_transaction = state_block.transaction();
-        let definition_id = AssetDefinitionId::from_str("rose#wonderland")?;
+        let definition_id = AssetDefinitionId::from_str("store#wonderland")?;
         let account_id = ALICE_ID.clone();
         SetKeyValue::asset_definition(
             definition_id.clone(),
@@ -521,6 +527,61 @@ mod tests {
             AcceptedTransaction::accept(tx, &chain_id, tx_limits),
             Err(AcceptTransactionFail::UnexpectedGenesisAccountSignature)
         ));
+        Ok(())
+    }
+
+    /// prepare state
+    /// prepare objects
+    /// construct instruction
+    /// execute
+    /// inspect state
+    #[test]
+    async fn recognize_destination_on_transfer_asset_numeric() -> Result<()> {
+        let kura = Kura::blank_kura_for_testing();
+        let state = state_with_test_domains(&kura)?;
+        let mut state_block = state.block();
+        let mut state_transaction = state_block.transaction();
+
+        let alice_id = ALICE_ID.clone();
+        let asset_id = AssetId::new("rose#wonderland".parse().unwrap(), alice_id.clone());
+        let quantity = 1_u32;
+        let (carol_id, _carol_keypair) = gen_account_in("wonderland");
+        let to = carol_id.clone();
+
+        let transfer = Transfer::asset_numeric(asset_id, quantity, to);
+
+        transfer
+            .execute(&alice_id, &mut state_transaction)
+            .expect("should execute");
+
+        let carol = state_transaction.world.account(&carol_id)?;
+        assert!(!carol.is_active);
+
+        Ok(())
+    }
+
+    #[test]
+    async fn recognize_object_account_on_setkv_asset() -> Result<()> {
+        let kura = Kura::blank_kura_for_testing();
+        let state = state_with_test_domains(&kura)?;
+        let mut state_block = state.block();
+        let mut state_transaction = state_block.transaction();
+
+        let alice_id = ALICE_ID.clone();
+        let (carol_id, _carol_keypair) = gen_account_in("wonderland");
+        let asset_id = AssetId::new("store#wonderland".parse().unwrap(), carol_id.clone());
+        let key: Name = "key".parse().unwrap();
+        let value = "value".to_string();
+
+        let setkv = SetKeyValue::asset(asset_id, key, value);
+
+        setkv
+            .execute(&alice_id, &mut state_transaction)
+            .expect("should execute");
+
+        let carol = state_transaction.world.account(&carol_id)?;
+        assert!(!carol.is_active);
+
         Ok(())
     }
 }

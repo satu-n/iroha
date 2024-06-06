@@ -432,7 +432,7 @@ pub mod isi {
     ) -> Result<(), TypeError> {
         match asset_value_type {
             AssetValueType::Store => Ok(()),
-            other => Err(TypeError::NumericAssetValueTypeExpected(*other)),
+            other => Err(TypeError::StoreAssetValueTypeExpected(*other)),
         }
     }
 }

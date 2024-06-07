@@ -55,34 +55,23 @@ pub mod isi {
                 ));
             }
 
-            match state_transaction.world.account_mut(&account_id) {
-                Ok(existing_account) => {
-                    if existing_account.is_active {
-                        return Err(RepetitionError {
-                            instruction_type: InstructionType::Register,
-                            id: IdBox::AccountId(account_id),
-                        }
-                        .into());
-                    }
+            recognize_account(&account_id, authority, state_transaction)?;
 
-                    existing_account.activate();
+            let account = state_transaction
+                .world
+                .account_mut(&account_id)
+                .expect("account should exist");
+
+            if account.is_active {
+                return Err(RepetitionError {
+                    instruction_type: InstructionType::Register,
+                    id: IdBox::AccountId(account_id),
                 }
-                Err(_account_not_found) => {
-                    let mut account: Account = self.object.build(authority);
-                    account.activate();
+                .into());
+            }
 
-                    state_transaction
-                        .world
-                        .domain_mut(&account_id.domain_id)?
-                        .add_account(account);
-
-                    state_transaction
-                        .world
-                        .emit_events(Some(DomainEvent::Account(AccountEvent::Recognized(
-                            account_id.clone(),
-                        ))));
-                }
-            };
+            // FIXME: disregarding self.object.metadata
+            account.activate();
 
             state_transaction
                 .world

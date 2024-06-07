@@ -62,7 +62,7 @@ pub mod isi {
                     .increase_asset_total_amount(&asset_id.definition_id, Numeric::ONE)?;
             }
 
-            recognize_account(asset_id.account_id().clone(), authority, state_transaction)?;
+            recognize_account(asset_id.account_id(), authority, state_transaction)?;
             let asset_metadata_limits = state_transaction.config.asset_metadata_limits;
             let asset = state_transaction
                 .world
@@ -156,7 +156,7 @@ pub mod isi {
                 })?;
 
             let destination_asset = {
-                recognize_account(self.destination_id.clone(), authority, state_transaction)?;
+                recognize_account(&self.destination_id, authority, state_transaction)?;
                 let destination_asset_id = AssetId::new(
                     source_asset_id.definition_id.clone(),
                     self.destination_id.clone(),
@@ -194,7 +194,7 @@ pub mod isi {
             assert_numeric_spec(&self.object, &asset_definition)?;
             assert_can_mint(&asset_definition, state_transaction)?;
 
-            recognize_account(asset_id.account_id().clone(), authority, state_transaction)?;
+            recognize_account(asset_id.account_id(), authority, state_transaction)?;
             let asset = state_transaction
                 .world
                 .asset_or_insert(asset_id.clone(), Numeric::ZERO)
@@ -321,7 +321,7 @@ pub mod isi {
                 }
             }
 
-            recognize_account(self.destination_id.clone(), authority, state_transaction)?;
+            recognize_account(&self.destination_id, authority, state_transaction)?;
             let destination_asset = state_transaction
                 .world
                 .asset_or_insert(destination_asset_id.clone(), Numeric::ZERO)

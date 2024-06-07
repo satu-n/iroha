@@ -231,7 +231,7 @@ impl Execute for RevokeBox {
 }
 
 fn recognize_account(
-    id: AccountId,
+    id: &AccountId,
     authority: &AccountId,
     state_transaction: &mut StateTransaction<'_, '_>,
 ) -> Result<(), Error> {

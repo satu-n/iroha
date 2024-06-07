@@ -46,7 +46,7 @@ pub mod isi {
             state_transaction: &mut StateTransaction<'_, '_>,
         ) -> Result<(), Error> {
             let asset_id = self.object.id;
-            recognize_account(asset_id.account_id().clone(), authority, state_transaction)?;
+            recognize_account(asset_id.account_id(), authority, state_transaction)?;
 
             match state_transaction.world.asset(&asset_id) {
                 Err(err) => match err {
@@ -145,7 +145,7 @@ pub mod isi {
             } = self;
 
             let _ = state_transaction.world.account(&source_id)?;
-            recognize_account(destination_id.clone(), authority, state_transaction)?;
+            recognize_account(&destination_id, authority, state_transaction)?;
 
             let asset_definition = state_transaction.world.asset_definition_mut(&object)?;
 
@@ -177,7 +177,7 @@ pub mod isi {
         ) -> Result<(), Error> {
             let account_id = self.object_id;
             let account_metadata_limits = state_transaction.config.account_metadata_limits;
-            recognize_account(account_id.clone(), authority, state_transaction)?;
+            recognize_account(&account_id, authority, state_transaction)?;
 
             state_transaction
                 .world
@@ -245,7 +245,7 @@ pub mod isi {
             let permission = self.object;
             let permission_id = permission.id.clone();
 
-            recognize_account(account_id.clone(), authority, state_transaction)?;
+            recognize_account(&account_id, authority, state_transaction)?;
 
             if !state_transaction
                 .world
@@ -337,7 +337,7 @@ pub mod isi {
                 .into_iter()
                 .map(|token| token.id);
 
-            recognize_account(account_id.clone(), authority, state_transaction)?;
+            recognize_account(&account_id, authority, state_transaction)?;
 
             if state_transaction
                 .world

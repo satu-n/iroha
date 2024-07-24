@@ -347,6 +347,8 @@ pub struct Client {
     pub chain: ChainId,
     /// Url for accessing Iroha node
     pub torii_url: Url,
+    /// Url for resolving account aliases
+    pub resolver_url: Url,
     /// Accounts keypair
     pub key_pair: KeyPair,
     /// Transaction time to live in milliseconds

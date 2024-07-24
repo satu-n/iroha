@@ -5,6 +5,9 @@ pub mod config;
 pub mod http;
 mod http_default;
 mod query_builder;
+// SATO
+// #[cfg(feature = "name_service")]
+mod alias;
 
 pub mod samples {
     //! Module containing sample configurations for tests and benchmarks.

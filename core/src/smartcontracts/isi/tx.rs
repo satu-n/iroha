@@ -70,11 +70,11 @@ impl BlockTransactionRef {
 
 impl ValidQuery for FindTransactions {
     #[metrics(+"find_transactions")]
-    fn execute<'state>(
+    fn execute(
         self,
         filter: CompoundPredicate<TransactionQueryOutputPredicateBox>,
-        state_ro: &'state impl StateReadOnly,
-    ) -> Result<impl Iterator<Item = Self::Item> + 'state, QueryExecutionFail> {
+        state_ro: &impl StateReadOnly,
+    ) -> Result<impl Iterator<Item = Self::Item>, QueryExecutionFail> {
         Ok(state_ro
             .all_blocks(nonzero!(1_usize))
             .flat_map(BlockTransactionIter::new)
@@ -88,11 +88,11 @@ impl ValidQuery for FindTransactions {
 
 impl ValidQuery for FindTransactionsByAccountId {
     #[metrics(+"find_transactions_by_account_id")]
-    fn execute<'state>(
+    fn execute(
         self,
         filter: CompoundPredicate<TransactionQueryOutputPredicateBox>,
-        state_ro: &'state impl StateReadOnly,
-    ) -> Result<impl Iterator<Item = Self::Item> + 'state, QueryExecutionFail> {
+        state_ro: &impl StateReadOnly,
+    ) -> Result<impl Iterator<Item = Self::Item>, QueryExecutionFail> {
         let account_id = self.account.clone();
 
         Ok(state_ro

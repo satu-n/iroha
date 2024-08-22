@@ -36,7 +36,8 @@ class Network:
         self.peers = [_Peer(args, i) for i in range(args.n_peers)]
 
         logging.info("Generating shared configuration...")
-        trusted_peers = [{"address": f"{peer.host_ip}:{peer.p2p_port}", "public_key": peer.public_key} for peer in self.peers]
+        n_bootstrap_peers = args.n_peers - args.n_offline_peers
+        trusted_peers = [{"address": f"{peer.host_ip}:{peer.p2p_port}", "public_key": peer.public_key} for peer in self.peers[:n_bootstrap_peers]]
         genesis_key_pair = kagami_generate_key_pair(args.out_dir, seed="Irohagenesis")
         genesis_public_key = genesis_key_pair["public_key"]
         genesis_private_key = genesis_key_pair["private_key"]
@@ -276,10 +277,14 @@ if __name__ == "__main__":
                         The `cleanup` command will kill all peer processes \
                         that were started by the `setup` command and remove the test directory")
     parser.add_argument("n_peers", nargs="?", default=4, type=pos_int,
-                        help="Number of peers to bootstrap. \
+                        help="Number of peers, whether included in bootstrap set or not. \
                         Defaults to 4. If setup was run with a custom number of peers, \
                         the same number doesn't need to be provided to cleanup as \
                         it kills all processes named `iroha`, so proper caution is advised")
+    parser.add_argument("n_offline_peers", nargs="?", default=0, type=int,
+                        help="Number of peers excluded from bootstrap set. \
+                        Defaults to 0. This is intended to be used for tests involving \
+                        registering peers")
 
     parser.add_argument("--out-dir", "-o", default="./test", type=pathlib.Path,
                         help="Directory to store config and log files. \

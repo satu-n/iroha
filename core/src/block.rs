@@ -157,33 +157,24 @@ mod pending {
             transactions: &[CommittedTransaction],
             consensus_estimation: Duration,
         ) -> BlockHeader {
+            let prev_time =
+                prev_block.map_or(Duration::ZERO, |block| block.header().creation_time());
+            let latest_transaction_time = transactions
+                .iter()
+                .map(|tx| tx.as_ref().creation_time())
+                .max()
+                .expect("block header should not be made with no transactions");
+            let padding = Duration::from_millis(1);
             let now = SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
                 .unwrap();
 
             // NOTE: Lower time bound must always be upheld for a valid block
             // If the clock has drifted too far this block will be rejected
-            let creation_time = transactions
+            let this_time = [now, latest_transaction_time + padding, prev_time + padding]
                 .iter()
-                .map(|tx| tx.as_ref().creation_time())
                 .max()
-                .and_then(|time_lower_bound| {
-                    let prev_block_creation_time =
-                        prev_block.map(|block| block.header().creation_time());
-
-                    if prev_block_creation_time > Some(time_lower_bound) {
-                        prev_block_creation_time
-                    } else {
-                        Some(time_lower_bound)
-                    }
-                })
-                .map_or(now, |time_lower_bound| {
-                    if time_lower_bound >= now {
-                        time_lower_bound + Duration::from_millis(1)
-                    } else {
-                        now
-                    }
-                });
+                .unwrap();
 
             BlockHeader {
                 height: prev_block

@@ -978,7 +978,7 @@ fn reset_state(
         *last_view_change_time = Instant::now();
         *view_change_time =
             pipeline_time.saturating_mul((view_change_index + 1).try_into().unwrap_or(u32::MAX));
-
+        error!(?view_change_index, ?view_change_time);
         *was_commit = false;
     }
 }
@@ -1186,6 +1186,7 @@ pub(crate) fn run(
                 .sumeragi
                 .pipeline_time()
                 .saturating_mul((view_change_index + 1).try_into().unwrap_or(u32::MAX));
+            error!(?view_change_index, ?view_change_time);
         }
 
         reset_state(

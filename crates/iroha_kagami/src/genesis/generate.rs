@@ -8,7 +8,7 @@ use clap::{Parser, Subcommand};
 use color_eyre::eyre::WrapErr as _;
 use iroha_data_model::{isi::InstructionBox, parameter::Parameters, prelude::*};
 use iroha_executor_data_model::permission::{
-    domain::CanRegisterDomain, parameter::CanSetParameters,
+    domain::CanRegisterDomain, parameter::CanSetParameters, trigger::CanRegisterAnyTrigger,
 };
 use iroha_genesis::{GenesisBuilder, RawGenesisTransaction, GENESIS_DOMAIN_ID};
 use iroha_test_samples::{gen_account_in, load_sample_wasm, ALICE_ID, BOB_ID, CARPENTER_ID};
@@ -129,10 +129,29 @@ pub fn generate_default(
         "wonderland".parse()?,
         ALICE_ID.clone(),
     );
-    // Register trigger which responds to requests to register a multisig account in wonderland
-    let register_multisig_accounts_registry_of_wonderland = {
-        // FIXME #5022 This trigger should continue to function regardless of domain ownership changes
-        let authority = ALICE_ID.clone();
+    // FIXME #5022 Too much authority to one domain owner. Set system trigger authority to non-personal account
+    let multisig_world_authority = ALICE_ID.clone();
+    // Register a trigger that reacts to domain creation and registers a multisig account registry for the domain
+    let register_multisig_domains_initializer = {
+        let multisig_domains_initializer_id = TriggerId::from_str("multisig_domains")?;
+        let executable = load_sample_wasm("multisig_domains");
+        let multisig_domains_initializer = Trigger::new(
+            multisig_domains_initializer_id.clone(),
+            Action::new(
+                executable,
+                Repeats::Indefinitely,
+                multisig_world_authority.clone(),
+                DomainEventFilter::new().for_events(DomainEventSet::Created),
+            ),
+        );
+        Register::trigger(multisig_domains_initializer)
+    };
+    // Allow the initializer to register a multisig account registry for any domain
+    let grant_to_register_any_trigger =
+        Grant::account_permission(CanRegisterAnyTrigger, multisig_world_authority);
+    // Manually register a multisig account registry for wonderland whose creation in genesis does not trigger the initializer
+    let register_multisig_accounts_registry_for_wonderland = {
+        let domain_owner = ALICE_ID.clone();
         let multisig_accounts_registry_id = TriggerId::from_str("multisig_accounts_wonderland")?;
         let executable = load_sample_wasm("multisig_accounts");
         let multisig_accounts_registry = Trigger::new(
@@ -140,7 +159,7 @@ pub fn generate_default(
             Action::new(
                 executable,
                 Repeats::Indefinitely,
-                authority,
+                domain_owner,
                 ExecuteTriggerEventFilter::new().for_trigger(multisig_accounts_registry_id.clone()),
             ),
         );
@@ -154,14 +173,16 @@ pub fn generate_default(
         builder = builder.append_parameter(parameter);
     }
 
-    let instructions: [InstructionBox; 7] = [
+    let instructions: [InstructionBox; 9] = [
         mint.into(),
         mint_cabbage.into(),
         transfer_rose_ownership.into(),
         transfer_wonderland_ownership.into(),
         grant_permission_to_set_parameters.into(),
         grant_permission_to_register_domains.into(),
-        register_multisig_accounts_registry_of_wonderland.into(),
+        register_multisig_domains_initializer.into(),
+        grant_to_register_any_trigger.into(),
+        register_multisig_accounts_registry_for_wonderland.into(),
     ];
 
     for isi in instructions {

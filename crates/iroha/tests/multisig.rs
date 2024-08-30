@@ -7,7 +7,7 @@ use iroha::{
     data_model::{prelude::*, query::trigger::FindTriggers, transaction::TransactionBuilder},
 };
 use iroha_test_network::*;
-use iroha_test_samples::gen_account_in;
+use iroha_test_samples::{gen_account_in, BOB_ID, BOB_KEYPAIR, CARPENTER_ID, CARPENTER_KEYPAIR};
 
 #[test]
 fn mutlisig() -> Result<()> {
@@ -45,9 +45,25 @@ fn mutlisig() -> Result<()> {
             .map(Register::account),
     )?;
 
+    let client = |account: AccountId, key_pair: KeyPair| client::Client {
+        account,
+        key_pair,
+        ..test_client.clone()
+    };
     let register_multisig_account =
         ExecuteTrigger::new(multisig_accounts_registry_id).with_args(args);
-    test_client.submit_blocking(register_multisig_account)?;
+
+    // Account cannot register multisig account in another domain
+    let carpenter_client = client(CARPENTER_ID.clone(), CARPENTER_KEYPAIR.clone());
+    let _err = carpenter_client
+        .submit_blocking(register_multisig_account.clone())
+        .expect_err("multisig account should not be registered by account of another domain");
+
+    // Account can register multisig account in domain without special permission
+    let bob_client = client(BOB_ID.clone(), BOB_KEYPAIR.clone());
+    bob_client
+        .submit_blocking(register_multisig_account)
+        .expect("multisig account should be registered by account of the same domain");
 
     // Check that multisig account exist
     test_client

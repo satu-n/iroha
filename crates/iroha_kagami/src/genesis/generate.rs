@@ -127,7 +127,6 @@ pub fn generate_default(
         ALICE_ID.clone(),
     );
     // Register trigger which responds to requests to register a multisig account in wonderland
-    // FIXME The requester should not be restricted to the trigger authority
     let register_multisig_accounts_registry_of_wonderland = {
         // FIXME #5022 This trigger should continue to function regardless of domain ownership changes
         let authority = ALICE_ID.clone();

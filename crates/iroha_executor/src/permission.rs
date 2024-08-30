@@ -117,6 +117,7 @@ declare_permissions! {
     iroha_executor_data_model::permission::parameter::{CanSetParameters},
     iroha_executor_data_model::permission::role::{CanManageRoles},
 
+    iroha_executor_data_model::permission::trigger::{CanRegisterAnyTrigger},
     iroha_executor_data_model::permission::trigger::{CanRegisterTrigger},
     iroha_executor_data_model::permission::trigger::{CanUnregisterTrigger},
     iroha_executor_data_model::permission::trigger::{CanModifyTrigger},
@@ -754,8 +755,8 @@ pub mod account {
 pub mod trigger {
     //! Module with pass conditions for trigger related tokens
     use iroha_executor_data_model::permission::trigger::{
-        CanExecuteTrigger, CanModifyTrigger, CanModifyTriggerMetadata, CanRegisterTrigger,
-        CanUnregisterTrigger,
+        CanExecuteTrigger, CanModifyTrigger, CanModifyTriggerMetadata, CanRegisterAnyTrigger,
+        CanRegisterTrigger, CanUnregisterTrigger,
     };
 
     use super::*;
@@ -816,6 +817,20 @@ pub mod trigger {
             Err(ValidationFail::NotPermitted(
                 "Can't give permission to access trigger owned by another account".to_owned(),
             ))
+        }
+    }
+
+    impl ValidateGrantRevoke for CanRegisterAnyTrigger {
+        fn validate_grant(&self, authority: &AccountId, context: &Context, host: &Iroha) -> Result {
+            OnlyGenesis::from(self).validate(authority, host, context)
+        }
+        fn validate_revoke(
+            &self,
+            authority: &AccountId,
+            context: &Context,
+            host: &Iroha,
+        ) -> Result {
+            OnlyGenesis::from(self).validate(authority, host, context)
         }
     }
 

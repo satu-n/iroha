@@ -84,6 +84,7 @@ pub fn build_schemas() -> MetaMap {
         permission::asset::CanModifyAssetMetadata,
         permission::parameter::CanSetParameters,
         permission::role::CanManageRoles,
+        permission::trigger::CanRegisterAnyTrigger,
         permission::trigger::CanRegisterTrigger,
         permission::trigger::CanExecuteTrigger,
         permission::trigger::CanUnregisterTrigger,
@@ -621,6 +622,9 @@ mod tests {
         insert_into_test_map!(iroha_executor_data_model::permission::asset::CanModifyAssetMetadata);
         insert_into_test_map!(iroha_executor_data_model::permission::parameter::CanSetParameters);
         insert_into_test_map!(iroha_executor_data_model::permission::role::CanManageRoles);
+        insert_into_test_map!(
+            iroha_executor_data_model::permission::trigger::CanRegisterAnyTrigger
+        );
         insert_into_test_map!(iroha_executor_data_model::permission::trigger::CanRegisterTrigger);
         insert_into_test_map!(iroha_executor_data_model::permission::trigger::CanExecuteTrigger);
         insert_into_test_map!(iroha_executor_data_model::permission::trigger::CanUnregisterTrigger);

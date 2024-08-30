@@ -1470,7 +1470,8 @@ pub mod trigger {
         if executor.context().curr_block.is_genesis() {
             execute!(executor, isi);
         }
-        match is_trigger_owner(trigger_id, &executor.context().authority, executor.host()) {
+        let authority = &executor.context().authority;
+        match is_trigger_owner(trigger_id, authority, executor.host()) {
             Err(err) => deny!(executor, err),
             Ok(true) => execute!(executor, isi),
             Ok(false) => {}
@@ -1478,7 +1479,21 @@ pub mod trigger {
         let can_execute_trigger_token = CanExecuteTrigger {
             trigger: trigger_id.clone(),
         };
-        if can_execute_trigger_token.is_owned_by(&executor.context().authority, executor.host()) {
+        if can_execute_trigger_token.is_owned_by(authority, executor.host()) {
+            execute!(executor, isi);
+        }
+        // Any account in domain can call multisig accounts registry to register any multisig account in the domain
+        // TODO Restrict access to the multisig signatories?
+        // TODO Impose proposal and approval process?
+        if trigger_id
+            .name()
+            .as_ref()
+            .strip_prefix("multisig_accounts_")
+            .and_then(|s| s.parse::<DomainId>().ok())
+            .map_or(false, |registry_domain| {
+                *authority.domain() == registry_domain
+            })
+        {
             execute!(executor, isi);
         }
 

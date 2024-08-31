@@ -22,6 +22,19 @@ fn multisig_expires() -> Result<()> {
     multisig_base(Some(2))
 }
 
+/// # Scenario
+///
+/// | world level               | domain level                | account level                   | transaction level    |
+/// |---------------------------|-----------------------------|---------------------------------|----------------------|
+/// | given domains initializer |                             |                                 |                      |
+/// |                           | creates domain              |                                 |                      |
+/// |       domains initializer | generates accounts registry |                                 |                      |
+/// |                           |                             | creates signatories             |                      |
+/// |                           |      call accounts registry | creates multisig account        |                      |
+/// |                           |           accounts registry | generates transactions registry |                      |
+/// |                           |                             |      call transactions registry | proposes transaction |
+/// |                           |                             |      call transactions registry | approves transaction |
+/// |                           |                             |           transactions registry | executes transaction |
 fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
     let (network, _rt) = NetworkBuilder::new().start_blocking()?;
     let test_client = network.client();

@@ -3046,6 +3046,7 @@ dependencies = [
  "color-eyre",
  "erased-serde",
  "error-stack",
+ "executor_custom_data_model",
  "eyre",
  "iroha",
  "iroha_config_base",

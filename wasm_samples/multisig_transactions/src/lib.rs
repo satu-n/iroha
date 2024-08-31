@@ -36,10 +36,13 @@ fn main(host: Iroha, context: Context) {
         MultisigTransactionArgs::Propose(instructions) => HashOf::new(instructions),
         MultisigTransactionArgs::Approve(instructions_hash) => *instructions_hash,
     };
-    let approvals_metadata_key: Name = format!("{instructions_hash}/approvals").parse().unwrap();
-    let instructions_metadata_key: Name =
-        format!("{instructions_hash}/instructions").parse().unwrap();
-    let proposed_at_ms_metadata_key: Name = format!("{instructions_hash}/proposed_at_ms")
+    let approvals_metadata_key: Name = format!("proposals/{instructions_hash}/approvals")
+        .parse()
+        .unwrap();
+    let instructions_metadata_key: Name = format!("proposals/{instructions_hash}/instructions")
+        .parse()
+        .unwrap();
+    let proposed_at_ms_metadata_key: Name = format!("proposals/{instructions_hash}/proposed_at_ms")
         .parse()
         .unwrap();
 
@@ -62,6 +65,8 @@ fn main(host: Iroha, context: Context) {
             .expect_err("instructions are already submitted");
 
             let approvals = BTreeSet::from([signatory.clone()]);
+
+            // TODO Recursively deploy multisig authentication down to the terminal personal signatories
 
             host.submit(&SetKeyValue::trigger(
                 trigger_id.clone(),

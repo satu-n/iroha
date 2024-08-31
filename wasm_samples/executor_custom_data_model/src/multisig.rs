@@ -13,7 +13,12 @@ pub struct MultisigAccountArgs {
     pub account: NewAccount,
     /// List of accounts responsible for handling multisig account
     pub signatories: BTreeSet<AccountId>,
+    /// Multisig transaction time-to-live based on block timestamps. Defaults to [`DEFAULT_MULTISIG_TTL_SECS`]
+    pub transaction_ttl_secs: Option<u32>,
 }
+
+// Default multisig transaction time-to-live based on block timestamps
+pub const DEFAULT_MULTISIG_TTL_SECS: u32 = 60 * 60; // 1 hour
 
 /// Arguments to propose or approve multisig transaction
 #[derive(Serialize, Deserialize)]

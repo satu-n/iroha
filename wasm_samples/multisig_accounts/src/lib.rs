@@ -9,7 +9,7 @@ extern crate panic_halt;
 use alloc::format;
 
 use dlmalloc::GlobalDlmalloc;
-use executor_custom_data_model::multisig::MultisigAccountArgs;
+use executor_custom_data_model::multisig::{MultisigAccountArgs, DEFAULT_MULTISIG_TTL_SECS};
 use iroha_executor_data_model::permission::trigger::CanExecuteTrigger;
 use iroha_trigger::{
     debug::{dbg_panic, DebugExpectExt as _},
@@ -61,6 +61,24 @@ fn main(host: Iroha, context: Context) {
     host.submit(&Register::trigger(multisig_transactions_registry))
         .dbg_expect("failed to register multisig transactions registry");
 
+    host.submit(&SetKeyValue::trigger(
+        multisig_transactions_registry_id.clone(),
+        "signatories".parse().unwrap(),
+        Json::new(&args.signatories),
+    ))
+    .dbg_unwrap();
+
+    host.submit(&SetKeyValue::trigger(
+        multisig_transactions_registry_id.clone(),
+        "transaction_ttl_secs".parse().unwrap(),
+        Json::new(
+            &args
+                .transaction_ttl_secs
+                .unwrap_or(DEFAULT_MULTISIG_TTL_SECS),
+        ),
+    ))
+    .dbg_unwrap();
+
     let role_id: RoleId = format!(
         "multisig_signatory_{}_{}",
         account_id.signatory(),
@@ -78,13 +96,6 @@ fn main(host: Iroha, context: Context) {
             .add_permission(can_execute_multisig_transactions_registry),
     ))
     .dbg_expect("failed to register multisig role");
-
-    host.submit(&SetKeyValue::trigger(
-        multisig_transactions_registry_id,
-        "signatories".parse().unwrap(),
-        Json::new(&args.signatories),
-    ))
-    .dbg_unwrap();
 
     for signatory in args.signatories {
         host.submit(&Grant::account_role(role_id.clone(), signatory))

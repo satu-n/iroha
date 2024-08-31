@@ -39,6 +39,19 @@ fn main(host: Iroha, context: Context) {
     let approvals_metadata_key: Name = format!("{instructions_hash}/approvals").parse().unwrap();
     let instructions_metadata_key: Name =
         format!("{instructions_hash}/instructions").parse().unwrap();
+    let proposed_at_ms_metadata_key: Name = format!("{instructions_hash}/proposed_at_ms")
+        .parse()
+        .unwrap();
+
+    let mut block_headers = host.query(FindBlockHeaders).execute().dbg_unwrap();
+    let now_ms: u64 = block_headers
+        .next()
+        .dbg_unwrap()
+        .dbg_unwrap()
+        .creation_time()
+        .as_millis()
+        .try_into()
+        .dbg_unwrap();
 
     let (approvals, instructions) = match args {
         MultisigTransactionArgs::Propose(instructions) => {
@@ -61,6 +74,13 @@ fn main(host: Iroha, context: Context) {
                 trigger_id.clone(),
                 approvals_metadata_key.clone(),
                 Json::new(&approvals),
+            ))
+            .dbg_unwrap();
+
+            host.submit(&SetKeyValue::trigger(
+                trigger_id.clone(),
+                proposed_at_ms_metadata_key.clone(),
+                Json::new(&now_ms),
             ))
             .dbg_unwrap();
 
@@ -107,8 +127,31 @@ fn main(host: Iroha, context: Context) {
         .try_into_any()
         .dbg_unwrap();
 
+    let is_expired = {
+        let proposed_at_ms: u64 = host
+            .query_single(FindTriggerMetadata::new(
+                trigger_id.clone(),
+                proposed_at_ms_metadata_key.clone(),
+            ))
+            .dbg_unwrap()
+            .try_into_any()
+            .dbg_unwrap();
+
+        let transaction_ttl_secs: u32 = host
+            .query_single(FindTriggerMetadata::new(
+                trigger_id.clone(),
+                "transaction_ttl_secs".parse().unwrap(),
+            ))
+            .dbg_unwrap()
+            .try_into_any()
+            .dbg_unwrap();
+
+        proposed_at_ms + transaction_ttl_secs as u64 * 1_000 < now_ms
+    };
+
     // Require N of N signatures
-    if approvals.is_superset(&signatories) {
+    // TODO introduce M of N authentication policy
+    if approvals.is_superset(&signatories) || is_expired {
         // Cleanup approvals and instructions
         host.submit(&RemoveKeyValue::trigger(
             trigger_id.clone(),
@@ -120,10 +163,17 @@ fn main(host: Iroha, context: Context) {
             instructions_metadata_key,
         ))
         .dbg_unwrap();
+        host.submit(&RemoveKeyValue::trigger(
+            trigger_id.clone(),
+            proposed_at_ms_metadata_key,
+        ))
+        .dbg_unwrap();
 
-        // Execute instructions proposal which collected enough approvals
-        for isi in &instructions {
-            host.submit(isi).dbg_unwrap();
+        if !is_expired {
+            // Execute instructions proposal which collected enough approvals
+            for isi in instructions {
+                host.submit(&isi).dbg_unwrap();
+            }
         }
     }
 }

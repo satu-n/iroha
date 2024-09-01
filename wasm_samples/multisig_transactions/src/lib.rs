@@ -6,7 +6,11 @@ extern crate alloc;
 #[cfg(not(test))]
 extern crate panic_halt;
 
-use alloc::{collections::btree_set::BTreeSet, format, vec::Vec};
+use alloc::{
+    collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+    format,
+    vec::Vec,
+};
 
 use dlmalloc::GlobalDlmalloc;
 use executor_custom_data_model::multisig::MultisigTransactionArgs;
@@ -24,25 +28,25 @@ getrandom::register_custom_getrandom!(iroha_trigger::stub_getrandom);
 fn main(host: Iroha, context: Context) {
     let trigger_id = context.id;
     let EventBox::ExecuteTrigger(event) = context.event else {
-        dbg_panic("only work as by call trigger");
+        dbg_panic("should be triggered by a call");
     };
 
     let args: MultisigTransactionArgs = event
         .args()
         .try_into_any()
-        .dbg_expect("failed to parse arguments");
+        .dbg_expect("args should be for a multisig transaction");
     let signatory = event.authority().clone();
     let instructions_hash = match &args {
         MultisigTransactionArgs::Propose(instructions) => HashOf::new(instructions),
         MultisigTransactionArgs::Approve(instructions_hash) => *instructions_hash,
     };
-    let approvals_metadata_key: Name = format!("proposals/{instructions_hash}/approvals")
-        .parse()
-        .unwrap();
     let instructions_metadata_key: Name = format!("proposals/{instructions_hash}/instructions")
         .parse()
         .unwrap();
     let proposed_at_ms_metadata_key: Name = format!("proposals/{instructions_hash}/proposed_at_ms")
+        .parse()
+        .unwrap();
+    let approvals_metadata_key: Name = format!("proposals/{instructions_hash}/approvals")
         .parse()
         .unwrap();
 
@@ -62,7 +66,7 @@ fn main(host: Iroha, context: Context) {
                 trigger_id.clone(),
                 approvals_metadata_key.clone(),
             ))
-            .expect_err("instructions are already submitted");
+            .expect_err("instructions shouldn't already be proposed");
 
             let approvals = BTreeSet::from([signatory.clone()]);
 
@@ -77,15 +81,15 @@ fn main(host: Iroha, context: Context) {
 
             host.submit(&SetKeyValue::trigger(
                 trigger_id.clone(),
-                approvals_metadata_key.clone(),
-                Json::new(&approvals),
+                proposed_at_ms_metadata_key.clone(),
+                Json::new(&now_ms),
             ))
             .dbg_unwrap();
 
             host.submit(&SetKeyValue::trigger(
                 trigger_id.clone(),
-                proposed_at_ms_metadata_key.clone(),
-                Json::new(&now_ms),
+                approvals_metadata_key.clone(),
+                Json::new(&approvals),
             ))
             .dbg_unwrap();
 
@@ -97,7 +101,7 @@ fn main(host: Iroha, context: Context) {
                     trigger_id.clone(),
                     approvals_metadata_key.clone(),
                 ))
-                .dbg_expect("instructions should be submitted first")
+                .dbg_expect("instructions should be proposed first")
                 .try_into_any()
                 .dbg_unwrap();
 
@@ -123,7 +127,7 @@ fn main(host: Iroha, context: Context) {
         }
     };
 
-    let signatories: BTreeSet<AccountId> = host
+    let signatories: BTreeMap<AccountId, u8> = host
         .query_single(FindTriggerMetadata::new(
             trigger_id.clone(),
             "signatories".parse().unwrap(),
@@ -131,6 +135,22 @@ fn main(host: Iroha, context: Context) {
         .dbg_unwrap()
         .try_into_any()
         .dbg_unwrap();
+
+    let quorum: u16 = host
+        .query_single(FindTriggerMetadata::new(
+            trigger_id.clone(),
+            "quorum".parse().unwrap(),
+        ))
+        .dbg_unwrap()
+        .try_into_any()
+        .dbg_unwrap();
+
+    let is_authenticated = quorum
+        <= signatories
+            .into_iter()
+            .filter(|(id, _)| approvals.contains(&id))
+            .map(|(_, weight)| weight as u16)
+            .sum();
 
     let is_expired = {
         let proposed_at_ms: u64 = host
@@ -154,9 +174,7 @@ fn main(host: Iroha, context: Context) {
         proposed_at_ms + transaction_ttl_secs as u64 * 1_000 < now_ms
     };
 
-    // Require N of N signatures
-    // TODO introduce M of N authentication policy
-    if approvals.is_superset(&signatories) || is_expired {
+    if is_authenticated || is_expired {
         // Cleanup approvals and instructions
         host.submit(&RemoveKeyValue::trigger(
             trigger_id.clone(),
@@ -165,12 +183,12 @@ fn main(host: Iroha, context: Context) {
         .dbg_unwrap();
         host.submit(&RemoveKeyValue::trigger(
             trigger_id.clone(),
-            instructions_metadata_key,
+            proposed_at_ms_metadata_key,
         ))
         .dbg_unwrap();
         host.submit(&RemoveKeyValue::trigger(
             trigger_id.clone(),
-            proposed_at_ms_metadata_key,
+            instructions_metadata_key,
         ))
         .dbg_unwrap();
 

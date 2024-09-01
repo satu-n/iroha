@@ -1236,6 +1236,12 @@ mod multisig {
         /// Signatories of the multisig account
         #[arg(short, long, num_args(2..))]
         pub signatories: Vec<AccountId>,
+        /// Relative weights of responsibility of respective signatories
+        #[arg(short, long, num_args(2..))]
+        pub weights: Vec<u8>,
+        /// Threshold of total weight at which the multisig is considered authenticated
+        #[arg(short, long)]
+        pub quorum: u16,
         /// Time-to-live of multisig transactions made by the multisig account
         #[arg(short, long)]
         pub transaction_ttl_secs: Option<u32>,
@@ -1246,16 +1252,19 @@ mod multisig {
             let Self {
                 account,
                 signatories,
+                weights,
+                quorum,
                 transaction_ttl_secs,
             } = self;
             let registry_id: TriggerId = format!("multisig_accounts_{}", account.domain())
                 .parse()
                 .unwrap();
             let account = Account::new(account);
-            let signatories = signatories.into_iter().collect();
+            let signatories = signatories.into_iter().zip(weights).collect();
             let args = MultisigAccountArgs {
                 account,
                 signatories,
+                quorum,
                 transaction_ttl_secs,
             };
             let register_multisig_account =

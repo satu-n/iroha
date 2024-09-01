@@ -35,6 +35,8 @@ fn multisig_expires() -> Result<()> {
 /// |                           |                             |      call transactions registry | approves transaction |
 /// |                           |                             |           transactions registry | executes transaction |
 fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
+    const N_SIGNATORIES: usize = 5;
+
     let (network, _rt) = NetworkBuilder::new().start_blocking()?;
     let test_client = network.client();
 
@@ -44,17 +46,18 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
     // One more block to generate a multisig accounts registry for the domain
     test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
 
+    // Check that the multisig accounts registry has been generated
     let multisig_accounts_registry_id: TriggerId =
         format!("multisig_accounts_{kingdom}").parse()?;
-    // Check that the multisig accounts registry has been generated
     let _trigger = test_client
         .query(FindTriggers::new())
         .filter_with(|trigger| trigger.id.eq(multisig_accounts_registry_id.clone()))
         .execute_single()
         .expect("multisig accounts registry should be generated after domain creation");
 
+    // Populate residents in the domain
     let mut residents = core::iter::repeat_with(|| gen_account_in(kingdom))
-        .take(6)
+        .take(1 + N_SIGNATORIES)
         .collect::<BTreeMap<AccountId, KeyPair>>();
     test_client.submit_all_blocking(
         residents
@@ -73,7 +76,13 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
 
     let args = &MultisigAccountArgs {
         account: Account::new(multisig_account_id.clone()),
-        signatories: signatories.keys().cloned().collect(),
+        signatories: signatories
+            .keys()
+            .enumerate()
+            .map(|(weight, id)| (id.clone(), 1 + weight as u8))
+            .collect(),
+        // Can be met without the first signatory
+        quorum: (1..=N_SIGNATORIES).skip(1).sum::<usize>() as u16,
         transaction_ttl_secs,
     };
     let register_multisig_account =
@@ -84,16 +93,19 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
         key_pair,
         ..test_client.clone()
     };
-    // Account cannot register multisig account in another domain
+
+    // Any account in another domain cannot register a multisig account without special permission
     let carpenter_client = client(CARPENTER_ID.clone(), CARPENTER_KEYPAIR.clone());
     let _err = carpenter_client
         .submit_blocking(register_multisig_account.clone())
         .expect_err("multisig account should not be registered by account of another domain");
-    // Account can register multisig account in domain without special permission
+
+    // Any account in the same domain can register a multisig account without special permission
     let not_signatory_client = client(not_signatory.0, not_signatory.1);
     not_signatory_client
         .submit_blocking(register_multisig_account)
         .expect("multisig account should be registered by account of the same domain");
+
     // Check that the multisig account has been registered
     test_client
         .query(client::account::all())
@@ -101,13 +113,13 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
         .execute_single()
         .expect("multisig account should be created by calling the multisig accounts registry");
 
+    // Check that the multisig transactions registry has been generated
     let multisig_transactions_registry_id: TriggerId = format!(
         "multisig_transactions_{}_{}",
         multisig_account_id.signatory(),
         multisig_account_id.domain()
     )
     .parse()?;
-    // Check that the multisig transactions registry has been generated
     let _trigger = test_client
         .query(FindTriggers::new())
         .filter_with(|trigger| trigger.id.eq(multisig_transactions_registry_id.clone()))
@@ -123,12 +135,13 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
     .into()];
     let instructions_hash = HashOf::new(&instructions);
 
-    let proposer = signatories.pop_first().unwrap();
+    let proposer = signatories.pop_last().unwrap();
     let approvers = signatories;
 
     let args = &MultisigTransactionArgs::Propose(instructions);
     let propose = ExecuteTrigger::new(multisig_transactions_registry_id.clone()).with_args(args);
 
+    // One of signatories proposes a multisig transaction
     test_client.submit_transaction_blocking(
         &TransactionBuilder::new(test_client.chain.clone(), proposer.0)
             .with_instructions([propose])
@@ -142,12 +155,14 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
         ))
         .expect_err("key-value shouldn't be set without enough approvals");
 
+    // Allow time to elapse to test the expiration
     if let Some(s) = transaction_ttl_secs {
         std::thread::sleep(Duration::from_secs(s.into()))
     };
     test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
 
-    for approver in approvers {
+    // All but the first signatory approve the multisig transaction
+    for approver in approvers.into_iter().skip(1) {
         let args = &MultisigTransactionArgs::Approve(instructions_hash);
         let approve =
             ExecuteTrigger::new(multisig_transactions_registry_id.clone()).with_args(args);

@@ -107,6 +107,43 @@ fn main(host: Iroha, context: Context) {
     .dbg_expect("accounts registry should successfully register a multisig role");
 
     for signatory in args.signatories.keys().cloned() {
+        let is_multisig_again = {
+            let sub_role_id: RoleId = format!(
+                "multisig_signatory_{}_{}",
+                signatory.signatory(),
+                signatory.domain()
+            )
+            .parse()
+            .dbg_unwrap();
+
+            host.query(FindRoleIds)
+                .filter_with(|role_id| role_id.eq(sub_role_id))
+                .execute_single_opt()
+                .dbg_unwrap()
+                .is_some()
+        };
+
+        if is_multisig_again {
+            // Allow the transactions registry to write to the sub registry
+            let sub_registry_id: TriggerId = format!(
+                "multisig_transactions_{}_{}",
+                signatory.signatory(),
+                signatory.domain()
+            )
+            .parse()
+            .dbg_unwrap();
+
+            host.submit(&Grant::account_permission(
+                CanExecuteTrigger {
+                    trigger: sub_registry_id,
+                },
+                account_id.clone(),
+            ))
+            .dbg_expect(
+                "accounts registry should successfully grant permission to the multisig account",
+            );
+        }
+
         host.submit(&Grant::account_role(role_id.clone(), signatory))
             .dbg_expect(
                 "accounts registry should successfully grant the multisig role to signatories",

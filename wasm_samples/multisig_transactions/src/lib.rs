@@ -50,6 +50,48 @@ fn main(host: Iroha, context: Context) {
         .parse()
         .unwrap();
 
+    let signatories: BTreeMap<AccountId, u8> = host
+        .query_single(FindTriggerMetadata::new(
+            trigger_id.clone(),
+            "signatories".parse().unwrap(),
+        ))
+        .dbg_unwrap()
+        .try_into_any()
+        .dbg_unwrap();
+
+    // Recursively deploy multisig authentication down to the terminal personal signatories
+    for account_id in signatories.keys() {
+        let sub_transactions_registry_id: TriggerId = format!(
+            "multisig_transactions_{}_{}",
+            account_id.signatory(),
+            account_id.domain()
+        )
+        .parse()
+        .unwrap();
+
+        if let Ok(_sub_registry) = host
+            .query(FindTriggers::new())
+            .filter_with(|trigger| trigger.id.eq(sub_transactions_registry_id.clone()))
+            .execute_single()
+        {
+            let propose_to_approve_me: InstructionBox = {
+                let approve_me: InstructionBox = {
+                    let args = MultisigTransactionArgs::Approve(instructions_hash);
+                    ExecuteTrigger::new(trigger_id.clone())
+                        .with_args(&args)
+                        .into()
+                };
+                let args = MultisigTransactionArgs::Propose([approve_me].to_vec());
+
+                ExecuteTrigger::new(sub_transactions_registry_id.clone())
+                    .with_args(&args)
+                    .into()
+            };
+            host.submit(&propose_to_approve_me)
+                .dbg_expect("should successfully write to sub registry");
+        }
+    }
+
     let mut block_headers = host.query(FindBlockHeaders).execute().dbg_unwrap();
     let now_ms: u64 = block_headers
         .next()
@@ -69,8 +111,6 @@ fn main(host: Iroha, context: Context) {
             .expect_err("instructions shouldn't already be proposed");
 
             let approvals = BTreeSet::from([signatory.clone()]);
-
-            // TODO Recursively deploy multisig authentication down to the terminal personal signatories
 
             host.submit(&SetKeyValue::trigger(
                 trigger_id.clone(),
@@ -126,15 +166,6 @@ fn main(host: Iroha, context: Context) {
             (approvals, instructions)
         }
     };
-
-    let signatories: BTreeMap<AccountId, u8> = host
-        .query_single(FindTriggerMetadata::new(
-            trigger_id.clone(),
-            "signatories".parse().unwrap(),
-        ))
-        .dbg_unwrap()
-        .try_into_any()
-        .dbg_unwrap();
 
     let quorum: u16 = host
         .query_single(FindTriggerMetadata::new(

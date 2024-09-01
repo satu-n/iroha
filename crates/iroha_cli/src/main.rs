@@ -1340,55 +1340,79 @@ mod multisig {
     /// List pending multisig transactions relevant to you
     #[derive(clap::Subcommand, Debug, Clone)]
     pub enum List {
-        /// All pending multisig transactions directly relevant to you
-        /// TODO Recursively trace back to the root multisig account
+        /// All pending multisig transactions relevant to you
         All,
     }
 
     impl RunArgs for List {
         fn run(self, context: &mut dyn RunContext) -> Result<()> {
             let client = context.client_from_config();
+            let me = client.account.clone();
 
-            let query_my_roles = client.query(FindRolesByAccountId::new(client.account.clone()));
-            let my_multisig_roles: Vec<RoleId> = query_my_roles
-                .filter_with(|role_id| role_id.name.starts_with("multisig_signatory_"))
-                .execute_all()?;
-            for role_id in my_multisig_roles {
-                let transactions_registry_id: TriggerId = role_id
-                    .name
-                    .as_ref()
-                    .replace("signatory", "transactions")
-                    .parse()
-                    .unwrap();
-
-                context.print_data(&transactions_registry_id)?;
-
-                let transactions_registry = client
-                    .query(FindTriggers::new())
-                    .filter_with(|trigger| trigger.id.eq(transactions_registry_id.clone()))
-                    .execute_single()?;
-                let proposal_kvs = transactions_registry
-                    .action()
-                    .metadata()
-                    .iter()
-                    .filter(|kv| kv.0.as_ref().starts_with("proposals"));
-
-                proposal_kvs.fold("", |acc, (k, v)| {
-                    let mut path = k.as_ref().split('/');
-                    let hash = path.nth(1).unwrap();
-
-                    if acc != hash {
-                        context.print_data(&hash).unwrap();
-                    }
-                    path.for_each(|seg| context.print_data(&seg).unwrap());
-                    context.print_data(&v).unwrap();
-
-                    hash
-                });
-            }
-
-            Ok(())
+            trace_back_from(me, &client, context)
         }
+    }
+
+    /// Recursively trace back to the root multisig account
+    fn trace_back_from(
+        account: AccountId,
+        client: &Client,
+        context: &mut dyn RunContext,
+    ) -> Result<()> {
+        let Ok(multisig_roles) = client
+            .query(FindRolesByAccountId::new(account))
+            .filter_with(|role_id| role_id.name.starts_with("multisig_signatory_"))
+            .execute_all()
+        else {
+            return Ok(());
+        };
+
+        for role_id in multisig_roles {
+            let super_account: AccountId = role_id
+                .name
+                .as_ref()
+                .strip_prefix("multisig_signatory_")
+                .unwrap()
+                .replacen('_', "@", 1)
+                .parse()
+                .unwrap();
+
+            trace_back_from(super_account, &client, context)?;
+
+            let transactions_registry_id: TriggerId = role_id
+                .name
+                .as_ref()
+                .replace("signatory", "transactions")
+                .parse()
+                .unwrap();
+
+            context.print_data(&transactions_registry_id)?;
+
+            let transactions_registry = client
+                .query(FindTriggers::new())
+                .filter_with(|trigger| trigger.id.eq(transactions_registry_id))
+                .execute_single()?;
+            let proposal_kvs = transactions_registry
+                .action()
+                .metadata()
+                .iter()
+                .filter(|kv| kv.0.as_ref().starts_with("proposals"));
+
+            proposal_kvs.fold("", |acc, (k, v)| {
+                let mut path = k.as_ref().split('/');
+                let hash = path.nth(1).unwrap();
+
+                if acc != hash {
+                    context.print_data(&hash).unwrap();
+                }
+                path.for_each(|seg| context.print_data(&seg).unwrap());
+                context.print_data(&v).unwrap();
+
+                hash
+            });
+        }
+
+        Ok(())
     }
 }
 #[cfg(test)]

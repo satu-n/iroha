@@ -30,16 +30,16 @@ const WASM: &[u8] = core::include_bytes!(concat!(
 #[iroha_trigger::main]
 fn main(host: Iroha, context: Context) {
     let EventBox::ExecuteTrigger(event) = context.event else {
-        dbg_panic("Only work as by call trigger");
+        dbg_panic("should be triggered by a call");
     };
     let args: MultisigAccountArgs = event
         .args()
         .try_into_any()
-        .dbg_expect("failed to parse args");
+        .dbg_expect("args should be for a multisig account");
     let account_id = args.account.id().clone();
 
     host.submit(&Register::account(args.account))
-        .dbg_expect("failed to register multisig account");
+        .dbg_expect("accounts registry should successfully register a multisig account");
 
     let multisig_transactions_registry_id: TriggerId = format!(
         "multisig_transactions_{}_{}",
@@ -47,7 +47,8 @@ fn main(host: Iroha, context: Context) {
         account_id.domain()
     )
     .parse()
-    .dbg_expect("failed to parse trigger id");
+    .dbg_unwrap();
+
     let multisig_transactions_registry = Trigger::new(
         multisig_transactions_registry_id.clone(),
         Action::new(
@@ -59,12 +60,19 @@ fn main(host: Iroha, context: Context) {
     );
 
     host.submit(&Register::trigger(multisig_transactions_registry))
-        .dbg_expect("failed to register multisig transactions registry");
+        .dbg_expect("accounts registry should successfully register a transactions registry");
 
     host.submit(&SetKeyValue::trigger(
         multisig_transactions_registry_id.clone(),
         "signatories".parse().unwrap(),
         Json::new(&args.signatories),
+    ))
+    .dbg_unwrap();
+
+    host.submit(&SetKeyValue::trigger(
+        multisig_transactions_registry_id.clone(),
+        "quorum".parse().unwrap(),
+        Json::new(&args.quorum),
     ))
     .dbg_unwrap();
 
@@ -85,7 +93,8 @@ fn main(host: Iroha, context: Context) {
         account_id.domain()
     )
     .parse()
-    .dbg_expect("failed to parse role");
+    .dbg_unwrap();
+
     let can_execute_multisig_transactions_registry = CanExecuteTrigger {
         trigger: multisig_transactions_registry_id.clone(),
     };
@@ -95,13 +104,17 @@ fn main(host: Iroha, context: Context) {
         Role::new(role_id.clone(), context.authority.clone())
             .add_permission(can_execute_multisig_transactions_registry),
     ))
-    .dbg_expect("failed to register multisig role");
+    .dbg_expect("accounts registry should successfully register a multisig role");
 
-    for signatory in args.signatories {
+    for signatory in args.signatories.keys().cloned() {
         host.submit(&Grant::account_role(role_id.clone(), signatory))
-            .dbg_expect("failed to grant multisig role to account");
+            .dbg_expect(
+                "accounts registry should successfully grant the multisig role to signatories",
+            );
     }
 
     host.submit(&Revoke::account_role(role_id.clone(), context.authority))
-        .dbg_expect("failed to revoke multisig role from owner");
+        .dbg_expect(
+        "accounts registry should successfully revoke the multisig role from the trigger authority",
+    );
 }

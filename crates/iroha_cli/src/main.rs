@@ -1384,7 +1384,7 @@ mod multisig {
                 .parse()
                 .unwrap();
 
-            trace_back_from(super_account, &client, context)?;
+            trace_back_from(super_account, client, context)?;
 
             let transactions_registry_id: TriggerId = role_id
                 .name

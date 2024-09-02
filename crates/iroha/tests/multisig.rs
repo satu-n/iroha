@@ -7,9 +7,7 @@ use executor_custom_data_model::multisig::{MultisigAccountArgs, MultisigTransact
 use eyre::Result;
 use iroha::{
     crypto::KeyPair,
-    data_model::{
-        prelude::*, query::trigger::FindTriggers, transaction::TransactionBuilder, Level,
-    },
+    data_model::{prelude::*, query::trigger::FindTriggers, Level},
 };
 use iroha_test_network::*;
 use iroha_test_samples::{gen_account_in, CARPENTER_ID, CARPENTER_KEYPAIR};
@@ -40,6 +38,8 @@ fn multisig_expires() -> Result<()> {
 /// |                           |                             |   * calls transactions registry | proposes transaction |
 /// |                           |                             |   * calls transactions registry | approves transaction |
 /// |                           |                             |           transactions registry | executes transaction |
+/// ```
+#[allow(clippy::cast_possible_truncation)]
 fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
     const N_SIGNATORIES: usize = 5;
 
@@ -138,11 +138,8 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
     let args = &MultisigTransactionArgs::Propose(instructions);
     let propose = ExecuteTrigger::new(multisig_transactions_registry_id.clone()).with_args(args);
 
-    test_client.submit_transaction_blocking(
-        &TransactionBuilder::new(test_client.chain.clone(), proposer.0)
-            .with_instructions([propose])
-            .sign(proposer.1.private_key()),
-    )?;
+    alt_client(proposer, &test_client).submit_blocking(propose)?;
+
     // Check that the multisig transaction has not yet executed
     let _err = test_client
         .query_single(FindAccountMetadata::new(
@@ -159,15 +156,13 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
 
     // All but the first signatory approve the multisig transaction
     for approver in approvers.into_iter().skip(1) {
+        let approver_client = alt_client(approver.clone(), &test_client);
+
         let args = &MultisigTransactionArgs::Approve(instructions_hash);
         let approve =
             ExecuteTrigger::new(multisig_transactions_registry_id.clone()).with_args(args);
 
-        test_client.submit_transaction_blocking(
-            &TransactionBuilder::new(test_client.chain.clone(), approver.0)
-                .with_instructions([approve])
-                .sign(approver.1.private_key()),
-        )?;
+        approver_client.submit_blocking(approve)?;
     }
     // Check that the multisig transaction has executed
     let res = test_client.query_single(FindAccountMetadata::new(
@@ -196,6 +191,7 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
 ///   0       1    2   3  4  5 <--- personal signatories
 /// ```
 #[test]
+#[allow(clippy::similar_names, clippy::too_many_lines)]
 fn multisig_recursion() -> Result<()> {
     let (network, _rt) = NetworkBuilder::new().start_blocking()?;
     let test_client = network.client();
@@ -228,8 +224,8 @@ fn multisig_recursion() -> Result<()> {
                 let ms_account_id = gen_account_in(wonderland).0;
                 let args = MultisigAccountArgs {
                     account: Account::new(ms_account_id.clone()),
-                    signatories: sigs.iter().cloned().map(|id| (id.clone(), 1)).collect(),
-                    quorum: sigs.len() as u16,
+                    signatories: sigs.iter().copied().map(|id| (id.clone(), 1)).collect(),
+                    quorum: sigs.len().try_into().unwrap(),
                     transaction_ttl_secs: None,
                 };
                 let register_ms_account =
@@ -279,11 +275,7 @@ fn multisig_recursion() -> Result<()> {
     let args = MultisigTransactionArgs::Propose(instructions);
     let propose = ExecuteTrigger::new(ms_transactions_registry_id.clone()).with_args(&args);
 
-    proposer_client.submit_transaction_blocking(
-        &TransactionBuilder::new(proposer_client.chain.clone(), proposer.0)
-            .with_instructions([propose])
-            .sign(proposer.1.private_key()),
-    )?;
+    proposer_client.submit_blocking(propose)?;
 
     // Ticks as many times as the multisig recursion
     (0..2).for_each(|_| {
@@ -334,7 +326,7 @@ fn multisig_recursion() -> Result<()> {
     let approve_for_each = |approvers: BTreeMap<AccountId, KeyPair>,
                             instructions_hash: HashOf<Vec<InstructionBox>>,
                             ms_account: &AccountId| {
-        for approver in approvers.into_iter() {
+        for approver in approvers {
             let approver_client = alt_client(approver.clone(), &test_client);
 
             let registry_id = multisig_transactions_registry_of(ms_account);
@@ -342,16 +334,12 @@ fn multisig_recursion() -> Result<()> {
             let approve = ExecuteTrigger::new(registry_id.clone()).with_args(&args);
 
             approver_client
-                .submit_transaction_blocking(
-                    &TransactionBuilder::new(approver_client.chain.clone(), approver.0)
-                        .with_instructions([approve])
-                        .sign(approver.1.private_key()),
-                )
+                .submit_blocking(approve)
                 .expect("should successfully approve the proposal");
         }
     };
 
-    approve_for_each(sigs_12, approval_hash_to_12345.clone(), &msa_12);
+    approve_for_each(sigs_12, approval_hash_to_12345, &msa_12);
     approve_for_each(sigs_345, approval_hash_to_12345, &msa_345);
 
     // Let the intermediate registry (12345) collect approvals and approve the original proposal

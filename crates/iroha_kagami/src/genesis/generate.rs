@@ -128,7 +128,7 @@ pub fn generate_default(
     );
     // FIXME #5022 Too much authority to one domain owner. Set system trigger authority to non-personal account
     let multisig_world_authority = ALICE_ID.clone();
-    // Register a trigger that reacts to domain creation and registers a multisig account registry for the domain
+    // Register a trigger that reacts to domain creation and registers a multisig accounts registry for the domain
     let register_multisig_domains_initializer = {
         let multisig_domains_initializer_id = TriggerId::from_str("multisig_domains")?;
         let executable = load_sample_wasm("multisig_domains");
@@ -143,10 +143,10 @@ pub fn generate_default(
         );
         Register::trigger(multisig_domains_initializer)
     };
-    // Allow the initializer to register a multisig account registry for any domain
+    // Allow the initializer to register a multisig accounts registry for any domain
     let grant_to_register_any_trigger =
         Grant::account_permission(CanRegisterAnyTrigger, multisig_world_authority);
-    // Manually register a multisig account registry for wonderland whose creation in genesis does not trigger the initializer
+    // Manually register a multisig accounts registry for wonderland whose creation in genesis does not trigger the initializer
     let register_multisig_accounts_registry_for_wonderland = {
         let domain_owner = ALICE_ID.clone();
         let multisig_accounts_registry_id = TriggerId::from_str("multisig_accounts_wonderland")?;
@@ -164,9 +164,8 @@ pub fn generate_default(
     };
 
     let parameters = Parameters::default();
-    let parameters = parameters.parameters();
 
-    for parameter in parameters {
+    for parameter in parameters.parameters() {
         builder = builder.append_parameter(parameter);
     }
 

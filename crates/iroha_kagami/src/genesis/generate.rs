@@ -11,7 +11,9 @@ use iroha_executor_data_model::permission::{
     domain::CanRegisterDomain, parameter::CanSetParameters, trigger::CanRegisterAnyTrigger,
 };
 use iroha_genesis::{GenesisBuilder, RawGenesisTransaction, GENESIS_DOMAIN_ID};
-use iroha_test_samples::{gen_account_in, load_sample_wasm, ALICE_ID, BOB_ID, CARPENTER_ID};
+use iroha_test_samples::{
+    gen_account_in, load_sample_wasm, ALICE_ID, BOB_ID, CARPENTER_ID, MULTISIG_SYSTEM_ID,
+};
 
 use crate::{Outcome, RunArgs};
 
@@ -91,6 +93,9 @@ pub fn generate_default(
     meta.insert("key".parse()?, Json::new("value"));
 
     let mut builder = builder
+        .domain("system".parse()?)
+        .account(MULTISIG_SYSTEM_ID.signatory().clone())
+        .finish_domain()
         .domain_with_metadata("wonderland".parse()?, meta.clone())
         .account_with_metadata(ALICE_ID.signatory().clone(), meta.clone())
         .account_with_metadata(BOB_ID.signatory().clone(), meta)
@@ -126,8 +131,6 @@ pub fn generate_default(
         "wonderland".parse()?,
         ALICE_ID.clone(),
     );
-    // FIXME #5022 Too much authority to one domain owner. Set system trigger authority to non-personal account
-    let multisig_world_authority = ALICE_ID.clone();
     // Register a trigger that reacts to domain creation and registers a multisig accounts registry for the domain
     let register_multisig_domains_initializer = {
         let multisig_domains_initializer_id = TriggerId::from_str("multisig_domains")?;
@@ -137,7 +140,7 @@ pub fn generate_default(
             Action::new(
                 executable,
                 Repeats::Indefinitely,
-                multisig_world_authority.clone(),
+                MULTISIG_SYSTEM_ID.clone(),
                 DomainEventFilter::new().for_events(DomainEventSet::Created),
             ),
         );
@@ -145,7 +148,7 @@ pub fn generate_default(
     };
     // Allow the initializer to register a multisig accounts registry for any domain
     let grant_to_register_any_trigger =
-        Grant::account_permission(CanRegisterAnyTrigger, multisig_world_authority);
+        Grant::account_permission(CanRegisterAnyTrigger, MULTISIG_SYSTEM_ID.clone());
     // Manually register a multisig accounts registry for wonderland whose creation in genesis does not trigger the initializer
     let register_multisig_accounts_registry_for_wonderland = {
         let domain_owner = ALICE_ID.clone();

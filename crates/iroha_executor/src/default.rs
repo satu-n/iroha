@@ -1235,8 +1235,33 @@ pub mod role {
         isi: &Register<Role>,
     ) {
         let role = isi.object();
-        let mut new_role = Role::new(role.id().clone(), role.grant_to().clone());
 
+        let naming_is_ok = if let Some(tail) = role
+            .id()
+            .name()
+            .as_ref()
+            .strip_prefix("multisig_signatory_")
+        {
+            tail.replace('_', "@")
+                .parse::<AccountId>()
+                .ok()
+                .and_then(|account_id| {
+                    crate::permission::domain::is_domain_owner(
+                        account_id.domain(),
+                        &executor.context().authority,
+                        executor.host(),
+                    )
+                    .ok()
+                })
+                .unwrap_or_default()
+        } else {
+            true
+        };
+        if !naming_is_ok {
+            deny!(executor, "Violates role naming restrictions");
+        }
+
+        let mut new_role = Role::new(role.id().clone(), role.grant_to().clone());
         for permission in role.inner().permissions() {
             iroha_smart_contract::debug!(&format!("Checking `{permission:?}`"));
 
@@ -1337,8 +1362,38 @@ pub mod trigger {
         isi: &Register<Trigger>,
     ) {
         let trigger = isi.object();
+        let is_genesis = executor.context().curr_block.is_genesis();
 
-        if executor.context().curr_block.is_genesis()
+        let trigger_name = trigger.id().name().as_ref();
+        let naming_is_ok = if let Some(tail) = trigger_name.strip_prefix("multisig_accounts_") {
+            let multisig_system: AccountId =
+                // iroha_test_samples::MULTISIG_SYSTEM_ID
+                "ed01201F677E0900C2F633391310D12D155112DF65EDF9DC800D13797CEE5DAF47B890@system"
+                    .parse()
+                    .unwrap();
+            tail.parse::<DomainId>().is_ok()
+                && (is_genesis || executor.context().authority == multisig_system)
+        } else if let Some(tail) = trigger_name.strip_prefix("multisig_transactions_") {
+            tail.replacen('_', "@", 1)
+                .parse::<AccountId>()
+                .ok()
+                .and_then(|account_id| {
+                    is_domain_owner(
+                        account_id.domain(),
+                        &executor.context().authority,
+                        executor.host(),
+                    )
+                    .ok()
+                })
+                .unwrap_or_default()
+        } else {
+            true
+        };
+        if !naming_is_ok {
+            deny!(executor, "Violates trigger naming restrictions");
+        }
+
+        if is_genesis
             || {
                 match is_domain_owner(
                     trigger.action().authority().domain(),

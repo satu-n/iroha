@@ -24,25 +24,52 @@ const WASM: &[u8] = core::include_bytes!(concat!(core::env!("OUT_DIR"), "/multis
 
 #[iroha_trigger::main]
 fn main(host: Iroha, context: Context) {
-    let EventBox::Data(DataEvent::Domain(DomainEvent::Created(domain))) = context.event else {
-        dbg_panic("should be triggered only by domain created events");
+    let (domain_id, domain_owner, owner_changed) = match context.event {
+        EventBox::Data(DataEvent::Domain(DomainEvent::Created(domain))) => {
+            (domain.id().clone(), domain.owned_by().clone(), false)
+        }
+        EventBox::Data(DataEvent::Domain(DomainEvent::OwnerChanged(owner_changed))) => (
+            owner_changed.domain().clone(),
+            owner_changed.new_owner().clone(),
+            true,
+        ),
+        _ => dbg_panic("should be triggered only when domain created or owner changed"),
     };
 
-    let accounts_registry_id: TriggerId = format!("multisig_accounts_{}", domain.id())
+    let accounts_registry_id: TriggerId = format!("multisig_accounts_{}", domain_id)
         .parse()
         .dbg_unwrap();
 
-    let executable = WasmSmartContract::from_compiled(WASM.to_vec());
-    let accounts_registry = Trigger::new(
-        accounts_registry_id.clone(),
-        Action::new(
-            executable,
-            Repeats::Indefinitely,
-            // FIXME #5022 This trigger should continue to function regardless of domain ownership changes
-            domain.owned_by().clone(),
-            ExecuteTriggerEventFilter::new().for_trigger(accounts_registry_id.clone()),
-        ),
-    );
+    let accounts_registry = if owner_changed {
+        let existing = host
+            .query(FindTriggers::new())
+            .filter_with(|trigger| trigger.id.eq(accounts_registry_id.clone()))
+            .execute_single()
+            .dbg_expect("accounts registry should be existing");
+
+        host.submit(&Unregister::trigger(existing.id().clone()))
+            .dbg_expect("accounts registry should be successfully unregistered");
+
+        Trigger::new(
+            existing.id().clone(),
+            Action::new(
+                existing.action().executable().clone(),
+                existing.action().repeats().clone(),
+                domain_owner,
+                existing.action().filter().clone(),
+            ),
+        )
+    } else {
+        Trigger::new(
+            accounts_registry_id.clone(),
+            Action::new(
+                WasmSmartContract::from_compiled(WASM.to_vec()),
+                Repeats::Indefinitely,
+                domain_owner,
+                ExecuteTriggerEventFilter::new().for_trigger(accounts_registry_id.clone()),
+            ),
+        )
+    };
 
     host.submit(&Register::trigger(accounts_registry))
         .dbg_expect("accounts registry should be successfully registered");

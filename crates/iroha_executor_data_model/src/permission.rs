@@ -184,6 +184,11 @@ pub mod trigger {
     }
 
     permission! {
+        #[derive(Copy)]
+        pub struct CanUnregisterAnyTrigger;
+    }
+
+    permission! {
         pub struct CanRegisterTrigger {
             pub authority: AccountId,
         }

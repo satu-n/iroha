@@ -10,7 +10,7 @@ use iroha::{
     data_model::{prelude::*, query::trigger::FindTriggers, Level},
 };
 use iroha_test_network::*;
-use iroha_test_samples::{gen_account_in, CARPENTER_ID, CARPENTER_KEYPAIR};
+use iroha_test_samples::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID, CARPENTER_KEYPAIR};
 
 #[test]
 fn multisig() -> Result<()> {
@@ -352,6 +352,37 @@ fn multisig_recursion() -> Result<()> {
     test_client
         .query_single(FindAccountMetadata::new(msa_012345.clone(), key.clone()))
         .expect("key-value should be set with enough approvals");
+
+    Ok(())
+}
+
+#[test]
+fn persistent_domain_level_authority() -> Result<()> {
+    let (network, _rt) = NetworkBuilder::new().start_blocking()?;
+    let test_client = network.client();
+
+    let wonderland: DomainId = "wonderland".parse().unwrap();
+
+    let ms_accounts_registry_id = multisig_accounts_registry_of(&wonderland);
+
+    // Domain owner changes from Alice to Bob
+    test_client.submit_blocking(Transfer::domain(
+        ALICE_ID.clone(),
+        wonderland,
+        BOB_ID.clone(),
+    ))?;
+
+    // One block gap to follow the domain owner change
+    test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
+
+    // Bob is the authority of the wonderland multisig accounts registry
+    let ms_accounts_registry = test_client
+        .query(FindTriggers::new())
+        .filter_with(|trigger| trigger.id.eq(ms_accounts_registry_id.clone()))
+        .execute_single()
+        .expect("multisig accounts registry should survive before and after a domain owner change");
+
+    assert!(*ms_accounts_registry.action().authority() == BOB_ID.clone());
 
     Ok(())
 }

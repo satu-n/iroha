@@ -369,6 +369,7 @@ pub mod domain {
                 permission.authority.domain() == domain_id
             }
             AnyPermission::CanRegisterAnyTrigger(_)
+            | AnyPermission::CanUnregisterAnyTrigger(_)
             | AnyPermission::CanUnregisterTrigger(_)
             | AnyPermission::CanExecuteTrigger(_)
             | AnyPermission::CanModifyTrigger(_)
@@ -548,6 +549,7 @@ pub mod account {
             AnyPermission::CanTransferAsset(permission) => permission.asset.account() == account_id,
             AnyPermission::CanRegisterTrigger(permission) => permission.authority == *account_id,
             AnyPermission::CanRegisterAnyTrigger(_)
+            | AnyPermission::CanUnregisterAnyTrigger(_)
             | AnyPermission::CanUnregisterTrigger(_)
             | AnyPermission::CanExecuteTrigger(_)
             | AnyPermission::CanModifyTrigger(_)
@@ -815,6 +817,7 @@ pub mod asset_definition {
             | AnyPermission::CanRegisterAsset(_)
             | AnyPermission::CanModifyAccountMetadata(_)
             | AnyPermission::CanRegisterAnyTrigger(_)
+            | AnyPermission::CanUnregisterAnyTrigger(_)
             | AnyPermission::CanRegisterTrigger(_)
             | AnyPermission::CanUnregisterTrigger(_)
             | AnyPermission::CanExecuteTrigger(_)
@@ -1320,7 +1323,7 @@ pub mod role {
 pub mod trigger {
     use iroha_executor_data_model::permission::trigger::{
         CanExecuteTrigger, CanModifyTrigger, CanModifyTriggerMetadata, CanRegisterAnyTrigger,
-        CanRegisterTrigger, CanUnregisterTrigger,
+        CanRegisterTrigger, CanUnregisterAnyTrigger, CanUnregisterTrigger,
     };
     use iroha_smart_contract::data_model::trigger::Trigger;
 
@@ -1378,6 +1381,7 @@ pub mod trigger {
                 can_unregister_user_trigger_token
                     .is_owned_by(&executor.context().authority, executor.host())
             }
+            || CanUnregisterAnyTrigger.is_owned_by(&executor.context().authority, executor.host())
         {
             let mut err = None;
             for (owner_id, permission) in accounts_permissions(executor.host()) {
@@ -1574,6 +1578,7 @@ pub mod trigger {
                 &permission.trigger == trigger_id
             }
             AnyPermission::CanRegisterAnyTrigger(_)
+            | AnyPermission::CanUnregisterAnyTrigger(_)
             | AnyPermission::CanRegisterTrigger(_)
             | AnyPermission::CanManagePeers(_)
             | AnyPermission::CanRegisterDomain(_)

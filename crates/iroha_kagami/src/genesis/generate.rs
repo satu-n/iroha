@@ -8,7 +8,9 @@ use clap::{Parser, Subcommand};
 use color_eyre::eyre::WrapErr as _;
 use iroha_data_model::{isi::InstructionBox, parameter::Parameters, prelude::*};
 use iroha_executor_data_model::permission::{
-    domain::CanRegisterDomain, parameter::CanSetParameters, trigger::CanRegisterAnyTrigger,
+    domain::CanRegisterDomain,
+    parameter::CanSetParameters,
+    trigger::{CanRegisterAnyTrigger, CanUnregisterAnyTrigger},
 };
 use iroha_genesis::{GenesisBuilder, RawGenesisTransaction, GENESIS_DOMAIN_ID};
 use iroha_test_samples::{
@@ -131,7 +133,7 @@ pub fn generate_default(
         "wonderland".parse()?,
         ALICE_ID.clone(),
     );
-    // Register a trigger that reacts to domain creation and registers a multisig accounts registry for the domain
+    // Register a trigger that reacts to domain creation (or owner changes) and registers (or replaces) a multisig accounts registry for the domain
     let register_multisig_domains_initializer = {
         let multisig_domains_initializer_id = TriggerId::from_str("multisig_domains")?;
         let executable = load_sample_wasm("multisig_domains");
@@ -141,14 +143,17 @@ pub fn generate_default(
                 executable,
                 Repeats::Indefinitely,
                 MULTISIG_SYSTEM_ID.clone(),
-                DomainEventFilter::new().for_events(DomainEventSet::Created),
+                DomainEventFilter::new()
+                    .for_events(DomainEventSet::Created | DomainEventSet::OwnerChanged),
             ),
         );
         Register::trigger(multisig_domains_initializer)
     };
-    // Allow the initializer to register a multisig accounts registry for any domain
-    let grant_to_register_any_trigger =
+    // Allow the initializer to register and replace a multisig accounts registry for any domain
+    let grant_multisig_system_to_register_any_trigger =
         Grant::account_permission(CanRegisterAnyTrigger, MULTISIG_SYSTEM_ID.clone());
+    let grant_multisig_system_to_unregister_any_trigger =
+        Grant::account_permission(CanUnregisterAnyTrigger, MULTISIG_SYSTEM_ID.clone());
     // Manually register a multisig accounts registry for wonderland whose creation in genesis does not trigger the initializer
     let register_multisig_accounts_registry_for_wonderland = {
         let domain_owner = ALICE_ID.clone();
@@ -172,7 +177,7 @@ pub fn generate_default(
         builder = builder.append_parameter(parameter);
     }
 
-    let instructions: [InstructionBox; 9] = [
+    let instructions: [InstructionBox; 10] = [
         mint.into(),
         mint_cabbage.into(),
         transfer_rose_ownership.into(),
@@ -180,7 +185,8 @@ pub fn generate_default(
         grant_permission_to_set_parameters.into(),
         grant_permission_to_register_domains.into(),
         register_multisig_domains_initializer.into(),
-        grant_to_register_any_trigger.into(),
+        grant_multisig_system_to_register_any_trigger.into(),
+        grant_multisig_system_to_unregister_any_trigger.into(),
         register_multisig_accounts_registry_for_wonderland.into(),
     ];
 

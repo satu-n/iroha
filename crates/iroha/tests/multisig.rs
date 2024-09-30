@@ -9,6 +9,7 @@ use iroha::{
     crypto::KeyPair,
     data_model::{prelude::*, query::trigger::FindTriggers, Level},
 };
+use iroha_data_model::events::execute_trigger::ExecuteTriggerEventFilter;
 use iroha_test_network::*;
 use iroha_test_samples::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID, CARPENTER_KEYPAIR};
 
@@ -385,6 +386,73 @@ fn persistent_domain_level_authority() -> Result<()> {
     assert!(*ms_accounts_registry.action().authority() == BOB_ID.clone());
 
     Ok(())
+}
+
+#[test]
+fn reserved_names() {
+    let (network, _rt) = NetworkBuilder::new().start_blocking().unwrap();
+    let test_client = network.client();
+
+    let account_in_another_domain = gen_account_in("garden_of_live_flowers").0;
+
+    {
+        let reserved_prefix = "multisig_accounts_";
+        let register = {
+            let id: TriggerId = format!("{reserved_prefix}{}", account_in_another_domain.domain())
+                .parse()
+                .unwrap();
+            let action = Action::new(
+                Vec::<InstructionBox>::new(),
+                Repeats::Indefinitely,
+                ALICE_ID.clone(),
+                ExecuteTriggerEventFilter::new(),
+            );
+            Register::trigger(Trigger::new(id, action))
+        };
+        let _err = test_client.submit_blocking(register).expect_err(
+            "trigger with this name shouldn't be registered by anyone other than multisig system",
+        );
+    }
+
+    {
+        let reserved_prefix = "multisig_transactions_";
+        let register = {
+            let id: TriggerId = format!(
+                "{reserved_prefix}{}_{}",
+                account_in_another_domain.signatory(),
+                account_in_another_domain.domain()
+            )
+            .parse()
+            .unwrap();
+            let action = Action::new(
+                Vec::<InstructionBox>::new(),
+                Repeats::Indefinitely,
+                ALICE_ID.clone(),
+                ExecuteTriggerEventFilter::new(),
+            );
+            Register::trigger(Trigger::new(id, action))
+        };
+        let _err = test_client.submit_blocking(register).expect_err(
+            "trigger with this name shouldn't be registered by anyone other than domain owner",
+        );
+    }
+
+    {
+        let reserved_prefix = "multisig_signatory_";
+        let register = {
+            let id: RoleId = format!(
+                "{reserved_prefix}{}_{}",
+                account_in_another_domain.signatory(),
+                account_in_another_domain.domain()
+            )
+            .parse()
+            .unwrap();
+            Register::role(Role::new(id, ALICE_ID.clone()))
+        };
+        let _err = test_client.submit_blocking(register).expect_err(
+            "role with this name shouldn't be registered by anyone other than domain owner",
+        );
+    }
 }
 
 fn alt_client(signatory: (AccountId, KeyPair), base_client: &client::Client) -> client::Client {

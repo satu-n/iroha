@@ -36,9 +36,16 @@ fn main(host: Iroha, context: Context) {
         .args()
         .try_into_any()
         .dbg_expect("args should be for a multisig account");
-    let account_id = args.account.id().clone();
+    let domain_id = context
+        .id
+        .name()
+        .as_ref()
+        .strip_prefix("multisig_accounts_")
+        .and_then(|s| s.parse::<DomainId>().ok())
+        .dbg_unwrap();
+    let account_id = AccountId::new(domain_id, args.account);
 
-    host.submit(&Register::account(args.account))
+    host.submit(&Register::account(Account::new(account_id.clone())))
         .dbg_expect("accounts registry should successfully register a multisig account");
 
     let multisig_transactions_registry_id: TriggerId = format!(

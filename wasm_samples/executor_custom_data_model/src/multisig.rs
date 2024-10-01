@@ -2,7 +2,7 @@
 
 use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 
-use iroha_data_model::{account::NewAccount, prelude::*};
+use iroha_data_model::prelude::*;
 use serde::{Deserialize, Serialize};
 
 /// Arguments to register multisig account
@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 pub struct MultisigAccountArgs {
     /// Multisig account to be registered
     /// WARNING: any corresponding private key allows the owner to manipulate this account as a ordinary personal account
-    pub account: NewAccount,
+    pub account: PublicKey,
     /// List of accounts and their relative weights of responsibility for the multisig
     pub signatories: BTreeMap<AccountId, u8>,
     /// Threshold of total weight at which the multisig is considered authenticated

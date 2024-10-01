@@ -82,7 +82,7 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
     let mut signatories = residents;
 
     let args = &MultisigAccountArgs {
-        account: Account::new(multisig_account_id.clone()),
+        account: multisig_account_id.signatory().clone(),
         signatories: signatories
             .keys()
             .enumerate()
@@ -225,7 +225,7 @@ fn multisig_recursion() -> Result<()> {
             .map(|sigs| {
                 let ms_account_id = gen_account_in(wonderland).0;
                 let args = MultisigAccountArgs {
-                    account: Account::new(ms_account_id.clone()),
+                    account: ms_account_id.signatory().clone(),
                     signatories: sigs.iter().copied().map(|id| (id.clone(), 1)).collect(),
                     quorum: sigs.len().try_into().unwrap(),
                     transaction_ttl_secs: None,

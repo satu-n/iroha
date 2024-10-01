@@ -1252,7 +1252,7 @@ mod multisig {
             let registry_id: TriggerId = format!("multisig_accounts_{}", account.domain())
                 .parse()
                 .unwrap();
-            let account = Account::new(account);
+            let account = account.signatory.clone();
             let signatories = signatories.into_iter().zip(weights).collect();
             let args = MultisigAccountArgs {
                 account,

@@ -1256,6 +1256,9 @@ mod multisig {
                 quorum,
                 transaction_ttl_secs,
             } = self;
+            if signatories.len() != weights.len() {
+                return Err(eyre!("signatories and weights must be equal in length"));
+            }
             let registry_id: TriggerId = format!("multisig_accounts_{}", account.domain())
                 .parse()
                 .unwrap();

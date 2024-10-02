@@ -1,6 +1,9 @@
 #!/bin/sh
 set -ex
 
+# This diagram describes the state when the root multisig account is successfully authenticated in this test:
+# https://github.com/hyperledger/iroha/pull/5027#discussion_r1741722664
+
 cargo build
 scripts/test_env.py setup
 cd test

@@ -96,17 +96,15 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
         ExecuteTrigger::new(multisig_accounts_registry_id).with_args(args);
 
     // Any account in another domain cannot register a multisig account without special permission
-    let carpenter_client = alt_client(
+    let _err = alt_client(
         (CARPENTER_ID.clone(), CARPENTER_KEYPAIR.clone()),
         &test_client,
-    );
-    let _err = carpenter_client
-        .submit_blocking(register_multisig_account.clone())
-        .expect_err("multisig account should not be registered by account of another domain");
+    )
+    .submit_blocking(register_multisig_account.clone())
+    .expect_err("multisig account should not be registered by account of another domain");
 
     // Any account in the same domain can register a multisig account without special permission
-    let not_signatory_client = alt_client(not_signatory, &test_client);
-    not_signatory_client
+    alt_client(not_signatory, &test_client)
         .submit_blocking(register_multisig_account)
         .expect("multisig account should be registered by account of the same domain");
 
@@ -158,13 +156,11 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
 
     // All but the first signatory approve the multisig transaction
     for approver in approvers.into_iter().skip(1) {
-        let approver_client = alt_client(approver.clone(), &test_client);
-
         let args = &MultisigTransactionArgs::Approve(instructions_hash);
         let approve =
             ExecuteTrigger::new(multisig_transactions_registry_id.clone()).with_args(args);
 
-        approver_client.submit_blocking(approve)?;
+        alt_client(approver, &test_client).submit_blocking(approve)?;
     }
     // Check that the multisig transaction has executed
     let res = test_client.query_single(FindAccountMetadata::new(
@@ -271,13 +267,11 @@ fn multisig_recursion() -> Result<()> {
     let instructions_hash = HashOf::new(&instructions);
 
     let proposer = sigs_0.pop_last().unwrap();
-    let proposer_client = alt_client(proposer.clone(), &test_client);
-
     let ms_transactions_registry_id = multisig_transactions_registry_of(&msa_012345);
     let args = MultisigTransactionArgs::Propose(instructions);
     let propose = ExecuteTrigger::new(ms_transactions_registry_id.clone()).with_args(&args);
 
-    proposer_client.submit_blocking(propose)?;
+    alt_client(proposer, &test_client).submit_blocking(propose)?;
 
     // Ticks as many times as the multisig recursion
     (0..2).for_each(|_| {
@@ -329,13 +323,11 @@ fn multisig_recursion() -> Result<()> {
                             instructions_hash: HashOf<Vec<InstructionBox>>,
                             ms_account: &AccountId| {
         for approver in approvers {
-            let approver_client = alt_client(approver.clone(), &test_client);
-
             let registry_id = multisig_transactions_registry_of(ms_account);
             let args = MultisigTransactionArgs::Approve(instructions_hash);
             let approve = ExecuteTrigger::new(registry_id.clone()).with_args(&args);
 
-            approver_client
+            alt_client(approver, &test_client)
                 .submit_blocking(approve)
                 .expect("should successfully approve the proposal");
         }

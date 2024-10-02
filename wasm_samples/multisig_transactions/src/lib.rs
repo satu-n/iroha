@@ -59,7 +59,7 @@ fn main(host: Iroha, context: Context) {
         .try_into_any()
         .dbg_unwrap();
 
-    // Recursively deploy multisig authentication down to the terminal personal signatories
+    // Recursively deploy multisig authentication down to the personal leaf signatories
     for account_id in signatories.keys() {
         let sub_transactions_registry_id: TriggerId = format!(
             "multisig_transactions_{}_{}",

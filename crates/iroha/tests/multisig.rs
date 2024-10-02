@@ -286,7 +286,7 @@ fn multisig_recursion() -> Result<()> {
             .unwrap();
     });
 
-    // Check that the entire authentication policy has been deployed down to one of the terminal registries
+    // Check that the entire authentication policy has been deployed down to one of the leaf registries
     let approval_hash_to_12345 = {
         let approval_hash_to_012345 = {
             let registry_id = multisig_transactions_registry_of(&msa_012345);
@@ -313,7 +313,7 @@ fn multisig_recursion() -> Result<()> {
                 .parse()
                 .unwrap(),
         ))
-        .expect("terminal approvals should be initialized by the root proposal")
+        .expect("leaf approvals should be initialized by the root proposal")
         .try_into_any()
         .unwrap();
 

@@ -1,7 +1,6 @@
 use std::{
     io::{BufWriter, Write},
     path::PathBuf,
-    str::FromStr,
 };
 
 use clap::{Parser, Subcommand};
@@ -12,10 +11,10 @@ use iroha_executor_data_model::permission::{
     parameter::CanSetParameters,
     trigger::{CanRegisterAnyTrigger, CanUnregisterAnyTrigger},
 };
-use iroha_genesis::{GenesisBuilder, RawGenesisTransaction, GENESIS_DOMAIN_ID};
-use iroha_test_samples::{
-    gen_account_in, load_sample_wasm, ALICE_ID, BOB_ID, CARPENTER_ID, MULTISIG_SYSTEM_ID,
+use iroha_genesis::{
+    GenesisBuilder, GenesisWasmAction, GenesisWasmTrigger, RawGenesisTransaction, GENESIS_DOMAIN_ID,
 };
+use iroha_test_samples::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID, MULTISIG_SYSTEM_ID};
 
 use crate::{Outcome, RunArgs};
 
@@ -136,43 +135,11 @@ pub fn generate_default(
         "wonderland".parse()?,
         ALICE_ID.clone(),
     );
-    // Register a trigger that reacts to domain creation (or owner changes) and registers (or replaces) a multisig accounts registry for the domain
-    let register_multisig_domains_initializer = {
-        let multisig_domains_initializer_id = TriggerId::from_str("multisig_domains")?;
-        let executable = load_sample_wasm("multisig_domains");
-        let multisig_domains_initializer = Trigger::new(
-            multisig_domains_initializer_id.clone(),
-            Action::new(
-                executable,
-                Repeats::Indefinitely,
-                MULTISIG_SYSTEM_ID.clone(),
-                DomainEventFilter::new()
-                    .for_events(DomainEventSet::Created | DomainEventSet::OwnerChanged),
-            ),
-        );
-        Register::trigger(multisig_domains_initializer)
-    };
     // Allow the initializer to register and replace a multisig accounts registry for any domain
     let grant_multisig_system_to_register_any_trigger =
         Grant::account_permission(CanRegisterAnyTrigger, MULTISIG_SYSTEM_ID.clone());
     let grant_multisig_system_to_unregister_any_trigger =
         Grant::account_permission(CanUnregisterAnyTrigger, MULTISIG_SYSTEM_ID.clone());
-    // Manually register a multisig accounts registry for wonderland whose creation in genesis does not trigger the initializer
-    let register_multisig_accounts_registry_for_wonderland = {
-        let domain_owner = ALICE_ID.clone();
-        let multisig_accounts_registry_id = TriggerId::from_str("multisig_accounts_wonderland")?;
-        let executable = load_sample_wasm("multisig_accounts");
-        let multisig_accounts_registry = Trigger::new(
-            multisig_accounts_registry_id.clone(),
-            Action::new(
-                executable,
-                Repeats::Indefinitely,
-                domain_owner,
-                ExecuteTriggerEventFilter::new().for_trigger(multisig_accounts_registry_id.clone()),
-            ),
-        );
-        Register::trigger(multisig_accounts_registry)
-    };
 
     let parameters = Parameters::default();
 
@@ -180,27 +147,61 @@ pub fn generate_default(
         builder = builder.append_parameter(parameter);
     }
 
-    let instructions: [InstructionBox; 10] = [
+    let instructions: [InstructionBox; 8] = [
         mint.into(),
         mint_cabbage.into(),
         transfer_rose_ownership.into(),
         transfer_wonderland_ownership.into(),
         grant_permission_to_set_parameters.into(),
         grant_permission_to_register_domains.into(),
-        register_multisig_domains_initializer.into(),
         grant_multisig_system_to_register_any_trigger.into(),
         grant_multisig_system_to_unregister_any_trigger.into(),
-        register_multisig_accounts_registry_for_wonderland.into(),
     ];
 
     for isi in instructions {
         builder = builder.append_instruction(isi);
     }
 
+    // Register a trigger that reacts to domain creation (or owner changes) and registers (or replaces) a multisig accounts registry for the domain
+    let multisig_domains_initializer = GenesisWasmTrigger::new(
+        "multisig_domains".parse().unwrap(),
+        GenesisWasmAction::new(
+            "multisig_domains",
+            Repeats::Indefinitely,
+            MULTISIG_SYSTEM_ID.clone(),
+            DomainEventFilter::new()
+                .for_events(DomainEventSet::Created | DomainEventSet::OwnerChanged),
+        ),
+    );
+
+    // Manually register a multisig accounts registry for wonderland whose creation in genesis does not trigger the initializer
+    let multisig_accounts_registry_for_wonderland = {
+        let domain_owner = ALICE_ID.clone();
+        let registry_id = "multisig_accounts_wonderland".parse::<TriggerId>().unwrap();
+
+        GenesisWasmTrigger::new(
+            registry_id.clone(),
+            GenesisWasmAction::new(
+                "multisig_accounts",
+                Repeats::Indefinitely,
+                domain_owner,
+                ExecuteTriggerEventFilter::new().for_trigger(registry_id),
+            ),
+        )
+    };
+
+    for wasm_trigger in [
+        multisig_domains_initializer,
+        multisig_accounts_registry_for_wonderland,
+    ] {
+        builder = builder.append_wasm_trigger(wasm_trigger);
+    }
+
     // Will be replaced with actual topology either in scripts/test_env.py or in iroha_swarm
     let topology = vec![];
     let chain_id = ChainId::from("00000000-0000-0000-0000-000000000000");
     let genesis = builder.build_raw(chain_id, executor_path, topology);
+
     Ok(genesis)
 }
 

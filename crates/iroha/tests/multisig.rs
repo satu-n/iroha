@@ -6,6 +6,7 @@ use std::{
 use executor_custom_data_model::multisig::{MultisigAccountArgs, MultisigTransactionArgs};
 use eyre::Result;
 use iroha::{
+    client::Client,
     crypto::KeyPair,
     data_model::{prelude::*, query::trigger::FindTriggers, Level},
 };
@@ -109,7 +110,7 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
 
     // Check that the multisig account has been registered
     test_client
-        .query(client::account::all())
+        .query(FindAccounts::new())
         .filter_with(|account| account.id.eq(multisig_account_id.clone()))
         .execute_single()
         .expect("multisig account should be created by calling the multisig accounts registry");
@@ -447,8 +448,8 @@ fn reserved_names() {
     }
 }
 
-fn alt_client(signatory: (AccountId, KeyPair), base_client: &client::Client) -> client::Client {
-    client::Client {
+fn alt_client(signatory: (AccountId, KeyPair), base_client: &Client) -> Client {
+    Client {
         account: signatory.0,
         key_pair: signatory.1,
         ..base_client.clone()
@@ -470,7 +471,7 @@ fn multisig_transactions_registry_of(multisig_account: &AccountId) -> TriggerId 
 }
 
 #[allow(dead_code)]
-fn debug_mst_registry(msa: &AccountId, client: &client::Client) {
+fn debug_mst_registry(msa: &AccountId, client: &Client) {
     let mst_registry = client
         .query(FindTriggers::new())
         .filter_with(|trigger| trigger.id.eq(multisig_transactions_registry_of(msa)))

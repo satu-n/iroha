@@ -2009,6 +2009,38 @@
       }
     ]
   },
+  "GenesisWasmAction": {
+    "Struct": [
+      {
+        "name": "executable",
+        "type": "String"
+      },
+      {
+        "name": "repeats",
+        "type": "Repeats"
+      },
+      {
+        "name": "authority",
+        "type": "AccountId"
+      },
+      {
+        "name": "filter",
+        "type": "EventFilterBox"
+      }
+    ]
+  },
+  "GenesisWasmTrigger": {
+    "Struct": [
+      {
+        "name": "id",
+        "type": "TriggerId"
+      },
+      {
+        "name": "action",
+        "type": "GenesisWasmAction"
+      }
+    ]
+  },
   "Grant<Permission, Account>": {
     "Struct": [
       {
@@ -3427,6 +3459,14 @@
       {
         "name": "instructions",
         "type": "Vec<InstructionBox>"
+      },
+      {
+        "name": "wasm_dir",
+        "type": "String"
+      },
+      {
+        "name": "wasm_triggers",
+        "type": "Vec<GenesisWasmTrigger>"
       },
       {
         "name": "topology",
@@ -4948,6 +4988,9 @@
   },
   "Vec<EventFilterBox>": {
     "Vec": "EventFilterBox"
+  },
+  "Vec<GenesisWasmTrigger>": {
+    "Vec": "GenesisWasmTrigger"
   },
   "Vec<InstructionBox>": {
     "Vec": "InstructionBox"

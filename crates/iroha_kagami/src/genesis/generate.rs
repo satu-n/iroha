@@ -1,30 +1,30 @@
 use std::{
     io::{BufWriter, Write},
     path::PathBuf,
-    str::FromStr,
 };
 
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::WrapErr as _;
 use iroha_data_model::{isi::InstructionBox, parameter::Parameters, prelude::*};
 use iroha_executor_data_model::permission::{
-    domain::CanRegisterDomain,
-    parameter::CanSetParameters,
-    trigger::{CanRegisterAnyTrigger, CanUnregisterAnyTrigger},
+    domain::CanRegisterDomain, parameter::CanSetParameters,
 };
-use iroha_genesis::{GenesisBuilder, RawGenesisTransaction, GENESIS_DOMAIN_ID};
-use iroha_test_samples::{
-    gen_account_in, load_sample_wasm, ALICE_ID, BOB_ID, CARPENTER_ID, MULTISIG_SYSTEM_ID,
+use iroha_genesis::{
+    GenesisBuilder, GenesisWasmAction, GenesisWasmTrigger, RawGenesisTransaction, GENESIS_DOMAIN_ID,
 };
+use iroha_test_samples::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID};
 
 use crate::{Outcome, RunArgs};
 
-/// Generate the genesis block that is used in tests
+/// Generate a genesis configuration and standard-output in JSON format
 #[derive(Parser, Debug, Clone)]
 pub struct Args {
-    /// Specifies the `executor_file` <PATH> that will be inserted into the genesis JSON as-is.
+    /// Relative path from the directory of output file to the executor.wasm file
     #[clap(long, value_name = "PATH")]
-    executor_path_in_genesis: PathBuf,
+    executor: PathBuf,
+    /// Relative path from the directory of output file to the directory that contains *.wasm libraries
+    #[clap(long, value_name = "PATH")]
+    wasm_dir: PathBuf,
     #[clap(long, value_name = "MULTI_HASH")]
     genesis_public_key: PublicKey,
     #[clap(subcommand)]
@@ -59,13 +59,14 @@ pub enum Mode {
 impl<T: Write> RunArgs<T> for Args {
     fn run(self, writer: &mut BufWriter<T>) -> Outcome {
         let Self {
-            executor_path_in_genesis,
+            executor,
+            wasm_dir,
             genesis_public_key,
             mode,
         } = self;
 
         let chain = ChainId::from("00000000-0000-0000-0000-000000000000");
-        let builder = GenesisBuilder::new(chain, executor_path_in_genesis.into());
+        let builder = GenesisBuilder::new(chain, executor, wasm_dir).install_libs();
         let genesis = match mode.unwrap_or_default() {
             Mode::Default => generate_default(builder, genesis_public_key),
             Mode::Synthetic {
@@ -95,9 +96,6 @@ pub fn generate_default(
     meta.insert("key".parse()?, Json::new("value"));
 
     let mut builder = builder
-        .domain("system".parse()?)
-        .account(MULTISIG_SYSTEM_ID.signatory().clone())
-        .finish_domain()
         .domain_with_metadata("wonderland".parse()?, meta.clone())
         .account_with_metadata(ALICE_ID.signatory().clone(), meta.clone())
         .account_with_metadata(BOB_ID.signatory().clone(), meta)
@@ -133,43 +131,6 @@ pub fn generate_default(
         "wonderland".parse()?,
         ALICE_ID.clone(),
     );
-    // Register a trigger that reacts to domain creation (or owner changes) and registers (or replaces) a multisig accounts registry for the domain
-    let register_multisig_domains_initializer = {
-        let multisig_domains_initializer_id = TriggerId::from_str("multisig_domains")?;
-        let executable = load_sample_wasm("multisig_domains");
-        let multisig_domains_initializer = Trigger::new(
-            multisig_domains_initializer_id.clone(),
-            Action::new(
-                executable,
-                Repeats::Indefinitely,
-                MULTISIG_SYSTEM_ID.clone(),
-                DomainEventFilter::new()
-                    .for_events(DomainEventSet::Created | DomainEventSet::OwnerChanged),
-            ),
-        );
-        Register::trigger(multisig_domains_initializer)
-    };
-    // Allow the initializer to register and replace a multisig accounts registry for any domain
-    let grant_multisig_system_to_register_any_trigger =
-        Grant::account_permission(CanRegisterAnyTrigger, MULTISIG_SYSTEM_ID.clone());
-    let grant_multisig_system_to_unregister_any_trigger =
-        Grant::account_permission(CanUnregisterAnyTrigger, MULTISIG_SYSTEM_ID.clone());
-    // Manually register a multisig accounts registry for wonderland whose creation in genesis does not trigger the initializer
-    let register_multisig_accounts_registry_for_wonderland = {
-        let domain_owner = ALICE_ID.clone();
-        let multisig_accounts_registry_id = TriggerId::from_str("multisig_accounts_wonderland")?;
-        let executable = load_sample_wasm("multisig_accounts");
-        let multisig_accounts_registry = Trigger::new(
-            multisig_accounts_registry_id.clone(),
-            Action::new(
-                executable,
-                Repeats::Indefinitely,
-                domain_owner,
-                ExecuteTriggerEventFilter::new().for_trigger(multisig_accounts_registry_id.clone()),
-            ),
-        );
-        Register::trigger(multisig_accounts_registry)
-    };
 
     let parameters = Parameters::default();
 
@@ -177,22 +138,36 @@ pub fn generate_default(
         builder = builder.append_parameter(parameter);
     }
 
-    let instructions: [InstructionBox; 10] = [
+    let instructions: [InstructionBox; 6] = [
         mint.into(),
         mint_cabbage.into(),
         transfer_rose_ownership.into(),
         transfer_wonderland_ownership.into(),
         grant_permission_to_set_parameters.into(),
         grant_permission_to_register_domains.into(),
-        register_multisig_domains_initializer.into(),
-        grant_multisig_system_to_register_any_trigger.into(),
-        grant_multisig_system_to_unregister_any_trigger.into(),
-        register_multisig_accounts_registry_for_wonderland.into(),
     ];
 
     for isi in instructions {
         builder = builder.append_instruction(isi);
     }
+
+    // Manually register a multisig accounts registry for wonderland whose creation in genesis does not trigger the initializer
+    let multisig_accounts_registry_for_wonderland = {
+        let domain_owner = ALICE_ID.clone();
+        let registry_id = "multisig_accounts_wonderland".parse::<TriggerId>().unwrap();
+
+        GenesisWasmTrigger::new(
+            registry_id.clone(),
+            GenesisWasmAction::new(
+                "multisig_accounts.wasm",
+                Repeats::Indefinitely,
+                domain_owner,
+                ExecuteTriggerEventFilter::new().for_trigger(registry_id),
+            ),
+        )
+    };
+
+    builder = builder.append_wasm_trigger(multisig_accounts_registry_for_wonderland);
 
     Ok(builder.build_raw())
 }

@@ -216,7 +216,7 @@ types!(
     ExecutorEvent,
     ExecutorEventFilter,
     ExecutorEventSet,
-    ExecutorPath,
+    WasmPath,
     ExecutorUpgrade,
     FetchSize,
     FindAccountMetadata,
@@ -244,6 +244,8 @@ types!(
     FindTriggerMetadata,
     FindTriggers,
     ForwardCursor,
+    GenesisWasmAction,
+    GenesisWasmTrigger,
     Grant<Permission, Account>,
     Grant<Permission, Role>,
     Grant<RoleId, Account>,
@@ -476,6 +478,7 @@ types!(
     Vec<CompoundPredicate<TriggerPredicateBox>>,
     Vec<Domain>,
     Vec<EventFilterBox>,
+    Vec<GenesisWasmTrigger>,
     Vec<InstructionBox>,
     Vec<Parameter>,
     Vec<Peer>,
@@ -548,7 +551,7 @@ pub mod complete_data_model {
         },
         Level,
     };
-    pub use iroha_genesis::ExecutorPath;
+    pub use iroha_genesis::{GenesisWasmAction, GenesisWasmTrigger, WasmPath};
     pub use iroha_primitives::{
         addr::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrHost, SocketAddrV4, SocketAddrV6},
         const_vec::ConstVec,

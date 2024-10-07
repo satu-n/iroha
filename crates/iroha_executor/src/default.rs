@@ -1366,13 +1366,13 @@ pub mod trigger {
 
         let trigger_name = trigger.id().name().as_ref();
         let naming_is_ok = if let Some(tail) = trigger_name.strip_prefix("multisig_accounts_") {
-            let multisig_system: AccountId =
-                // iroha_test_samples::MULTISIG_SYSTEM_ID
-                "ed01201F677E0900C2F633391310D12D155112DF65EDF9DC800D13797CEE5DAF47B890@system"
+            let system_account: AccountId =
+                // predefined in `GenesisBuilder::default`
+                "ed0120D8B64D62FD8E09B9F29FE04D9C63E312EFB1CB29F1BF6AF00EBC263007AE75F7@system"
                     .parse()
                     .unwrap();
             tail.parse::<DomainId>().is_ok()
-                && (is_genesis || executor.context().authority == multisig_system)
+                && (is_genesis || executor.context().authority == system_account)
         } else if let Some(tail) = trigger_name.strip_prefix("multisig_transactions_") {
             tail.replacen('_', "@", 1)
                 .parse::<AccountId>()

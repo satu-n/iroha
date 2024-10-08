@@ -102,14 +102,9 @@ fn main(host: Iroha, context: Context) {
     .parse()
     .dbg_unwrap();
 
-    let can_execute_multisig_transactions_registry = CanExecuteTrigger {
-        trigger: multisig_transactions_registry_id.clone(),
-    };
-
     host.submit(&Register::role(
-        // Temporarily grant a multisig role to the trigger authority to propagate the role to the signatories
-        Role::new(role_id.clone(), context.authority.clone())
-            .add_permission(can_execute_multisig_transactions_registry),
+        // Temporarily grant a multisig role to the trigger authority to delegate the role to the signatories
+        Role::new(role_id.clone(), context.authority.clone()),
     ))
     .dbg_expect("accounts registry should successfully register a multisig role");
 

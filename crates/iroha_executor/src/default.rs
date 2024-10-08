@@ -1167,7 +1167,7 @@ pub mod parameter {
 }
 
 pub mod role {
-    use iroha_executor_data_model::permission::role::CanManageRoles;
+    use iroha_executor_data_model::permission::{role::CanManageRoles, trigger::CanExecuteTrigger};
     use iroha_smart_contract::{data_model::role::Role, Iroha};
 
     use super::*;
@@ -1235,33 +1235,43 @@ pub mod role {
         isi: &Register<Role>,
     ) {
         let role = isi.object();
+        let mut new_role = Role::new(role.id().clone(), role.grant_to().clone());
 
-        let naming_is_ok = if let Some(tail) = role
+        // Exception for multisig roles
+        let mut is_multisig_role = false;
+        if let Some(tail) = role
             .id()
             .name()
             .as_ref()
             .strip_prefix("multisig_signatory_")
         {
-            tail.replace('_', "@")
-                .parse::<AccountId>()
-                .ok()
-                .and_then(|account_id| {
-                    crate::permission::domain::is_domain_owner(
-                        account_id.domain(),
-                        &executor.context().authority,
-                        executor.host(),
+            let Ok(account_id) = tail.replacen('_', "@", 1).parse::<AccountId>() else {
+                deny!(executor, "Violates multisig role format")
+            };
+            if crate::permission::domain::is_domain_owner(
+                account_id.domain(),
+                &executor.context().authority,
+                executor.host(),
+            )
+            .unwrap_or_default()
+            {
+                // Bind this role to this permission here, regardless of the given contains
+                let permission = CanExecuteTrigger {
+                    trigger: format!(
+                        "multisig_transactions_{}_{}",
+                        account_id.signatory(),
+                        account_id.domain()
                     )
-                    .ok()
-                })
-                .unwrap_or_default()
-        } else {
-            true
-        };
-        if !naming_is_ok {
-            deny!(executor, "Violates role naming restrictions");
+                    .parse()
+                    .unwrap(),
+                };
+                new_role = new_role.add_permission(permission);
+                is_multisig_role = true;
+            } else {
+                deny!(executor, "Can't register multisig role")
+            }
         }
 
-        let mut new_role = Role::new(role.id().clone(), role.grant_to().clone());
         for permission in role.inner().permissions() {
             iroha_smart_contract::debug!(&format!("Checking `{permission:?}`"));
 
@@ -1288,9 +1298,9 @@ pub mod role {
 
         if executor.context().curr_block.is_genesis()
             || CanManageRoles.is_owned_by(&executor.context().authority, executor.host())
+            || is_multisig_role
         {
             let grant_role = &Grant::account_role(role.id().clone(), role.grant_to().clone());
-
             let isi = &Register::role(new_role);
             if let Err(err) = executor.host().submit(isi) {
                 executor.deny(err);

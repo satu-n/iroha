@@ -12,7 +12,9 @@ use iroha::{
 };
 use iroha_data_model::events::execute_trigger::ExecuteTriggerEventFilter;
 use iroha_test_network::*;
-use iroha_test_samples::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID, CARPENTER_KEYPAIR};
+use iroha_test_samples::{
+    gen_account_in, ALICE_ID, BOB_ID, BOB_KEYPAIR, CARPENTER_ID, CARPENTER_KEYPAIR,
+};
 
 #[test]
 fn multisig() -> Result<()> {
@@ -48,14 +50,20 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
     let (network, _rt) = NetworkBuilder::new().start_blocking()?;
     let test_client = network.client();
 
-    let kingdom = "kingdom";
+    let kingdom: DomainId = "kingdom".parse().unwrap();
+
     // Assume some domain registered after genesis
-    test_client.submit_blocking(Register::domain(Domain::new(kingdom.parse().unwrap())))?;
+    let register_and_transfer_kingdom: [InstructionBox; 2] = [
+        Register::domain(Domain::new(kingdom.clone())).into(),
+        Transfer::domain(ALICE_ID.clone(), kingdom.clone(), BOB_ID.clone()).into(),
+    ];
+    test_client.submit_all_blocking(register_and_transfer_kingdom)?;
+
     // One more block to generate a multisig accounts registry for the domain
     test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
 
     // Check that the multisig accounts registry has been generated
-    let multisig_accounts_registry_id = multisig_accounts_registry_of(&kingdom.parse().unwrap());
+    let multisig_accounts_registry_id = multisig_accounts_registry_of(&kingdom);
     let _trigger = test_client
         .query(FindTriggers::new())
         .filter_with(|trigger| trigger.id.eq(multisig_accounts_registry_id.clone()))
@@ -63,10 +71,10 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
         .expect("multisig accounts registry should be generated after domain creation");
 
     // Populate residents in the domain
-    let mut residents = core::iter::repeat_with(|| gen_account_in(kingdom))
+    let mut residents = core::iter::repeat_with(|| gen_account_in(&kingdom))
         .take(1 + N_SIGNATORIES)
         .collect::<BTreeMap<AccountId, KeyPair>>();
-    test_client.submit_all_blocking(
+    alt_client((BOB_ID.clone(), BOB_KEYPAIR.clone()), &test_client).submit_all_blocking(
         residents
             .keys()
             .cloned()
@@ -76,7 +84,7 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
 
     // Create a multisig account ID and discard the corresponding private key
     // FIXME #5022 Should not allow arbitrary IDs. Otherwise, after #4426 pre-registration account will be hijacked as a multisig account
-    let multisig_account_id = gen_account_in(kingdom).0;
+    let multisig_account_id = gen_account_in(&kingdom).0;
 
     let not_signatory = residents.pop_first().unwrap();
     let mut signatories = residents;

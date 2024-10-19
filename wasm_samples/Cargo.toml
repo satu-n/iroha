@@ -9,6 +9,8 @@ license = "Apache-2.0"
 [workspace]
 resolver = "2"
 members = [
+    "_inspect_query_context_in_trigger",
+    "_inspect_query_context_in_txn_wasm",
     "default_executor",
     "create_nft_for_every_user_trigger",
     "mint_rose_trigger",

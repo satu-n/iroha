@@ -3329,6 +3329,7 @@ name = "iroha_executor_derive"
 version = "2.0.0-rc.1.0"
 dependencies = [
  "darling",
+ "iroha_data_model",
  "iroha_macro_utils",
  "manyhow",
  "proc-macro2",

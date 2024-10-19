@@ -2,6 +2,8 @@
 //! `WebAssembly` VM Smartcontracts can be written in Rust, compiled
 //! to wasm format and submitted in a transaction
 
+#![allow(unused_imports)]
+
 use std::{borrow::Borrow, num::NonZeroU64};
 
 use error::*;
@@ -309,6 +311,7 @@ impl LimitsExecutor {
     }
 }
 
+#[allow(unused_variables)]
 pub mod state {
     //! All supported states for [`Runtime`](super::Runtime)
 
@@ -439,6 +442,7 @@ pub mod state {
         /// Smart Contract execution state
         #[derive(Copy, Clone)]
         pub struct SmartContract {
+            // SATO curr_block
             pub(in super::super) limits_executor: Option<LimitsExecutor>,
         }
 
@@ -562,11 +566,19 @@ pub mod state {
             )+ };
         }
 
-        impl_blank_validate_operations!(
-            ExecuteTransaction<'_, '_, '_>,
-            ExecuteInstruction<'_, '_, '_>,
-            Migrate<'_, '_, '_>,
-        );
+        impl_blank_validate_operations!(ExecuteInstruction<'_, '_, '_>, Migrate<'_, '_, '_>,);
+
+        // SATO inst...both (trigger and wasm) pass, txn...both fails
+        // ExecuteTrigger trigger execution seems to use ExecuteTransaction state
+        impl ValidateQueryOperation for ExecuteTransaction<'_, '_, '_> {
+            fn validate_query(
+                &self,
+                authority: &AccountId,
+                query: &QueryRequest,
+            ) -> Result<(), ValidationFail> {
+                Ok(())
+            }
+        }
 
         impl<S: StateReadOnly> ValidateQueryOperation for ValidateQuery<'_, S> {
             fn validate_query(
@@ -805,6 +817,7 @@ where
         let payload = payloads::Validate {
             context: payloads::ExecutorContext {
                 authority: state.authority.clone(),
+                // Ok?
                 curr_block: state.specific_state.curr_block,
             },
             target: state.specific_state.to_validate.clone(),
@@ -960,6 +973,7 @@ impl<'wrld, 'block: 'wrld, 'state: 'block> Runtime<state::SmartContract<'wrld, '
     fn get_smart_contract_context(state: &state::SmartContract) -> payloads::SmartContractContext {
         payloads::SmartContractContext {
             authority: state.authority.clone(),
+            // SATO specific?
             curr_block: state.state.0.curr_block,
         }
     }
@@ -1037,6 +1051,7 @@ impl<'wrld, 'block: 'wrld, 'state: 'block> Runtime<state::Trigger<'wrld, 'block,
         payloads::TriggerContext {
             id: state.specific_state.id.clone(),
             authority: state.authority.clone(),
+            // SATO specific?
             curr_block: state.state.0.curr_block,
             event: state.specific_state.triggering_event.clone(),
         }
@@ -1238,6 +1253,7 @@ impl<'wrld, S: StateReadOnly> Runtime<state::executor::ValidateQuery<'wrld, S>> 
             self.config,
             span,
             state::chain_state::WithConst(state_ro),
+            // SATO Ok
             state::specific::executor::ValidateQuery::new(query, latest_block.as_ref().header()),
         );
 

@@ -83,6 +83,8 @@ pub fn impl_derive_entrypoints(emitter: &mut Emitter, input: &syn::DeriveInput) 
                 host: ::iroha_executor::prelude::Iroha,
                 context: ::iroha_executor::prelude::Context,
             ) -> ::iroha_executor::prelude::Result {
+                // SATO trigger pass through
+                assert!(1_u64 == u64::from(context.curr_block.height()));
                 let mut executor = #ident {host, context, verdict: Ok(()), #(#custom_idents),*};
                 executor.visit_query(&query);
                 ::core::mem::forget(query);

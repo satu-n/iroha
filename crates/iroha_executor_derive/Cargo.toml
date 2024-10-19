@@ -16,6 +16,7 @@ proc-macro = true
 
 [dependencies]
 iroha_macro_utils = { workspace = true }
+iroha_data_model.workspace = true
 
 syn = { workspace = true, features = ["full", "derive"] }
 quote = { workspace = true }

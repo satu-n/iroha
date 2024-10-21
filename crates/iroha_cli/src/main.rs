@@ -1204,7 +1204,9 @@ mod json {
 mod multisig {
     use std::io::{BufReader, Read as _};
 
-    use iroha_multisig_data_model::{MultisigAccountArgs, MultisigTransactionArgs};
+    use iroha_multisig_data_model::{
+        MultisigAccountArgs, MultisigTransactionArgs, DEFAULT_MULTISIG_TTL_MS,
+    };
 
     use super::*;
 
@@ -1243,8 +1245,12 @@ mod multisig {
         #[arg(short, long)]
         pub quorum: u16,
         /// Time-to-live of multisig transactions made by the multisig account
-        #[arg(short, long)]
-        pub transaction_ttl_secs: Option<u32>,
+        #[arg(short, long, default_value_t = default_transaction_ttl())]
+        pub transaction_ttl: humantime::Duration,
+    }
+
+    fn default_transaction_ttl() -> humantime::Duration {
+        std::time::Duration::from_millis(DEFAULT_MULTISIG_TTL_MS).into()
     }
 
     impl RunArgs for Register {
@@ -1254,7 +1260,7 @@ mod multisig {
                 signatories,
                 weights,
                 quorum,
-                transaction_ttl_secs,
+                transaction_ttl,
             } = self;
             if signatories.len() != weights.len() {
                 return Err(eyre!("signatories and weights must be equal in length"));
@@ -1262,13 +1268,14 @@ mod multisig {
             let registry_id: TriggerId = format!("multisig_accounts_{}", account.domain())
                 .parse()
                 .unwrap();
-            let account = account.signatory.clone();
-            let signatories = signatories.into_iter().zip(weights).collect();
             let args = MultisigAccountArgs {
-                account,
-                signatories,
+                account: account.signatory.clone(),
+                signatories: signatories.into_iter().zip(weights).collect(),
                 quorum,
-                transaction_ttl_secs,
+                transaction_ttl_ms: transaction_ttl
+                    .as_millis()
+                    .try_into()
+                    .expect("ttl must be within 584942417 years"),
             };
             let register_multisig_account =
                 iroha::data_model::isi::ExecuteTrigger::new(registry_id).with_args(&args);

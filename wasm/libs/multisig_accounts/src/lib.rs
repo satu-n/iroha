@@ -10,7 +10,7 @@ use alloc::format;
 
 use dlmalloc::GlobalDlmalloc;
 use iroha_executor_data_model::permission::trigger::CanExecuteTrigger;
-use iroha_multisig_data_model::{MultisigAccountArgs, DEFAULT_MULTISIG_TTL_SECS};
+use iroha_multisig_data_model::MultisigAccountArgs;
 use iroha_trigger::{
     debug::{dbg_panic, DebugExpectExt as _},
     prelude::*,
@@ -85,12 +85,8 @@ fn main(host: Iroha, context: Context) {
 
     host.submit(&SetKeyValue::trigger(
         multisig_transactions_registry_id.clone(),
-        "transaction_ttl_secs".parse().unwrap(),
-        Json::new(
-            &args
-                .transaction_ttl_secs
-                .unwrap_or(DEFAULT_MULTISIG_TTL_SECS),
-        ),
+        "transaction_ttl_ms".parse().unwrap(),
+        Json::new(&args.transaction_ttl_ms),
     ))
     .dbg_unwrap();
 

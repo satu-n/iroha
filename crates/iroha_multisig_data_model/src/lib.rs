@@ -19,12 +19,12 @@ pub struct MultisigAccountArgs {
     pub signatories: BTreeMap<AccountId, u8>,
     /// Threshold of total weight at which the multisig is considered authenticated
     pub quorum: u16,
-    /// Multisig transaction time-to-live based on block timestamps. Defaults to [`DEFAULT_MULTISIG_TTL_SECS`]
-    pub transaction_ttl_secs: Option<u32>,
+    /// Multisig transaction time-to-live in milliseconds based on block timestamps. Defaults to [`DEFAULT_MULTISIG_TTL_MS`]
+    pub transaction_ttl_ms: u64,
 }
 
-/// Default multisig transaction time-to-live based on block timestamps
-pub const DEFAULT_MULTISIG_TTL_SECS: u32 = 60 * 60; // 1 hour
+/// Default multisig transaction time-to-live in milliseconds based on block timestamps
+pub const DEFAULT_MULTISIG_TTL_MS: u64 = 60 * 60 * 1_000; // 1 hour
 
 /// Arguments to propose or approve multisig transaction
 #[derive(Serialize, Deserialize)]

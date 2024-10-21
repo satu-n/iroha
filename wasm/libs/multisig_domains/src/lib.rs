@@ -20,7 +20,10 @@ static ALLOC: GlobalDlmalloc = GlobalDlmalloc;
 getrandom::register_custom_getrandom!(iroha_trigger::stub_getrandom);
 
 // Binary containing common logic to each domain for handling multisig accounts
-const WASM: &[u8] = core::include_bytes!(concat!(core::env!("OUT_DIR"), "/multisig_accounts.wasm"));
+const MULTISIG_ACCOUNTS_WASM: &[u8] = core::include_bytes!(concat!(
+    core::env!("CARGO_MANIFEST_DIR"),
+    "/../../target/prebuilt/libs/multisig_accounts.wasm"
+));
 
 #[iroha_trigger::main]
 fn main(host: Iroha, context: Context) {
@@ -63,7 +66,7 @@ fn main(host: Iroha, context: Context) {
         Trigger::new(
             accounts_registry_id.clone(),
             Action::new(
-                WasmSmartContract::from_compiled(WASM.to_vec()),
+                WasmSmartContract::from_compiled(MULTISIG_ACCOUNTS_WASM.to_vec()),
                 Repeats::Indefinitely,
                 domain_owner,
                 ExecuteTriggerEventFilter::new().for_trigger(accounts_registry_id.clone()),

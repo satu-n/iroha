@@ -9,8 +9,8 @@ extern crate panic_halt;
 use alloc::format;
 
 use dlmalloc::GlobalDlmalloc;
-use iroha_multisig_data_model::{MultisigAccountArgs, DEFAULT_MULTISIG_TTL_SECS};
 use iroha_executor_data_model::permission::trigger::CanExecuteTrigger;
+use iroha_multisig_data_model::{MultisigAccountArgs, DEFAULT_MULTISIG_TTL_SECS};
 use iroha_trigger::{
     debug::{dbg_panic, DebugExpectExt as _},
     prelude::*,
@@ -22,9 +22,9 @@ static ALLOC: GlobalDlmalloc = GlobalDlmalloc;
 getrandom::register_custom_getrandom!(iroha_trigger::stub_getrandom);
 
 // Binary containing common logic to each multisig account for handling multisig transactions
-const WASM: &[u8] = core::include_bytes!(concat!(
-    core::env!("OUT_DIR"),
-    "/multisig_transactions.wasm"
+const MULTISIG_TRANSACTIONS_WASM: &[u8] = core::include_bytes!(concat!(
+    core::env!("CARGO_MANIFEST_DIR"),
+    "/../../target/prebuilt/libs/multisig_transactions.wasm"
 ));
 
 #[iroha_trigger::main]
@@ -59,7 +59,7 @@ fn main(host: Iroha, context: Context) {
     let multisig_transactions_registry = Trigger::new(
         multisig_transactions_registry_id.clone(),
         Action::new(
-            WasmSmartContract::from_compiled(WASM.to_vec()),
+            WasmSmartContract::from_compiled(MULTISIG_TRANSACTIONS_WASM.to_vec()),
             Repeats::Indefinitely,
             account_id.clone(),
             ExecuteTriggerEventFilter::new().for_trigger(multisig_transactions_registry_id.clone()),

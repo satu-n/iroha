@@ -1,5 +1,9 @@
 //! Arguments attached on executing triggers for multisig accounts or transactions
 
+#![no_std]
+
+extern crate alloc;
+
 use alloc::{collections::btree_map::BTreeMap, vec::Vec};
 
 use iroha_data_model::prelude::*;
@@ -19,7 +23,7 @@ pub struct MultisigAccountArgs {
     pub transaction_ttl_secs: Option<u32>,
 }
 
-// Default multisig transaction time-to-live based on block timestamps
+/// Default multisig transaction time-to-live based on block timestamps
 pub const DEFAULT_MULTISIG_TTL_SECS: u32 = 60 * 60; // 1 hour
 
 /// Arguments to propose or approve multisig transaction

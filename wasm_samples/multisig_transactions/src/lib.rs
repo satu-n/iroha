@@ -13,7 +13,7 @@ use alloc::{
 };
 
 use dlmalloc::GlobalDlmalloc;
-use executor_custom_data_model::multisig::MultisigTransactionArgs;
+use iroha_multisig_data_model::MultisigTransactionArgs;
 use iroha_trigger::{
     debug::{dbg_panic, DebugExpectExt as _},
     prelude::*,

@@ -3,7 +3,7 @@ use std::{
     time::Duration,
 };
 
-use executor_custom_data_model::multisig::{MultisigAccountArgs, MultisigTransactionArgs};
+use iroha_multisig_data_model::{MultisigAccountArgs, MultisigTransactionArgs};
 use eyre::Result;
 use iroha::{
     client::Client,

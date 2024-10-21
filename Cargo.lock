@@ -2924,6 +2924,7 @@ dependencies = [
  "iroha_executor_data_model",
  "iroha_genesis",
  "iroha_logger",
+ "iroha_multisig_data_model",
  "iroha_primitives",
  "iroha_telemetry",
  "iroha_test_network",
@@ -2955,10 +2956,10 @@ dependencies = [
  "color-eyre",
  "erased-serde",
  "error-stack",
- "executor_custom_data_model",
  "eyre",
  "iroha",
  "iroha_config_base",
+ "iroha_multisig_data_model",
  "iroha_primitives",
  "json5",
  "serde",
@@ -3368,6 +3369,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.79",
+]
+
+[[package]]
+name = "iroha_multisig_data_model"
+version = "2.0.0-rc.1.0"
+dependencies = [
+ "iroha_data_model",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

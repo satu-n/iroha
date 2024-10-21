@@ -451,8 +451,7 @@ fn read_file(path: impl AsRef<Path>) -> std::io::Result<Vec<u8>> {
     Ok(blob)
 }
 
-// FIXME reorganize to "wasm/libs/target/prebuilt" ?
-const WASM_LIBS_PREBUILT_DIR: &str = "wasm_samples/target/prebuilt";
+const WASM_LIBS_PREBUILT_DIR: &str = "wasm/target/prebuilt/libs";
 
 fn load_library_wasm(name: impl AsRef<Path>) -> WasmSmartContract {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))

@@ -203,9 +203,6 @@ resolver = "2"
 members = [
     "crates/*"
 ]
-exclude = [
-    "wasm_samples",
-]
 
 [profile.deploy]
 inherits = "release"

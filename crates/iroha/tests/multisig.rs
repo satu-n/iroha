@@ -3,7 +3,6 @@ use std::{
     time::Duration,
 };
 
-use iroha_multisig_data_model::{MultisigAccountArgs, MultisigTransactionArgs};
 use eyre::Result;
 use iroha::{
     client,
@@ -11,6 +10,7 @@ use iroha::{
     data_model::{prelude::*, query::trigger::FindTriggers, Level},
 };
 use iroha_data_model::events::execute_trigger::ExecuteTriggerEventFilter;
+use iroha_multisig_data_model::{MultisigAccountArgs, MultisigTransactionArgs};
 use iroha_test_network::*;
 use iroha_test_samples::{
     gen_account_in, ALICE_ID, BOB_ID, BOB_KEYPAIR, CARPENTER_ID, CARPENTER_KEYPAIR,

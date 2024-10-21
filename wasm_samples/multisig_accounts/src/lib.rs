@@ -9,7 +9,7 @@ extern crate panic_halt;
 use alloc::format;
 
 use dlmalloc::GlobalDlmalloc;
-use executor_custom_data_model::multisig::{MultisigAccountArgs, DEFAULT_MULTISIG_TTL_SECS};
+use iroha_multisig_data_model::{MultisigAccountArgs, DEFAULT_MULTISIG_TTL_SECS};
 use iroha_executor_data_model::permission::trigger::CanExecuteTrigger;
 use iroha_trigger::{
     debug::{dbg_panic, DebugExpectExt as _},

@@ -44,7 +44,7 @@ fn multisig_expires() -> Result<()> {
 /// |                           |                             |           transactions registry | executes transaction |
 /// ```
 #[allow(clippy::cast_possible_truncation)]
-fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
+fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
     const N_SIGNATORIES: usize = 5;
 
     let (network, _rt) = NetworkBuilder::new().start_blocking()?;
@@ -98,7 +98,7 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
             .collect(),
         // Can be met without the first signatory
         quorum: (1..=N_SIGNATORIES).skip(1).sum::<usize>() as u16,
-        transaction_ttl_secs,
+        transaction_ttl_ms: transaction_ttl_ms.unwrap_or(u64::MAX),
     };
     let register_multisig_account =
         ExecuteTrigger::new(multisig_accounts_registry_id).with_args(args);
@@ -157,8 +157,8 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
         .expect_err("key-value shouldn't be set without enough approvals");
 
     // Allow time to elapse to test the expiration
-    if let Some(s) = transaction_ttl_secs {
-        std::thread::sleep(Duration::from_secs(s.into()))
+    if let Some(ms) = transaction_ttl_ms {
+        std::thread::sleep(Duration::from_millis(ms))
     };
     test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
 
@@ -176,7 +176,7 @@ fn multisig_base(transaction_ttl_secs: Option<u32>) -> Result<()> {
         key.clone(),
     ));
 
-    if transaction_ttl_secs.is_some() {
+    if transaction_ttl_ms.is_some() {
         let _err = res.expect_err("key-value shouldn't be set despite enough approvals");
     } else {
         res.expect("key-value should be set with enough approvals");
@@ -232,7 +232,7 @@ fn multisig_recursion() -> Result<()> {
                     account: ms_account_id.signatory().clone(),
                     signatories: sigs.iter().copied().map(|id| (id.clone(), 1)).collect(),
                     quorum: sigs.len().try_into().unwrap(),
-                    transaction_ttl_secs: None,
+                    transaction_ttl_ms: u64::MAX,
                 };
                 let register_ms_account =
                     ExecuteTrigger::new(ms_accounts_registry_id.clone()).with_args(&args);

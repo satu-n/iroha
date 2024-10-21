@@ -193,16 +193,16 @@ fn main(host: Iroha, context: Context) {
             .try_into_any()
             .dbg_unwrap();
 
-        let transaction_ttl_secs: u32 = host
+        let transaction_ttl_ms: u64 = host
             .query_single(FindTriggerMetadata::new(
                 trigger_id.clone(),
-                "transaction_ttl_secs".parse().unwrap(),
+                "transaction_ttl_ms".parse().unwrap(),
             ))
             .dbg_unwrap()
             .try_into_any()
             .dbg_unwrap();
 
-        proposed_at_ms + transaction_ttl_secs as u64 * 1_000 < now_ms
+        proposed_at_ms.saturating_add(transaction_ttl_ms) < now_ms
     };
 
     if is_authenticated || is_expired {

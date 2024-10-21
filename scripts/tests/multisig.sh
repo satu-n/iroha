@@ -42,8 +42,8 @@ done
 MULTISIG_ACCOUNT=$(gen_account_id "msa")
 WEIGHTS=($(yes 1 | head -n $N_SIGNATORIES)) # equal votes
 QUORUM=$N_SIGNATORIES # unanimous
-TRANSACTION_TTL_SECS=60 # 1 minute to expire
-./iroha --config "client.1.toml" multisig register --account $MULTISIG_ACCOUNT --signatories ${SIGNATORIES[*]} --weights ${WEIGHTS[*]} --quorum $QUORUM --transaction-ttl-secs $TRANSACTION_TTL_SECS
+TRANSACTION_TTL="1y 6M 2w 3d 12h 30m 30s 500ms"
+./iroha --config "client.1.toml" multisig register --account $MULTISIG_ACCOUNT --signatories ${SIGNATORIES[*]} --weights ${WEIGHTS[*]} --quorum $QUORUM --transaction-ttl "$TRANSACTION_TTL"
 
 # propose a multisig transaction
 INSTRUCTIONS="../scripts/tests/instructions.json"

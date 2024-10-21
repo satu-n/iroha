@@ -3397,6 +3397,7 @@ dependencies = [
  "eyre",
  "iroha_crypto",
  "iroha_data_model",
+ "iroha_executor_data_model",
  "iroha_schema",
  "iroha_test_samples",
  "parity-scale-codec",

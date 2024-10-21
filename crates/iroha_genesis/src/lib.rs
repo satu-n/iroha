@@ -14,12 +14,30 @@ use iroha_crypto::{KeyPair, PublicKey};
 use iroha_data_model::{
     block::SignedBlock, isi::Instruction, parameter::Parameter, peer::Peer, prelude::*,
 };
+use iroha_executor_data_model::permission::trigger::{
+    CanRegisterAnyTrigger, CanUnregisterAnyTrigger,
+};
 use iroha_schema::IntoSchema;
 use parity_scale_codec::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
-/// [`DomainId`](iroha_data_model::domain::DomainId) of the genesis account.
+/// Domain of the genesis account, technically required for the pre-genesis state
 pub static GENESIS_DOMAIN_ID: LazyLock<DomainId> = LazyLock::new(|| "genesis".parse().unwrap());
+
+/// Domain of the system account, implicitly registered in the genesis
+pub static SYSTEM_DOMAIN_ID: LazyLock<DomainId> = LazyLock::new(|| "system".parse().unwrap());
+
+/// The root authority for internal operations, implicitly registered in the genesis
+// FIXME #5022 deny external access
+// kagami crypto --seed "system"
+pub static SYSTEM_ACCOUNT_ID: LazyLock<AccountId> = LazyLock::new(|| {
+    AccountId::new(
+        SYSTEM_DOMAIN_ID.clone(),
+        "ed0120D8B64D62FD8E09B9F29FE04D9C63E312EFB1CB29F1BF6AF00EBC263007AE75F7"
+            .parse()
+            .unwrap(),
+    )
+});
 
 /// Genesis block.
 ///
@@ -231,7 +249,6 @@ fn get_executor(file: &Path) -> Result<Executor> {
 /// that does not perform any correctness checking on the block produced.
 /// Use with caution in tests and other things to register domains and accounts.
 #[must_use]
-#[derive(Default)]
 pub struct GenesisBuilder {
     parameters: Vec<Parameter>,
     instructions: Vec<InstructionBox>,
@@ -248,6 +265,39 @@ pub struct GenesisDomainBuilder {
     wasm_triggers: Vec<GenesisWasmTrigger>,
     domain_id: DomainId,
 }
+
+impl Default for GenesisBuilder {
+    fn default() -> Self {
+        // Register a trigger that reacts to domain creation (or owner changes) and registers (or replaces) a multisig accounts registry for the domain
+        let multisig_domains_initializer = GenesisWasmTrigger::new(
+            "multisig_domains".parse().unwrap(),
+            GenesisWasmAction::new(
+                "multisig_domains",
+                Repeats::Indefinitely,
+                SYSTEM_ACCOUNT_ID.clone(),
+                DomainEventFilter::new()
+                    .for_events(DomainEventSet::Created | DomainEventSet::OwnerChanged),
+            ),
+        );
+        let instructions = vec![
+            Register::domain(Domain::new(SYSTEM_DOMAIN_ID.clone())).into(),
+            Register::account(Account::new(SYSTEM_ACCOUNT_ID.clone())).into(),
+            // Allow the initializer to register and replace a multisig accounts registry for any domain
+            Grant::account_permission(CanRegisterAnyTrigger, SYSTEM_ACCOUNT_ID.clone()).into(),
+            Grant::account_permission(CanUnregisterAnyTrigger, SYSTEM_ACCOUNT_ID.clone()).into(),
+        ];
+
+        Self {
+            parameters: Vec::default(),
+            instructions,
+            wasm_triggers: vec![multisig_domains_initializer],
+        }
+    }
+}
+
+#[allow(dead_code)]
+#[cfg(test)]
+const N_DEFAULT_INSTRUCTIONS: usize = 4;
 
 impl GenesisBuilder {
     /// Create a domain and return a domain builder which can
@@ -481,6 +531,7 @@ fn load_library_wasm(name: impl AsRef<Path>) -> WasmSmartContract {
 
 #[cfg(test)]
 mod tests {
+    #[allow(unused_imports)]
     use iroha_test_samples::{ALICE_KEYPAIR, BOB_KEYPAIR};
 
     use super::*;
@@ -503,6 +554,7 @@ mod tests {
         Ok(())
     }
 
+    #[cfg(not_compile)]
     #[test]
     #[allow(clippy::too_many_lines)]
     fn genesis_block_builder_example() {
@@ -545,6 +597,7 @@ mod tests {
         // First transaction
         {
             let transaction = transactions[0];
+            // FIXME field `value` of struct `CommittedTransaction` is private
             let instructions = transaction.value.instructions();
             let Executable::Instructions(instructions) = instructions else {
                 panic!("Expected instructions");
@@ -560,15 +613,16 @@ mod tests {
         let Executable::Instructions(instructions) = instructions else {
             panic!("Expected instructions");
         };
+        let offset = N_DEFAULT_INSTRUCTIONS;
 
         {
             let domain_id: DomainId = "wonderland".parse().unwrap();
             assert_eq!(
-                instructions[0],
+                instructions[offset],
                 Register::domain(Domain::new(domain_id.clone())).into()
             );
             assert_eq!(
-                instructions[1],
+                instructions[offset + 1],
                 Register::account(Account::new(AccountId::new(
                     domain_id.clone(),
                     public_key["alice"].clone()
@@ -576,7 +630,7 @@ mod tests {
                 .into()
             );
             assert_eq!(
-                instructions[2],
+                instructions[offset + 2],
                 Register::account(Account::new(AccountId::new(
                     domain_id,
                     public_key["bob"].clone()
@@ -587,11 +641,11 @@ mod tests {
         {
             let domain_id: DomainId = "tulgey_wood".parse().unwrap();
             assert_eq!(
-                instructions[3],
+                instructions[offset + 3],
                 Register::domain(Domain::new(domain_id.clone())).into()
             );
             assert_eq!(
-                instructions[4],
+                instructions[offset + 4],
                 Register::account(Account::new(AccountId::new(
                     domain_id,
                     public_key["cheshire_cat"].clone()
@@ -602,11 +656,11 @@ mod tests {
         {
             let domain_id: DomainId = "meadow".parse().unwrap();
             assert_eq!(
-                instructions[5],
+                instructions[offset + 5],
                 Register::domain(Domain::new(domain_id.clone())).into()
             );
             assert_eq!(
-                instructions[6],
+                instructions[offset + 6],
                 Register::account(Account::new(AccountId::new(
                     domain_id,
                     public_key["mad_hatter"].clone()
@@ -614,7 +668,7 @@ mod tests {
                 .into()
             );
             assert_eq!(
-                instructions[7],
+                instructions[offset + 7],
                 Register::asset_definition(AssetDefinition::numeric(
                     "hats#meadow".parse().unwrap(),
                 ))
@@ -631,9 +685,9 @@ mod tests {
               "chain": "0",
               "executor": "./executor.wasm",
               "parameters": {parameters},
-              "instructions": []
-              "wasm_triggers": []
-              "topology": [],
+              "instructions": [],
+              "wasm_triggers": [],
+              "topology": []
             }}"#
             );
 

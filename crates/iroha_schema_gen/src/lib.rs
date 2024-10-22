@@ -552,7 +552,7 @@ pub mod complete_data_model {
         },
         Level,
     };
-    pub use iroha_genesis::{WasmPath, GenesisWasmAction, GenesisWasmTrigger};
+    pub use iroha_genesis::{GenesisWasmAction, GenesisWasmTrigger, WasmPath};
     pub use iroha_primitives::{
         addr::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrHost, SocketAddrV4, SocketAddrV6},
         const_vec::ConstVec,

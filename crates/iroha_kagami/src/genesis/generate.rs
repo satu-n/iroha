@@ -158,7 +158,7 @@ pub fn generate_default(
         GenesisWasmTrigger::new(
             registry_id.clone(),
             GenesisWasmAction::new(
-                "multisig_accounts",
+                "../wasm/target/prebuilt/libs/multisig_accounts.wasm",
                 Repeats::Indefinitely,
                 domain_owner,
                 ExecuteTriggerEventFilter::new().for_trigger(registry_id),

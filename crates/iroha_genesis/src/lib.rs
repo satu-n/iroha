@@ -272,7 +272,7 @@ impl Default for GenesisBuilder {
         let multisig_domains_initializer = GenesisWasmTrigger::new(
             "multisig_domains".parse().unwrap(),
             GenesisWasmAction::new(
-                "multisig_domains",
+                "../wasm/target/prebuilt/libs/multisig_domains.wasm",
                 Repeats::Indefinitely,
                 SYSTEM_ACCOUNT_ID.clone(),
                 DomainEventFilter::new()
@@ -458,7 +458,7 @@ pub struct GenesisWasmTrigger {
 /// Human-readable alternative to [`Action`] which has wasm executable
 #[derive(Debug, Clone, Serialize, Deserialize, IntoSchema, Encode, Decode)]
 pub struct GenesisWasmAction {
-    /// Path to the wasm crate relative to `wasm/libs/`
+    /// Path to the wasm crate relative to `defaults/genesis.json`
     executable: WasmPath,
     repeats: Repeats,
     authority: AccountId,
@@ -490,7 +490,12 @@ impl From<GenesisWasmTrigger> for Trigger {
 
 impl From<GenesisWasmAction> for Action {
     fn from(src: GenesisWasmAction) -> Self {
-        let executable = load_library_wasm(src.executable.0);
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../defaults/")
+            .join(src.executable.0)
+            .canonicalize()
+            .unwrap();
+        let executable = load_library_wasm(path);
         Action::new(executable, src.repeats, src.authority, src.filter)
     }
 }
@@ -501,27 +506,16 @@ fn read_file(path: impl AsRef<Path>) -> std::io::Result<Vec<u8>> {
     Ok(blob)
 }
 
-const WASM_LIBS_PREBUILT_DIR: &str = "wasm/target/prebuilt/libs";
-
-fn load_library_wasm(name: impl AsRef<Path>) -> WasmSmartContract {
-    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../../")
-        .canonicalize()
-        .expect("invoking from crates/iroha_genesis, should be fine")
-        .join(WASM_LIBS_PREBUILT_DIR)
-        .join(name.as_ref())
-        .with_extension("wasm");
-
+fn load_library_wasm(path: impl AsRef<Path>) -> WasmSmartContract {
     match read_file(&path) {
         Err(err) => {
+            let name = path.as_ref().file_stem().unwrap().to_str().unwrap();
+            let path = path.as_ref().display();
             eprintln!(
-                "ERROR: Could not load library WASM `{}` from `{}`: {err}\n  \
+                "ERROR: Could not load library WASM `{name}` from `{path}`: {err}\n  \
                     There are two possible reasons why:\n    \
                     1. You haven't pre-built WASM libraries before building genesis block. Make sure to run `build_wasm.sh` first.\n    \
-                    2. `{}` is not a valid name. Check the `wasm/libs` directory and make sure you haven't made a mistake.",
-                name.as_ref().display(),
-                path.display(),
-                name.as_ref().display(),
+                    2. `{path}` is not a valid path",
             );
             panic!("could not build WASM, see the message above");
         }

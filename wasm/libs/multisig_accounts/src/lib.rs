@@ -45,7 +45,199 @@ fn main(host: Iroha, context: Context) {
         .dbg_unwrap();
     let account_id = AccountId::new(domain_id, args.account);
 
-    host.submit(&Register::account(Account::new(account_id.clone())))
+    // SATO wip
+
+    let account_hash = match &args {
+        MultisigAccountArgs::Propose(proposal) => proposal.account.id().signatory().clone(),
+        MultisigAccountArgs::Approve(public_key) => public_key,
+    };
+    let instructions_metadata_key: Name = format!("proposals/{account_hash}/instructions")
+        .parse()
+        .unwrap();
+    let proposed_at_ms_metadata_key: Name = format!("proposals/{account_hash}/proposed_at_ms")
+        .parse()
+        .unwrap();
+    let approvals_metadata_key: Name = format!("proposals/{account_hash}/approvals")
+        .parse()
+        .unwrap();
+
+    let signatories: BTreeMap<AccountId, u8> = query_single(FindTriggerMetadata::new(
+        id.clone(),
+        "signatories".parse().unwrap(),
+    ))
+    .dbg_unwrap()
+    .try_into_any()
+    .dbg_unwrap();
+
+    // Recursively deploy multisig authentication down to the terminal personal signatories
+    for account_id in signatories.keys() {
+        let sub_transactions_registry_id: TriggerId = format!(
+            "multisig_transactions_{}_{}",
+            account_id.signatory(),
+            account_id.domain()
+        )
+        .parse()
+        .unwrap();
+
+        if let Ok(_sub_registry) = query(FindTriggers::new())
+            .filter_with(|trigger| trigger.id.eq(sub_transactions_registry_id.clone()))
+            .execute_single()
+        {
+            let propose_to_approve_me: InstructionBox = {
+                let approve_me: InstructionBox = {
+                    let args = MultisigTransactionArgs::Approve(account_hash);
+                    ExecuteTrigger::new(id.clone()).with_args(&args).into()
+                };
+                let args = MultisigTransactionArgs::Propose([approve_me].to_vec());
+
+                ExecuteTrigger::new(sub_transactions_registry_id.clone())
+                    .with_args(&args)
+                    .into()
+            };
+            propose_to_approve_me
+                .execute()
+                .dbg_expect("should successfully write to sub registry");
+        }
+    }
+
+    let mut block_headers = query(FindBlockHeaders).execute().dbg_unwrap();
+    let now_ms: u64 = block_headers
+        .next()
+        .dbg_unwrap()
+        .dbg_unwrap()
+        .creation_time()
+        .as_millis()
+        .try_into()
+        .dbg_unwrap();
+
+    let (approvals, instructions) = match args {
+        MultisigTransactionArgs::Propose(instructions) => {
+            query_single(FindTriggerMetadata::new(
+                id.clone(),
+                approvals_metadata_key.clone(),
+            ))
+            .expect_err("instructions shouldn't already be proposed");
+
+            let approvals = BTreeSet::from([signatory.clone()]);
+
+            SetKeyValue::trigger(
+                id.clone(),
+                instructions_metadata_key.clone(),
+                JsonString::new(&instructions),
+            )
+            .execute()
+            .dbg_unwrap();
+
+            SetKeyValue::trigger(
+                id.clone(),
+                proposed_at_ms_metadata_key.clone(),
+                JsonString::new(&now_ms),
+            )
+            .execute()
+            .dbg_unwrap();
+
+            SetKeyValue::trigger(
+                id.clone(),
+                approvals_metadata_key.clone(),
+                JsonString::new(&approvals),
+            )
+            .execute()
+            .dbg_unwrap();
+
+            (approvals, instructions)
+        }
+        MultisigTransactionArgs::Approve(account_hash) => {
+            let mut approvals: BTreeSet<AccountId> = query_single(FindTriggerMetadata::new(
+                id.clone(),
+                approvals_metadata_key.clone(),
+            ))
+            .dbg_expect("instructions should be proposed first")
+            .try_into_any()
+            .dbg_unwrap();
+
+            approvals.insert(signatory.clone());
+
+            SetKeyValue::trigger(
+                id.clone(),
+                approvals_metadata_key.clone(),
+                JsonString::new(&approvals),
+            )
+            .execute()
+            .dbg_unwrap();
+
+            let instructions: Vec<InstructionBox> = query_single(FindTriggerMetadata::new(
+                id.clone(),
+                instructions_metadata_key.clone(),
+            ))
+            .dbg_unwrap()
+            .try_into_any()
+            .dbg_unwrap();
+
+            (approvals, instructions)
+        }
+    };
+
+    let quorum: u16 = query_single(FindTriggerMetadata::new(
+        id.clone(),
+        "quorum".parse().unwrap(),
+    ))
+    .dbg_unwrap()
+    .try_into_any()
+    .dbg_unwrap();
+
+    let is_authenticated = quorum
+        <= signatories
+            .into_iter()
+            .filter(|(id, _)| approvals.contains(&id))
+            .map(|(_, weight)| weight as u16)
+            .sum();
+
+    let is_expired = {
+        let proposed_at_ms: u64 = query_single(FindTriggerMetadata::new(
+            id.clone(),
+            proposed_at_ms_metadata_key.clone(),
+        ))
+        .dbg_unwrap()
+        .try_into_any()
+        .dbg_unwrap();
+
+        let transaction_ttl_secs: u32 = query_single(FindTriggerMetadata::new(
+            id.clone(),
+            "transaction_ttl_secs".parse().unwrap(),
+        ))
+        .dbg_unwrap()
+        .try_into_any()
+        .dbg_unwrap();
+
+        proposed_at_ms + transaction_ttl_secs as u64 * 1_000 < now_ms
+    };
+
+    if is_authenticated || is_expired {
+        // Cleanup approvals and instructions
+        RemoveKeyValue::trigger(id.clone(), approvals_metadata_key)
+            .execute()
+            .dbg_unwrap();
+        RemoveKeyValue::trigger(id.clone(), proposed_at_ms_metadata_key)
+            .execute()
+            .dbg_unwrap();
+        RemoveKeyValue::trigger(id.clone(), instructions_metadata_key)
+            .execute()
+            .dbg_unwrap();
+
+        if !is_expired {
+            // Execute instructions proposal which collected enough approvals
+            for isi in instructions {
+                isi.execute().dbg_unwrap();
+            }
+        }
+    }
+
+    // SATO wip
+
+    let account_id = args.account.id().clone();
+
+    Register::account(args.account)
+        .execute()
         .dbg_expect("accounts registry should successfully register a multisig account");
 
     let multisig_transactions_registry_id: TriggerId = format!(

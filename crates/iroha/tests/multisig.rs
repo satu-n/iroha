@@ -83,7 +83,6 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
     )?;
 
     // Create a multisig account ID and discard the corresponding private key
-    // FIXME #5022 Should not allow arbitrary IDs. Otherwise, after #4426 pre-registration account will be hijacked as a multisig account
     let multisig_account_id = gen_account_in(&kingdom).0;
 
     let not_signatory = residents.pop_first().unwrap();

@@ -2960,7 +2960,6 @@ dependencies = [
  "humantime",
  "iroha",
  "iroha_config_base",
- "iroha_multisig_data_model",
  "iroha_primitives",
  "json5",
  "serde",

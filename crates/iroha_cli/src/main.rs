@@ -1204,7 +1204,7 @@ mod json {
 mod multisig {
     use std::io::{BufReader, Read as _};
 
-    use iroha_multisig_data_model::{
+    use iroha::multisig_data_model::{
         MultisigAccountArgs, MultisigTransactionArgs, DEFAULT_MULTISIG_TTL_MS,
     };
 

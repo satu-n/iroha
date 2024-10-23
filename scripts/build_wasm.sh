@@ -11,6 +11,7 @@ build() {
                 "multisig_transactions"
                 "multisig_accounts"
                 "multisig_domains"
+                "default_executor"
             )
             ;;
         "samples")
@@ -33,11 +34,11 @@ command() {
     case $1 in
         "libs")
             build $1
+            cp "wasm/target/prebuilt/$1/default_executor.wasm" ./defaults/executor.wasm
+            echo "info: copied default executor to ./defaults/executor.wasm"
             ;;
         "samples")
             build $1
-            cp "wasm/target/prebuilt/$1/default_executor.wasm" ./defaults/executor.wasm
-            echo "info: copied default executor to ./defaults/executor.wasm"
     esac
 }
 

@@ -43,7 +43,7 @@ command() {
 }
 
 case $1 in
-    "all")
+    "")
         command "libs"
         command "samples"
         ;;
@@ -54,6 +54,6 @@ case $1 in
         command "samples"
         ;;
     *)
-        echo "error: either 'all', 'libs', or 'samples' should be specified"
+        echo "error: arg must be 'libs', 'samples', or empty to build both"
         exit 1
 esac

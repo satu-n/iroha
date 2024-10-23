@@ -74,7 +74,7 @@ for i in $(seq 0 1); do
     cat $TICK | ./iroha json transaction
 done
 
-# check that one of the terminal signatories is involved
+# check that one of the leaf signatories is involved
 LIST=$(./iroha --config "client.5.toml" multisig list all)
 echo "$LIST" | grep $INSTRUCTIONS_HASH
 

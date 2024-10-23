@@ -512,9 +512,9 @@ fn load_library_wasm(path: impl AsRef<Path>) -> WasmSmartContract {
             let name = path.as_ref().file_stem().unwrap().to_str().unwrap();
             let path = path.as_ref().display();
             eprintln!(
-                "ERROR: Could not load library WASM `{name}` from `{path}`: {err}\n  \
-                    There are two possible reasons why:\n    \
-                    1. You haven't pre-built WASM libraries before building genesis block. Make sure to run `build_wasm.sh` first.\n    \
+                "ERROR: Could not load library WASM `{name}` from `{path}`: {err}\n\
+                    There are two possible reasons why:\n\
+                    1. You haven't pre-built WASM libraries before building genesis block. Make sure to run `build_wasm.sh` first.\n\
                     2. `{path}` is not a valid path",
             );
             panic!("could not build WASM, see the message above");

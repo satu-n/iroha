@@ -27,16 +27,19 @@ const MULTISIG_ACCOUNTS_WASM: &[u8] = core::include_bytes!(concat!(
 
 #[iroha_trigger::main]
 fn main(host: Iroha, context: Context) {
-    let (domain_id, domain_owner, owner_changed) = match context.event {
-        EventBox::Data(DataEvent::Domain(DomainEvent::Created(domain))) => {
-            (domain.id().clone(), domain.owned_by().clone(), false)
-        }
-        EventBox::Data(DataEvent::Domain(DomainEvent::OwnerChanged(owner_changed))) => (
+    let EventBox::Data(DataEvent::Domain(event)) = context.event else {
+        dbg_panic("trigger misused: must be triggered only by a domain event");
+    };
+    let (domain_id, domain_owner, owner_changed) = match event {
+        DomainEvent::Created(domain) => (domain.id().clone(), domain.owned_by().clone(), false),
+        DomainEvent::OwnerChanged(owner_changed) => (
             owner_changed.domain().clone(),
             owner_changed.new_owner().clone(),
             true,
         ),
-        _ => dbg_panic("should be triggered only when domain created or owner changed"),
+        _ => dbg_panic(
+            "trigger misused: must be triggered only when domain created or owner changed",
+        ),
     };
 
     let accounts_registry_id: TriggerId = format!("multisig_accounts_{}", domain_id)

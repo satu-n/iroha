@@ -30,7 +30,7 @@ const MULTISIG_TRANSACTIONS_WASM: &[u8] = core::include_bytes!(concat!(
 #[iroha_trigger::main]
 fn main(host: Iroha, context: Context) {
     let EventBox::ExecuteTrigger(event) = context.event else {
-        dbg_panic("should be triggered by a call");
+        dbg_panic("trigger misused: must be triggered only by a call");
     };
     let args: MultisigAccountArgs = event
         .args()

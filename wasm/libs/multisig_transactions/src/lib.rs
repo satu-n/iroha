@@ -28,7 +28,7 @@ getrandom::register_custom_getrandom!(iroha_trigger::stub_getrandom);
 fn main(host: Iroha, context: Context) {
     let trigger_id = context.id;
     let EventBox::ExecuteTrigger(event) = context.event else {
-        dbg_panic("should be triggered by a call");
+        dbg_panic("trigger misused: must be triggered only by a call");
     };
 
     let args: MultisigTransactionArgs = event

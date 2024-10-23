@@ -3375,6 +3375,8 @@ name = "iroha_multisig_data_model"
 version = "2.0.0-rc.1.0"
 dependencies = [
  "iroha_data_model",
+ "iroha_schema",
+ "parity-scale-codec",
  "serde",
  "serde_json",
 ]
@@ -3485,6 +3487,7 @@ dependencies = [
  "iroha_data_model",
  "iroha_executor_data_model",
  "iroha_genesis",
+ "iroha_multisig_data_model",
  "iroha_primitives",
  "iroha_schema",
 ]

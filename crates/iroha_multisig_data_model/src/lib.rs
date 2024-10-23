@@ -15,7 +15,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Decode, Encode, Serialize, Deserialize, IntoSchema)]
 pub struct MultisigAccountArgs {
     /// Multisig account to be registered
-    /// WARNING: any corresponding private key allows the owner to manipulate this account as a ordinary personal account
+    /// <div class="warning">
+    /// 
+    /// Any corresponding private key allows the owner to manipulate this account as a ordinary personal account
+    /// 
+    /// </div>
+    // FIXME #5022 prevent multisig monopoly
     pub account: PublicKey,
     /// List of accounts and their relative weights of responsibility for the multisig
     pub signatories: BTreeMap<AccountId, Weight>,

@@ -1375,6 +1375,8 @@ pub mod trigger {
         let is_genesis = executor.context().curr_block.is_genesis();
 
         let trigger_name = trigger.id().name().as_ref();
+
+        #[expect(clippy::option_if_let_else)] // clippy suggestion spoils readability
         let naming_is_ok = if let Some(tail) = trigger_name.strip_prefix("multisig_accounts_") {
             let system_account: AccountId =
                 // predefined in `GenesisBuilder::default`

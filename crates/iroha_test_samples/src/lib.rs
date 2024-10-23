@@ -110,12 +110,12 @@ pub fn load_sample_wasm(name: impl AsRef<str>) -> WasmSmartContract {
         .join(name.as_ref())
         .with_extension("wasm");
 
-    let blob = match read_file(&path) {
+    match read_file(&path) {
         Err(err) => {
             eprintln!(
-                "ERROR: Could not load sample WASM `{}` from `{}`: {err}\n  \
-                    There are two possible reasons why:\n    \
-                    1. You haven't pre-built WASM samples before running tests. Make sure to run `build_wasm.sh` first.\n    \
+                "ERROR: Could not load sample WASM `{}` from `{}`: {err}\n\
+                    There are two possible reasons why:\n\
+                    1. You haven't pre-built WASM samples before running tests. Make sure to run `build_wasm.sh` first.\n\
                     2. `{}` is not a valid name. Check the `wasm/samples` directory and make sure you haven't made a mistake.",
                 name.as_ref(),
                 path.display(),
@@ -123,8 +123,6 @@ pub fn load_sample_wasm(name: impl AsRef<str>) -> WasmSmartContract {
             );
             panic!("could not build WASM, see the message above");
         }
-        Ok(blob) => blob,
-    };
-
-    WasmSmartContract::from_compiled(blob)
+        Ok(blob) => WasmSmartContract::from_compiled(blob),
+    }
 }

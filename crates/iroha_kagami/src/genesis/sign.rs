@@ -53,13 +53,13 @@ impl<T: Write> RunArgs<T> for Args {
             let topology = serde_json::from_str(&topology).expect("Failed to parse topology");
             builder = builder.set_topology(topology);
         }
-        let genesis_transaction = builder.build_and_sign(&genesis_key_pair)?;
+        let genesis_block = builder.build_and_sign(&genesis_key_pair)?;
 
         let mut writer: Box<dyn Write> = match self.out_file {
             None => Box::new(writer),
             Some(path) => Box::new(BufWriter::new(File::create(path)?)),
         };
-        let bytes = genesis_transaction.0.encode();
+        let bytes = genesis_block.0.encode();
         writer.write_all(&bytes)?;
 
         Ok(())

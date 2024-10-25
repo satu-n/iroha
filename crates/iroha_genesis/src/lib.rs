@@ -200,7 +200,6 @@ pub struct GenesisDomainBuilder {
 
 impl GenesisBuilder {
     /// Construct [`GenesisBuilder`].
-    #[expect(clippy::new_without_default)]
     pub fn new(chain: ChainId, executor: ExecutorPath) -> Self {
         Self {
             chain,
@@ -250,24 +249,24 @@ impl GenesisBuilder {
     }
 
     /// Overwrite the initial topology.
-    #[must_use]
     pub fn set_topology(mut self, topology: Vec<PeerId>) -> Self {
         self.topology = topology;
         self
     }
 
     /// Finish building, sign, and produce a [`GenesisBlock`].
+    ///
+    /// # Errors
+    ///
+    /// Fails if internal [`RawGenesisTransaction::build_and_sign`] fails.
     pub fn build_and_sign(self, genesis_key_pair: &KeyPair) -> Result<GenesisBlock> {
         self.build_raw().build_and_sign(genesis_key_pair)
     }
 
     /// Finish building and produce a [`RawGenesisTransaction`].
     pub fn build_raw(self) -> RawGenesisTransaction {
-        let parameters = (!self.parameters.is_empty()).then(|| {
-            let mut res = Parameters::default();
-            res.extend(self.parameters);
-            res
-        });
+        let parameters =
+            (!self.parameters.is_empty()).then(|| self.parameters.into_iter().collect());
 
         RawGenesisTransaction {
             chain: self.chain,

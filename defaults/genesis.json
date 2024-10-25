@@ -190,7 +190,7 @@
       }
     }
   ],
-  "wasm_dir": "../wasm/target/prebuilt/libs/",
+  "wasm_dir": "libs",
   "wasm_triggers": [
     {
       "id": "multisig_domains",

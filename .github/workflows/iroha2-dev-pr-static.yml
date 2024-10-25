@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DOCKER_COMPOSE_PATH: defaults
+  DEFAULTS_DIR: defaults
 
 jobs:
   smart_contracts_analysis:

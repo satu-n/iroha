@@ -1,9 +1,11 @@
 #!/bin/sh
 set -e;
 
+DEFAULTS_DIR="defaults"
+CRATES_DIR="wasm"
+TARGET_DIR="wasm/target/prebuilt"
+
 build() {
-    CRATES_DIR="wasm/$1"
-    TARGET_DIR="wasm/target/prebuilt/$1"
     case $1 in
         "libs")
             NAMES=(
@@ -16,26 +18,28 @@ build() {
             ;;
         "samples")
             NAMES=($(
-                cargo metadata --no-deps --manifest-path ./wasm/Cargo.toml --format-version=1 |
+                cargo metadata --no-deps --manifest-path "$CRATES_DIR/Cargo.toml" --format-version=1 |
                 jq '.packages | map(select(.targets[].kind | contains(["cdylib"]))) | map(.manifest_path | split("/")) | map(select(.[-3] == "samples")) | map(.[-2]) | .[]' -r
             ))
     esac
 
-    mkdir -p "$TARGET_DIR"
+    mkdir -p "$TARGET_DIR/$1"
     for name in ${NAMES[@]}; do
-        out_file="$TARGET_DIR/$name.wasm"
-        cargo run --bin iroha_wasm_builder -- build "$CRATES_DIR/$name" --optimize --out-file "$out_file"
+        out_file="$TARGET_DIR/$1/$name.wasm"
+        cargo run --bin iroha_wasm_builder -- build "$CRATES_DIR/$1/$name" --optimize --out-file "$out_file"
     done
     echo "info: WASM $1 build complete"
-    echo "artifacts written to $TARGET_DIR"
+    echo "artifacts written to $TARGET_DIR/$1/"
 }
 
 command() {
     case $1 in
         "libs")
             build $1
-            cp "wasm/target/prebuilt/$1/default_executor.wasm" ./defaults/executor.wasm
-            echo "info: copied default executor to ./defaults/executor.wasm"
+            cp -r "$TARGET_DIR/$1" "$DEFAULTS_DIR/$1"
+            mv "$DEFAULTS_DIR/$1/default_executor.wasm" "$DEFAULTS_DIR/executor.wasm"
+            echo "info: copied wasm $1 to $DEFAULTS_DIR/$1/"
+            echo "info: copied default executor to $DEFAULTS_DIR/executor.wasm"
             ;;
         "samples")
             build $1

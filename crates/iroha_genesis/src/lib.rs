@@ -657,7 +657,7 @@ mod tests {
                 "executor": "executor.wasm",
                 "parameters": {parameters},
                 "instructions": [],
-                "wasm_dir": "../wasm/target/prebuilt/libs/",
+                "wasm_dir": "libs",
                 "wasm_triggers": [],
                 "topology": []
                 }}"#

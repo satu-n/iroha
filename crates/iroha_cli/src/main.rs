@@ -1179,9 +1179,7 @@ mod json {
 mod multisig {
     use std::io::{BufReader, Read as _};
 
-    use iroha::multisig_data_model::{
-        MultisigApprove, MultisigPropose, MultisigRegister, DEFAULT_MULTISIG_TTL_MS,
-    };
+    use iroha::multisig_data_model::*;
 
     use super::*;
 
@@ -1319,42 +1317,27 @@ mod multisig {
     ) -> Result<()> {
         let Ok(multisig_roles) = client
             .query(FindRolesByAccountId::new(account))
-            .filter_with(|role_id| role_id.name.starts_with("multisig_signatory_"))
+            .filter_with(|role_id| role_id.name.starts_with(MULTISIG_SIGNATORY_))
             .execute_all()
         else {
             return Ok(());
         };
 
         for role_id in multisig_roles {
-            let super_account: AccountId = role_id
-                .name()
-                .as_ref()
-                .strip_prefix("multisig_signatory_")
-                .unwrap()
-                .replacen('_', "@", 1)
-                .parse()
-                .unwrap();
+            let super_account_id: AccountId = multisig_account_from(&role_id).unwrap();
 
-            trace_back_from(super_account, client, context)?;
+            trace_back_from(super_account_id.clone(), client, context)?;
 
-            let transactions_registry_id: TriggerId = role_id
-                .name()
-                .as_ref()
-                .replace("signatory", "transactions")
-                .parse()
-                .unwrap();
+            context.print_data(&super_account_id)?;
 
-            context.print_data(&transactions_registry_id)?;
-
-            let transactions_registry = client
-                .query(FindTriggers::new())
-                .filter_with(|trigger| trigger.id.eq(transactions_registry_id))
+            let super_account = client
+                .query(FindAccounts)
+                .filter_with(|account| account.id.eq(super_account_id))
                 .execute_single()?;
-            let proposal_kvs = transactions_registry
-                .action()
+            let proposal_kvs = super_account
                 .metadata()
                 .iter()
-                .filter(|kv| kv.0.as_ref().starts_with("proposals"));
+                .filter(|kv| kv.0.as_ref().starts_with(PROPOSALS));
 
             proposal_kvs.fold("", |acc, (k, v)| {
                 let mut path = k.as_ref().split('/');

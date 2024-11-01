@@ -7,7 +7,6 @@ extern crate alloc;
 
 use alloc::{format, string::String, vec::Vec};
 
-pub use constants::*;
 use derive_more::{Constructor, From};
 use getset::Getters;
 use iroha_data_model::{
@@ -17,8 +16,12 @@ use iroha_data_model::{
 use iroha_schema::IntoSchema;
 use serde::{Deserialize, Serialize};
 
+pub use constants::*;
+
 #[allow(missing_docs)]
 mod constants {
+    use alloc::string::ParseError;
+
     use super::*;
 
     pub const SIGNATORIES: &str = "signatories";
@@ -26,25 +29,34 @@ mod constants {
     pub const TRANSACTION_TTL_MS: &str = "transaction_ttl_ms";
     pub const PROPOSALS: &str = "proposals";
 
-    pub fn instructions_key(hash: HashOf<Vec<InstructionBox>>) -> Name {
+    pub const MULTISIG_SIGNATORY_: &str = "MULTISIG_SIGNATORY_";
+
+    pub fn instructions_key(hash: &HashOf<Vec<InstructionBox>>) -> Name {
         format!("{PROPOSALS}/{hash}/instructions").parse().unwrap()
     }
-    pub fn proposed_at_ms_key(hash: HashOf<Vec<InstructionBox>>) -> Name {
-        format!("{PROPOSALS}/{hash}/proposed_at_ms")
-            .parse()
-            .unwrap()
+    pub fn proposed_at_ms_key(hash: &HashOf<Vec<InstructionBox>>) -> Name {
+        format!("{PROPOSALS}/{hash}/proposed_at_ms").parse().unwrap()
     }
-    pub fn approvals_key(hash: HashOf<Vec<InstructionBox>>) -> Name {
+    pub fn approvals_key(hash: &HashOf<Vec<InstructionBox>>) -> Name {
         format!("{PROPOSALS}/{hash}/approvals").parse().unwrap()
     }
-    pub fn multisig_signatory(account: &AccountId) -> RoleId {
+    pub fn multisig_role_for(account: &AccountId) -> RoleId {
         format!(
-            "MULTISIG_SIGNATORY_{}_{}",
+            "{MULTISIG_SIGNATORY_}{}_{}",
             account.signatory(),
             account.domain()
         )
         .parse()
         .unwrap()
+    }
+    pub fn multisig_account_from(role: &RoleId) -> Option<AccountId> {
+        role
+        .name()
+        .as_ref()
+        .strip_prefix(MULTISIG_SIGNATORY_)?
+        .replacen('_', "@", 1)
+        .parse()
+        .ok()
     }
 }
 

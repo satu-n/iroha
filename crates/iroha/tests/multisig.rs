@@ -8,8 +8,9 @@ use iroha::{
     client::Client,
     crypto::KeyPair,
     data_model::{prelude::*, query::trigger::FindTriggers, Level},
-    multisig_data_model::{MultisigApprove, MultisigPropose, MultisigRegister},
+    multisig_data_model::*,
 };
+use iroha_multisig_data_model::approvals_key;
 use iroha_test_network::*;
 use iroha_test_samples::{
     gen_account_in, ALICE_ID, BOB_ID, BOB_KEYPAIR, CARPENTER_ID, CARPENTER_KEYPAIR,
@@ -25,23 +26,6 @@ fn multisig_expires() -> Result<()> {
     multisig_base(Some(2))
 }
 
-/// # Scenario
-///
-/// Proceeds from top left to bottom right. Starred operations are the responsibility of the user
-///
-/// ```
-/// | world level               | domain level                | account level                   | transaction level    |
-/// |---------------------------|-----------------------------|---------------------------------|----------------------|
-/// | given domains initializer |                             |                                 |                      |
-/// |                           | * creates domain            |                                 |                      |
-/// |       domains initializer | generates accounts registry |                                 |                      |
-/// |                           |                             | * creates signatories           |                      |
-/// |                           |   * calls accounts registry | generates multisig account      |                      |
-/// |                           |           accounts registry | generates transactions registry |                      |
-/// |                           |                             |   * calls transactions registry | proposes transaction |
-/// |                           |                             |   * calls transactions registry | approves transaction |
-/// |                           |                             |           transactions registry | executes transaction |
-/// ```
 #[allow(clippy::cast_possible_truncation)]
 fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
     const N_SIGNATORIES: usize = 5;
@@ -59,15 +43,8 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
     test_client.submit_all_blocking(register_and_transfer_kingdom)?;
 
     // One more block to generate a multisig accounts registry for the domain
-    test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
-
-    // Check that the multisig accounts registry has been generated
-    let multisig_accounts_registry_id = multisig_accounts_registry_of(&kingdom);
-    let _trigger = test_client
-        .query(FindTriggers::new())
-        .filter_with(|trigger| trigger.id.eq(multisig_accounts_registry_id.clone()))
-        .execute_single()
-        .expect("multisig accounts registry should be generated after domain creation");
+    // SATO
+    // test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
 
     // Populate residents in the domain
     let mut residents = core::iter::repeat_with(|| gen_account_in(&kingdom))
@@ -117,15 +94,7 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
         .query(FindAccounts::new())
         .filter_with(|account| account.id.eq(multisig_account_id.clone()))
         .execute_single()
-        .expect("multisig account should be created by calling the multisig accounts registry");
-
-    // Check that the multisig transactions registry has been generated
-    let multisig_transactions_registry_id = multisig_transactions_registry_of(&multisig_account_id);
-    let _trigger = test_client
-        .query(FindTriggers::new())
-        .filter_with(|trigger| trigger.id.eq(multisig_transactions_registry_id.clone()))
-        .execute_single()
-        .expect("multisig transactions registry should be generated along with the corresponding multisig account");
+        .expect("multisig account should be created");
 
     let key: Name = "key".parse().unwrap();
     let instructions = vec![SetKeyValue::account(
@@ -149,7 +118,7 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
             multisig_account_id.clone(),
             key.clone(),
         ))
-        .expect_err("key-value shouldn't be set without enough approvals");
+        .expect_err("instructions shouldn't execute without enough approvals");
 
     // Allow time to elapse to test the expiration
     if let Some(ms) = transaction_ttl_ms {
@@ -163,6 +132,7 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
 
         alt_client(approver, &test_client).submit_blocking(approve)?;
     }
+
     // Check that the multisig transaction has executed
     let res = test_client.query_single(FindAccountMetadata::new(
         multisig_account_id.clone(),
@@ -170,9 +140,9 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
     ));
 
     if transaction_ttl_ms.is_some() {
-        let _err = res.expect_err("key-value shouldn't be set despite enough approvals");
+        let _err = res.expect_err("instructions shouldn't execute despite enough approvals");
     } else {
-        res.expect("key-value should be set with enough approvals");
+        res.expect("instructions should execute with enough approvals");
     }
 
     Ok(())
@@ -276,7 +246,7 @@ fn multisig_recursion() -> Result<()> {
             .unwrap();
     });
 
-    // Check that the entire authentication policy has been deployed down to one of the leaf registries
+    // Check that the entire authentication policy has been deployed down to one of the leaf signatories
     let approval_hash_to_12345 = {
         let approval_hash_to_012345 = {
             let approve: InstructionBox =
@@ -291,11 +261,9 @@ fn multisig_recursion() -> Result<()> {
     };
 
     let approvals_at_12: BTreeSet<AccountId> = test_client
-        .query_single(FindTriggerMetadata::new(
-            multisig_transactions_registry_of(&msa_12),
-            format!("proposals/{approval_hash_to_12345}/approvals")
-                .parse()
-                .unwrap(),
+        .query_single(FindAccountMetadata::new(
+            msa_12.clone(),
+                approvals_key(&approval_hash_to_12345)
         ))
         .expect("leaf approvals should be initialized by the root proposal")
         .try_into_any()
@@ -306,7 +274,7 @@ fn multisig_recursion() -> Result<()> {
     // Check that the multisig transaction has not yet executed
     let _err = test_client
         .query_single(FindAccountMetadata::new(msa_012345.clone(), key.clone()))
-        .expect_err("key-value shouldn't be set without enough approvals");
+        .expect_err("instructions shouldn't execute without enough approvals");
 
     // All the rest signatories approve the multisig transaction
     let approve_for_each = |approvers: BTreeMap<AccountId, KeyPair>,
@@ -325,46 +293,17 @@ fn multisig_recursion() -> Result<()> {
     approve_for_each(sigs_345, approval_hash_to_12345, &msa_345);
 
     // Let the intermediate registry (12345) collect approvals and approve the original proposal
-    test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
+    // SATO
+    // test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
 
     // Let the root registry (012345) collect approvals and execute the original proposal
-    test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
+    // SATO
+    // test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
 
     // Check that the multisig transaction has executed
     test_client
         .query_single(FindAccountMetadata::new(msa_012345.clone(), key.clone()))
-        .expect("key-value should be set with enough approvals");
-
-    Ok(())
-}
-
-#[test]
-fn persistent_domain_level_authority() -> Result<()> {
-    let (network, _rt) = NetworkBuilder::new().start_blocking()?;
-    let test_client = network.client();
-
-    let wonderland: DomainId = "wonderland".parse().unwrap();
-
-    let ms_accounts_registry_id = multisig_accounts_registry_of(&wonderland);
-
-    // Domain owner changes from Alice to Bob
-    test_client.submit_blocking(Transfer::domain(
-        ALICE_ID.clone(),
-        wonderland,
-        BOB_ID.clone(),
-    ))?;
-
-    // One block gap to follow the domain owner change
-    test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
-
-    // Bob is the authority of the wonderland multisig accounts registry
-    let ms_accounts_registry = test_client
-        .query(FindTriggers::new())
-        .filter_with(|trigger| trigger.id.eq(ms_accounts_registry_id.clone()))
-        .execute_single()
-        .expect("multisig accounts registry should survive before and after a domain owner change");
-
-    assert!(*ms_accounts_registry.action().authority() == BOB_ID.clone());
+        .expect("instructions should execute with enough approvals");
 
     Ok(())
 }
@@ -377,58 +316,9 @@ fn reserved_names() {
     let account_in_another_domain = gen_account_in("garden_of_live_flowers").0;
 
     {
-        let reserved_prefix = "multisig_accounts_";
         let register = {
-            let id: TriggerId = format!("{reserved_prefix}{}", account_in_another_domain.domain())
-                .parse()
-                .unwrap();
-            let action = Action::new(
-                Vec::<InstructionBox>::new(),
-                Repeats::Indefinitely,
-                ALICE_ID.clone(),
-                ExecuteTriggerEventFilter::new(),
-            );
-            Register::trigger(Trigger::new(id, action))
-        };
-        let _err = test_client.submit_blocking(register).expect_err(
-            "trigger with this name shouldn't be registered by anyone other than multisig system",
-        );
-    }
-
-    {
-        let reserved_prefix = "multisig_transactions_";
-        let register = {
-            let id: TriggerId = format!(
-                "{reserved_prefix}{}_{}",
-                account_in_another_domain.signatory(),
-                account_in_another_domain.domain()
-            )
-            .parse()
-            .unwrap();
-            let action = Action::new(
-                Vec::<InstructionBox>::new(),
-                Repeats::Indefinitely,
-                ALICE_ID.clone(),
-                ExecuteTriggerEventFilter::new(),
-            );
-            Register::trigger(Trigger::new(id, action))
-        };
-        let _err = test_client.submit_blocking(register).expect_err(
-            "trigger with this name shouldn't be registered by anyone other than domain owner",
-        );
-    }
-
-    {
-        let reserved_prefix = "multisig_signatory_";
-        let register = {
-            let id: RoleId = format!(
-                "{reserved_prefix}{}_{}",
-                account_in_another_domain.signatory(),
-                account_in_another_domain.domain()
-            )
-            .parse()
-            .unwrap();
-            Register::role(Role::new(id, ALICE_ID.clone()))
+            let role = multisig_role_for(&account_in_another_domain);
+            Register::role(Role::new(role, ALICE_ID.clone()))
         };
         let _err = test_client.submit_blocking(register).expect_err(
             "role with this name shouldn't be registered by anyone other than domain owner",
@@ -445,29 +335,12 @@ fn alt_client(signatory: (AccountId, KeyPair), base_client: &Client) -> Client {
 }
 
 #[expect(dead_code)]
-fn multisig_accounts_registry_of(domain: &DomainId) -> TriggerId {
-    format!("multisig_accounts_{domain}",).parse().unwrap()
-}
-
-#[expect(dead_code)]
-fn multisig_transactions_registry_of(multisig_account: &AccountId) -> TriggerId {
-    format!(
-        "multisig_transactions_{}_{}",
-        multisig_account.signatory(),
-        multisig_account.domain()
-    )
-    .parse()
-    .unwrap()
-}
-
-#[expect(dead_code)]
-fn debug_mst_registry(msa: &AccountId, client: &Client) {
-    let mst_registry = client
-        .query(FindTriggers::new())
-        .filter_with(|trigger| trigger.id.eq(multisig_transactions_registry_of(msa)))
+fn debug_account(account_id: &AccountId, client: &Client) {
+    let account = client
+        .query(FindAccounts)
+        .filter_with(|account| account.id.eq(account_id.clone()))
         .execute_single()
         .unwrap();
-    let mst_metadata = mst_registry.action().metadata();
 
-    iroha_logger::error!(%msa, ?mst_metadata);
+    iroha_logger::error!(?account);
 }

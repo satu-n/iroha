@@ -1,8 +1,108 @@
+// SATO crate description
 //! Arguments attached on executing triggers for multisig accounts or transactions
 
 #![no_std]
 
 extern crate alloc;
+
+use alloc::{format, string::String, vec::Vec};
+
+use iroha_data_model::{
+    asset::AssetDefinitionId,
+    isi::{CustomInstruction, Instruction, InstructionBox},
+    prelude::{Json, Numeric},
+};
+use iroha_schema::IntoSchema;
+
+use derive_more::{Constructor, From};
+use serde::{Deserialize, Serialize};
+
+/// SATO doc
+#[derive(Debug, Deserialize, Serialize, IntoSchema, From)]
+pub enum MultisigInstructionBox {
+    Register(MultisigRegister),
+    Propose(MultisigPropose),
+    Approve(MultisigApprove),
+}
+
+/// SATO doc
+#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor)]
+pub struct MultisigRegister {
+    /// Multisig account to be registered
+    /// <div class="warning">
+    ///
+    /// Any corresponding private key allows the owner to manipulate this account as a ordinary personal account
+    ///
+    /// </div>
+    // FIXME #5022 prevent multisig monopoly
+    // FIXME #5022 stop accepting user input: otherwise, after #4426 pre-registration account will be hijacked as a multisig account
+    account: AccountId,
+    /// List of accounts and their relative weights of responsibility for the multisig
+    signatories: BTreeMap<AccountId, Weight>,
+    /// Threshold of total weight at which the multisig is considered authenticated
+    quorum: u16,
+    /// Multisig transaction time-to-live in milliseconds based on block timestamps. Defaults to [`DEFAULT_MULTISIG_TTL_MS`]
+    transaction_ttl_ms: u64,
+}
+
+/// SATO doc
+#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor)]
+pub struct MultisigPropose {
+    account: AccountId,
+    instructions: Vec<InstructionBox>,
+}
+
+#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor)]
+pub struct MultisigApprove {
+    account: AccountId,
+    instructions_hash: HashOf<Vec<InstructionBox>>,
+}
+
+macro_rules! impl_custom_instruction {
+    ($box:ty, $($instruction:ty)|+) => {
+        impl Instruction for $box {}
+
+        impl From<$box> for InstructionBox {
+            fn from(value: $box) -> Self {
+                Self::Custom(value.into())
+            }
+        }
+
+        impl From<$box> for CustomInstruction {
+            fn from(value: $box) -> Self {
+                let payload = serde_json::to_value(&value)
+                    .expect(concat!("INTERNAL BUG: Couldn't serialize ", stringify!($box)));
+
+                Self::new(payload)
+            }
+        }
+
+        impl TryFrom<&Json> for $box {
+            type Error = serde_json::Error;
+        
+            fn try_from(payload: &Json) -> serde_json::Result<Self> {
+                serde_json::from_str::<Self>(payload.as_ref())
+            }
+        }
+
+        $(
+            impl Instruction for $instruction {}
+
+            impl From<$instruction> for InstructionBox {
+                fn from(value: $instruction) -> Self {
+                    Self::Custom(<$box>::from(value).into())
+                }
+            }
+        )+
+    };
+}
+
+impl_custom_instruction!(MultisigInstructionBox, MultisigRegister | MultisigPropose | MultisigApprove);
+
+
+
+
+// SATO remove
 
 use alloc::{collections::btree_map::BTreeMap, format, string::String, vec::Vec};
 

@@ -8,14 +8,31 @@ extern crate alloc;
 use alloc::{format, string::String, vec::Vec};
 
 use iroha_data_model::{
-    asset::AssetDefinitionId,
     isi::{CustomInstruction, Instruction, InstructionBox},
-    prelude::{Json, Numeric},
+    prelude::Json,
 };
 use iroha_schema::IntoSchema;
 
 use derive_more::{Constructor, From};
+use getset::Getters;
 use serde::{Deserialize, Serialize};
+
+
+pub fn multisig_domain_initializer() -> TriggerId {
+    "MULTISIG_DOMAINS".parse().unwrap()
+}
+
+pub fn multisig_account_registry(domain: &DomainId) -> TriggerId {
+    format!("MULTISIG_ACCOUNTS_{domain}").parse().unwrap()
+}
+
+pub fn multisig_transaction_registry(account: &AccountId) -> TriggerId {
+    format!("MULTISIG_TRANSACTIONS_{}_{}", account.signatory(), account.domain()).parse().unwrap()
+}
+
+pub fn multisig_signatory(account: &AccountId) -> RoleId {
+    format!("MULTISIG_SIGNATORY_{}_{}", account.signatory(), account.domain()).parse().unwrap()
+}
 
 /// SATO doc
 #[derive(Debug, Deserialize, Serialize, IntoSchema, From)]
@@ -26,7 +43,7 @@ pub enum MultisigInstructionBox {
 }
 
 /// SATO doc
-#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor)]
+#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
 pub struct MultisigRegister {
     /// Multisig account to be registered
     /// <div class="warning">
@@ -46,13 +63,13 @@ pub struct MultisigRegister {
 }
 
 /// SATO doc
-#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor)]
+#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
 pub struct MultisigPropose {
     account: AccountId,
     instructions: Vec<InstructionBox>,
 }
 
-#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor)]
+#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
 pub struct MultisigApprove {
     account: AccountId,
     instructions_hash: HashOf<Vec<InstructionBox>>,

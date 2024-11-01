@@ -8,7 +8,7 @@ use iroha::{
     client::Client,
     crypto::KeyPair,
     data_model::{prelude::*, query::trigger::FindTriggers, Level},
-    multisig_data_model::{MultisigRegister, MultisigPropose, MultisigApprove}
+    multisig_data_model::{MultisigApprove, MultisigPropose, MultisigRegister},
 };
 use iroha_test_network::*;
 use iroha_test_samples::{
@@ -279,13 +279,13 @@ fn multisig_recursion() -> Result<()> {
     // Check that the entire authentication policy has been deployed down to one of the leaf registries
     let approval_hash_to_12345 = {
         let approval_hash_to_012345 = {
-            let approve: InstructionBox = MultisigApprove::new(msa_012345.clone(), instructions_hash)
-                .into();
+            let approve: InstructionBox =
+                MultisigApprove::new(msa_012345.clone(), instructions_hash).into();
 
             HashOf::new(&vec![approve])
         };
-        let approve: InstructionBox = MultisigApprove::new(msa_12345.clone(), approval_hash_to_012345)
-            .into();
+        let approve: InstructionBox =
+            MultisigApprove::new(msa_12345.clone(), approval_hash_to_012345).into();
 
         HashOf::new(&vec![approve])
     };

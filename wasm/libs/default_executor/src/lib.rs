@@ -9,6 +9,7 @@ use dlmalloc::GlobalDlmalloc;
 use iroha_executor::{
     data_model::block::BlockHeader, debug::dbg_panic, prelude::*, DataModelBuilder,
 };
+use iroha_multisig_data_model::*;
 
 #[global_allocator]
 static ALLOC: GlobalDlmalloc = GlobalDlmalloc;
@@ -42,14 +43,31 @@ impl Executor {
 }
 
 fn visit_custom(executor: &mut Executor, isi: &CustomInstruction) {
-    if let Ok(isi) = MultisigInstructionBox::try_from(isi.payload()) {
-        multisig::visit_multisig(executor, isi)
+    if let Ok(isi) = multisig::MultisigInstructionBox::try_from(isi.payload()) {
+        isi.visit_execute(executor)
     };
     deny!(executor, "Failed to parse custom instruction");
 }
 
-trait ExecuteCustom<T> {
-    fn
+trait VisitExecute: Instruction {
+    fn visit_execute(self, executor: &mut Executor) {
+        let init_authority = executor.context().authority.clone();
+        self.visit(executor);
+        self.execute(executor, &init_authority).unwrap_or_else(|err| deny!(executor, err))
+        // reset authority per instruction
+        // TODO seek a more proper way
+        *executor.context_mut().authority = init_authority;
+    }
+
+    fn visit(&self, executor: &mut Executor);
+
+    fn execute(
+        self,
+        executor: &Executor,
+        init_authority: &AccountId,
+    ) -> Result<(), ValidationFail> {
+        Ok(())
+    }
 }
 
 /// Migrate previous executor to the current version.

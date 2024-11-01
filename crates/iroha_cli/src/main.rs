@@ -1180,7 +1180,7 @@ mod multisig {
     use std::io::{BufReader, Read as _};
 
     use iroha::multisig_data_model::{
-        MultisigRegister, MultisigPropose, MultisigApprove, DEFAULT_MULTISIG_TTL_MS,
+        MultisigApprove, MultisigPropose, MultisigRegister, DEFAULT_MULTISIG_TTL_MS,
     };
 
     use super::*;
@@ -1267,8 +1267,7 @@ mod multisig {
             };
             let instructions_hash = HashOf::new(&instructions);
             println!("{instructions_hash}");
-            let propose_multisig_transaction =
-                MultisigPropose::new(self.account, instructions);
+            let propose_multisig_transaction = MultisigPropose::new(self.account, instructions);
 
             submit([propose_multisig_transaction], Metadata::default(), context)
                 .wrap_err("Failed to propose transaction")
@@ -1288,7 +1287,8 @@ mod multisig {
 
     impl RunArgs for Approve {
         fn run(self, context: &mut dyn RunContext) -> Result<()> {
-            let approve_multisig_transaction = MultisigApprove::new(self.account, self.instructions_hash);
+            let approve_multisig_transaction =
+                MultisigApprove::new(self.account, self.instructions_hash);
 
             submit([approve_multisig_transaction], Metadata::default(), context)
                 .wrap_err("Failed to approve transaction")

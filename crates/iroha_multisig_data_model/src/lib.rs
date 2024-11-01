@@ -7,34 +7,45 @@ extern crate alloc;
 
 use alloc::{format, string::String, vec::Vec};
 
+pub use constants::*;
+use derive_more::{Constructor, From};
+use getset::Getters;
 use iroha_data_model::{
     isi::{CustomInstruction, Instruction, InstructionBox},
     prelude::Json,
 };
 use iroha_schema::IntoSchema;
-
-use derive_more::{Constructor, From};
-use getset::Getters;
 use serde::{Deserialize, Serialize};
 
-/// SATO
-pub fn multisig_domain_initializer() -> TriggerId {
-    "MULTISIG_DOMAINS".parse().unwrap()
-}
+#[allow(missing_docs)]
+mod constants {
+    use super::*;
 
-/// SATO
-pub fn multisig_account_registry(domain: &DomainId) -> TriggerId {
-    format!("MULTISIG_ACCOUNTS_{domain}").parse().unwrap()
-}
+    pub const SIGNATORIES: &str = "signatories";
+    pub const QUORUM: &str = "quorum";
+    pub const TRANSACTION_TTL_MS: &str = "transaction_ttl_ms";
+    pub const PROPOSALS: &str = "proposals";
 
-/// SATO
-pub fn multisig_transaction_registry(account: &AccountId) -> TriggerId {
-    format!("MULTISIG_TRANSACTIONS_{}_{}", account.signatory(), account.domain()).parse().unwrap()
-}
-
-/// SATO
-pub fn multisig_signatory(account: &AccountId) -> RoleId {
-    format!("MULTISIG_SIGNATORY_{}_{}", account.signatory(), account.domain()).parse().unwrap()
+    pub fn instructions_key(hash: HashOf<Vec<InstructionBox>>) -> Name {
+        format!("{PROPOSALS}/{hash}/instructions").parse().unwrap()
+    }
+    pub fn proposed_at_ms_key(hash: HashOf<Vec<InstructionBox>>) -> Name {
+        format!("{PROPOSALS}/{hash}/proposed_at_ms")
+            .parse()
+            .unwrap()
+    }
+    pub fn approvals_key(hash: HashOf<Vec<InstructionBox>>) -> Name {
+        format!("{PROPOSALS}/{hash}/approvals").parse().unwrap()
+    }
+    pub fn multisig_signatory(account: &AccountId) -> RoleId {
+        format!(
+            "MULTISIG_SIGNATORY_{}_{}",
+            account.signatory(),
+            account.domain()
+        )
+        .parse()
+        .unwrap()
+    }
 }
 
 /// SATO doc
@@ -102,7 +113,7 @@ macro_rules! impl_custom_instruction {
 
         impl TryFrom<&Json> for $box {
             type Error = serde_json::Error;
-        
+
             fn try_from(payload: &Json) -> serde_json::Result<Self> {
                 serde_json::from_str::<Self>(payload.as_ref())
             }
@@ -120,10 +131,10 @@ macro_rules! impl_custom_instruction {
     };
 }
 
-impl_custom_instruction!(MultisigInstructionBox, MultisigRegister | MultisigPropose | MultisigApprove);
-
-
-
+impl_custom_instruction!(
+    MultisigInstructionBox,
+    MultisigRegister | MultisigPropose | MultisigApprove
+);
 
 // SATO remove
 

@@ -17,33 +17,39 @@ use derive_more::{Constructor, From};
 use getset::Getters;
 use serde::{Deserialize, Serialize};
 
-
+/// SATO
 pub fn multisig_domain_initializer() -> TriggerId {
     "MULTISIG_DOMAINS".parse().unwrap()
 }
 
+/// SATO
 pub fn multisig_account_registry(domain: &DomainId) -> TriggerId {
     format!("MULTISIG_ACCOUNTS_{domain}").parse().unwrap()
 }
 
+/// SATO
 pub fn multisig_transaction_registry(account: &AccountId) -> TriggerId {
     format!("MULTISIG_TRANSACTIONS_{}_{}", account.signatory(), account.domain()).parse().unwrap()
 }
 
+/// SATO
 pub fn multisig_signatory(account: &AccountId) -> RoleId {
     format!("MULTISIG_SIGNATORY_{}_{}", account.signatory(), account.domain()).parse().unwrap()
 }
 
 /// SATO doc
-#[derive(Debug, Deserialize, Serialize, IntoSchema, From)]
+#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, From)]
 pub enum MultisigInstructionBox {
+    /// SATO
     Register(MultisigRegister),
+    /// SATO
     Propose(MultisigPropose),
+    /// SATO
     Approve(MultisigApprove),
 }
 
 /// SATO doc
-#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
+#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
 pub struct MultisigRegister {
     /// Multisig account to be registered
     /// <div class="warning">
@@ -63,13 +69,13 @@ pub struct MultisigRegister {
 }
 
 /// SATO doc
-#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
+#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
 pub struct MultisigPropose {
     account: AccountId,
     instructions: Vec<InstructionBox>,
 }
-
-#[derive(Debug, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
+/// SATO doc
+#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
 pub struct MultisigApprove {
     account: AccountId,
     instructions_hash: HashOf<Vec<InstructionBox>>,
@@ -121,12 +127,10 @@ impl_custom_instruction!(MultisigInstructionBox, MultisigRegister | MultisigProp
 
 // SATO remove
 
-use alloc::{collections::btree_map::BTreeMap, format, string::String, vec::Vec};
+use alloc::collections::btree_map::BTreeMap;
 
 use iroha_data_model::prelude::*;
-use iroha_schema::IntoSchema;
 use parity_scale_codec::{Decode, Encode};
-use serde::{Deserialize, Serialize};
 
 /// Arguments to register multisig account
 #[derive(Debug, Clone, Decode, Encode, Serialize, Deserialize, IntoSchema)]

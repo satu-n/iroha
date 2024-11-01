@@ -43,9 +43,13 @@ impl Executor {
 
 fn visit_custom(executor: &mut Executor, isi: &CustomInstruction) {
     if let Ok(isi) = MultisigInstructionBox::try_from(isi.payload()) {
-        visit_multisig(executor, isi)
+        multisig::visit_multisig(executor, isi)
     };
     deny!(executor, "Failed to parse custom instruction");
+}
+
+trait ExecuteCustom<T> {
+    fn
 }
 
 /// Migrate previous executor to the current version.

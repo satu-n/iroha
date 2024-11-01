@@ -1,31 +1,16 @@
+// SATO doc
 //! Trigger given per domain to control multi-signature accounts and corresponding triggers
 
-#![no_std]
+fn visit_multisig_register(executor: &mut Executor, isi: &MultisigRegister) {
+    // Any account in domain can call multisig accounts registry to register any multisig account in the domain
+    // TODO Restrict access to the multisig signatories?
+    // TODO Impose proposal and approval process?
+    if isi.account().domain() == executor.context().authority.domain() {
+        execute!(executor, isi);
+    }
 
-extern crate alloc;
-#[cfg(not(test))]
-extern crate panic_halt;
-
-use alloc::format;
-
-use dlmalloc::GlobalDlmalloc;
-use iroha_executor_data_model::permission::trigger::CanExecuteTrigger;
-use iroha_multisig_data_model::MultisigAccountArgs;
-use iroha_trigger::{
-    debug::{dbg_panic, DebugExpectExt as _},
-    prelude::*,
-};
-
-#[global_allocator]
-static ALLOC: GlobalDlmalloc = GlobalDlmalloc;
-
-getrandom::register_custom_getrandom!(iroha_trigger::stub_getrandom);
-
-// Binary containing common logic to each multisig account for handling multisig transactions
-const MULTISIG_TRANSACTIONS_WASM: &[u8] = core::include_bytes!(concat!(
-    core::env!("CARGO_MANIFEST_DIR"),
-    "/../../target/prebuilt/libs/multisig_transactions.wasm"
-));
+    deny!(executor, "multisig account and its registrant must be in the same domain")
+}
 
 #[iroha_trigger::main]
 fn main(host: Iroha, context: Context) {

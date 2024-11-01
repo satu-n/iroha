@@ -8,9 +8,8 @@ use iroha::{
     client::Client,
     crypto::KeyPair,
     data_model::{prelude::*, query::trigger::FindTriggers, Level},
+    multisig_data_model::{MultisigRegister, MultisigPropose, MultisigApprove}
 };
-use iroha_data_model::events::execute_trigger::ExecuteTriggerEventFilter;
-use iroha_multisig_data_model::{MultisigAccountArgs, MultisigTransactionArgs};
 use iroha_test_network::*;
 use iroha_test_samples::{
     gen_account_in, ALICE_ID, BOB_ID, BOB_KEYPAIR, CARPENTER_ID, CARPENTER_KEYPAIR,
@@ -88,19 +87,17 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
     let not_signatory = residents.pop_first().unwrap();
     let mut signatories = residents;
 
-    let args = &MultisigAccountArgs {
-        account: multisig_account_id.signatory().clone(),
-        signatories: signatories
+    let register_multisig_account = MultisigRegister::new(
+        multisig_account_id.clone(),
+        signatories
             .keys()
             .enumerate()
             .map(|(weight, id)| (id.clone(), 1 + weight as u8))
             .collect(),
         // Can be met without the first signatory
-        quorum: (1..=N_SIGNATORIES).skip(1).sum::<usize>() as u16,
-        transaction_ttl_ms: transaction_ttl_ms.unwrap_or(u64::MAX),
-    };
-    let register_multisig_account =
-        ExecuteTrigger::new(multisig_accounts_registry_id).with_args(args);
+        (1..=N_SIGNATORIES).skip(1).sum::<usize>() as u16,
+        transaction_ttl_ms.unwrap_or(u64::MAX),
+    );
 
     // Any account in another domain cannot register a multisig account without special permission
     let _err = alt_client(
@@ -142,8 +139,7 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
     let proposer = signatories.pop_last().unwrap();
     let approvers = signatories;
 
-    let args = &MultisigTransactionArgs::Propose(instructions);
-    let propose = ExecuteTrigger::new(multisig_transactions_registry_id.clone()).with_args(args);
+    let propose = MultisigPropose::new(multisig_account_id.clone(), instructions);
 
     alt_client(proposer, &test_client).submit_blocking(propose)?;
 
@@ -163,9 +159,7 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
 
     // All but the first signatory approve the multisig transaction
     for approver in approvers.into_iter().skip(1) {
-        let args = &MultisigTransactionArgs::Approve(instructions_hash);
-        let approve =
-            ExecuteTrigger::new(multisig_transactions_registry_id.clone()).with_args(args);
+        let approve = MultisigApprove::new(multisig_account_id.clone(), instructions_hash);
 
         alt_client(approver, &test_client).submit_blocking(approve)?;
     }
@@ -202,7 +196,6 @@ fn multisig_recursion() -> Result<()> {
     let test_client = network.client();
 
     let wonderland = "wonderland";
-    let ms_accounts_registry_id = multisig_accounts_registry_of(&wonderland.parse().unwrap());
 
     // Populate signatories in the domain
     let signatories = core::iter::repeat_with(|| gen_account_in(wonderland))
@@ -227,14 +220,12 @@ fn multisig_recursion() -> Result<()> {
             .into_iter()
             .map(|sigs| {
                 let ms_account_id = gen_account_in(wonderland).0;
-                let args = MultisigAccountArgs {
-                    account: ms_account_id.signatory().clone(),
-                    signatories: sigs.iter().copied().map(|id| (id.clone(), 1)).collect(),
-                    quorum: sigs.len().try_into().unwrap(),
-                    transaction_ttl_ms: u64::MAX,
-                };
-                let register_ms_account =
-                    ExecuteTrigger::new(ms_accounts_registry_id.clone()).with_args(&args);
+                let register_ms_account = MultisigRegister::new(
+                    ms_account_id.clone(),
+                    sigs.iter().copied().map(|id| (id.clone(), 1)).collect(),
+                    sigs.len().try_into().unwrap(),
+                    u64::MAX,
+                );
 
                 test_client
                     .submit_blocking(register_ms_account)
@@ -274,9 +265,7 @@ fn multisig_recursion() -> Result<()> {
     let instructions_hash = HashOf::new(&instructions);
 
     let proposer = sigs_0.pop_last().unwrap();
-    let ms_transactions_registry_id = multisig_transactions_registry_of(&msa_012345);
-    let args = MultisigTransactionArgs::Propose(instructions);
-    let propose = ExecuteTrigger::new(ms_transactions_registry_id.clone()).with_args(&args);
+    let propose = MultisigPropose::new(msa_012345.clone(), instructions);
 
     alt_client(proposer, &test_client).submit_blocking(propose)?;
 
@@ -290,18 +279,12 @@ fn multisig_recursion() -> Result<()> {
     // Check that the entire authentication policy has been deployed down to one of the leaf registries
     let approval_hash_to_12345 = {
         let approval_hash_to_012345 = {
-            let registry_id = multisig_transactions_registry_of(&msa_012345);
-            let args = MultisigTransactionArgs::Approve(instructions_hash);
-            let approve: InstructionBox = ExecuteTrigger::new(registry_id.clone())
-                .with_args(&args)
+            let approve: InstructionBox = MultisigApprove::new(msa_012345.clone(), instructions_hash)
                 .into();
 
             HashOf::new(&vec![approve])
         };
-        let registry_id = multisig_transactions_registry_of(&msa_12345);
-        let args = MultisigTransactionArgs::Approve(approval_hash_to_012345);
-        let approve: InstructionBox = ExecuteTrigger::new(registry_id.clone())
-            .with_args(&args)
+        let approve: InstructionBox = MultisigApprove::new(msa_12345.clone(), approval_hash_to_012345)
             .into();
 
         HashOf::new(&vec![approve])
@@ -330,9 +313,7 @@ fn multisig_recursion() -> Result<()> {
                             instructions_hash: HashOf<Vec<InstructionBox>>,
                             ms_account: &AccountId| {
         for approver in approvers {
-            let registry_id = multisig_transactions_registry_of(ms_account);
-            let args = MultisigTransactionArgs::Approve(instructions_hash);
-            let approve = ExecuteTrigger::new(registry_id.clone()).with_args(&args);
+            let approve = MultisigApprove::new(ms_account.clone(), instructions_hash);
 
             alt_client(approver, &test_client)
                 .submit_blocking(approve)
@@ -463,10 +444,12 @@ fn alt_client(signatory: (AccountId, KeyPair), base_client: &Client) -> Client {
     }
 }
 
+#[expect(dead_code)]
 fn multisig_accounts_registry_of(domain: &DomainId) -> TriggerId {
     format!("multisig_accounts_{domain}",).parse().unwrap()
 }
 
+#[expect(dead_code)]
 fn multisig_transactions_registry_of(multisig_account: &AccountId) -> TriggerId {
     format!(
         "multisig_transactions_{}_{}",
@@ -477,7 +460,7 @@ fn multisig_transactions_registry_of(multisig_account: &AccountId) -> TriggerId 
     .unwrap()
 }
 
-#[allow(dead_code)]
+#[expect(dead_code)]
 fn debug_mst_registry(msa: &AccountId, client: &Client) {
     let mst_registry = client
         .query(FindTriggers::new())

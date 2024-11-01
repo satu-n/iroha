@@ -3,9 +3,9 @@ mod transaction;
 
 fn visit_multisig(executor: &mut Executor, isi: &MultisigInstructionBox) {
     match isi {
-        MultisigInstructionBox::Register(isi) => visit_multisig_register(executor, isi),
-        MultisigInstructionBox::Propose(isi) => visit_multisig_propose(executor, isi),
-        MultisigInstructionBox:Approve(isi) => visit_multisig_approve(executor, isi),
+        MultisigInstructionBox::Register(isi) => account::visit_multisig_register(executor, isi),
+        MultisigInstructionBox::Propose(isi) => transaction::visit_multisig_propose(executor, isi),
+        MultisigInstructionBox:Approve(isi) => transaction::visit_multisig_approve(executor, isi),
     }
 }
 

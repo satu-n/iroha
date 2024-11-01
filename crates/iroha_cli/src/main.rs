@@ -1180,7 +1180,7 @@ mod multisig {
     use std::io::{BufReader, Read as _};
 
     use iroha::multisig_data_model::{
-        MultisigAccountArgs, MultisigTransactionArgs, DEFAULT_MULTISIG_TTL_MS,
+        MultisigRegister, MultisigPropose, MultisigApprove, DEFAULT_MULTISIG_TTL_MS,
     };
 
     use super::*;
@@ -1190,7 +1190,7 @@ mod multisig {
     pub enum Args {
         /// Register a multisig account
         Register(Register),
-        /// Propose a multisig transaction
+        /// Propose a multisig transaction, with `Vec<InstructionBox>` stdin
         Propose(Propose),
         /// Approve a multisig transaction
         Approve(Approve),
@@ -1230,30 +1230,18 @@ mod multisig {
 
     impl RunArgs for Register {
         fn run(self, context: &mut dyn RunContext) -> Result<()> {
-            let Self {
-                account,
-                signatories,
-                weights,
-                quorum,
-                transaction_ttl,
-            } = self;
-            if signatories.len() != weights.len() {
+            if self.signatories.len() != self.weights.len() {
                 return Err(eyre!("signatories and weights must be equal in length"));
             }
-            let registry_id: TriggerId = format!("multisig_accounts_{}", account.domain())
-                .parse()
-                .unwrap();
-            let args = MultisigAccountArgs {
-                account: account.signatory().clone(),
-                signatories: signatories.into_iter().zip(weights).collect(),
-                quorum,
-                transaction_ttl_ms: transaction_ttl
+            let register_multisig_account = MultisigRegister::new(
+                self.account,
+                self.signatories.into_iter().zip(self.weights).collect(),
+                self.quorum,
+                self.transaction_ttl
                     .as_millis()
                     .try_into()
                     .expect("ttl must be within 584942417 years"),
-            };
-            let register_multisig_account =
-                iroha::data_model::isi::ExecuteTrigger::new(registry_id).with_args(&args);
+            );
 
             submit([register_multisig_account], Metadata::default(), context)
                 .wrap_err("Failed to register multisig account")
@@ -1270,14 +1258,6 @@ mod multisig {
 
     impl RunArgs for Propose {
         fn run(self, context: &mut dyn RunContext) -> Result<()> {
-            let Self { account } = self;
-            let registry_id: TriggerId = format!(
-                "multisig_transactions_{}_{}",
-                account.signatory(),
-                account.domain()
-            )
-            .parse()
-            .unwrap();
             let instructions: Vec<InstructionBox> = {
                 let mut reader = BufReader::new(stdin());
                 let mut raw_content = Vec::new();
@@ -1287,9 +1267,8 @@ mod multisig {
             };
             let instructions_hash = HashOf::new(&instructions);
             println!("{instructions_hash}");
-            let args = MultisigTransactionArgs::Propose(instructions);
             let propose_multisig_transaction =
-                iroha::data_model::isi::ExecuteTrigger::new(registry_id).with_args(&args);
+                MultisigPropose::new(self.account, instructions);
 
             submit([propose_multisig_transaction], Metadata::default(), context)
                 .wrap_err("Failed to propose transaction")
@@ -1309,20 +1288,7 @@ mod multisig {
 
     impl RunArgs for Approve {
         fn run(self, context: &mut dyn RunContext) -> Result<()> {
-            let Self {
-                account,
-                instructions_hash,
-            } = self;
-            let registry_id: TriggerId = format!(
-                "multisig_transactions_{}_{}",
-                account.signatory(),
-                account.domain()
-            )
-            .parse()
-            .unwrap();
-            let args = MultisigTransactionArgs::Approve(instructions_hash);
-            let approve_multisig_transaction =
-                iroha::data_model::isi::ExecuteTrigger::new(registry_id).with_args(&args);
+            let approve_multisig_transaction = MultisigApprove::new(self.account, self.instructions_hash);
 
             submit([approve_multisig_transaction], Metadata::default(), context)
                 .wrap_err("Failed to approve transaction")

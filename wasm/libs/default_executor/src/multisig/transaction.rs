@@ -1,28 +1,9 @@
+// SATO doc
 //! Trigger given per multi-signature account to control multi-signature transactions
 
-#![no_std]
+fn visit_multisig_propose(executor: &mut Executor, isi: &MultisigPropose) {}
 
-extern crate alloc;
-#[cfg(not(test))]
-extern crate panic_halt;
-
-use alloc::{
-    collections::{btree_map::BTreeMap, btree_set::BTreeSet},
-    format,
-    vec::Vec,
-};
-
-use dlmalloc::GlobalDlmalloc;
-use iroha_multisig_data_model::MultisigTransactionArgs;
-use iroha_trigger::{
-    debug::{dbg_panic, DebugExpectExt as _},
-    prelude::*,
-};
-
-#[global_allocator]
-static ALLOC: GlobalDlmalloc = GlobalDlmalloc;
-
-getrandom::register_custom_getrandom!(iroha_trigger::stub_getrandom);
+fn visit_multisig_approve(executor: &mut Executor, isi: &MultisigApprove) {}
 
 #[iroha_trigger::main]
 fn main(host: Iroha, context: Context) {

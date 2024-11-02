@@ -1,7 +1,3 @@
-extern crate alloc;
-
-pub(super) use iroha_multisig_data_model::*;
-
 use super::*;
 
 mod account;
@@ -34,3 +30,5 @@ impl VisitExecute for MultisigInstructionBox {
         }
     }
 }
+
+pub(super) use iroha_multisig_data_model::*;

@@ -7,7 +7,6 @@ extern crate alloc;
 
 use alloc::{format, string::String, vec::Vec};
 
-pub use constants::*;
 use derive_more::{Constructor, From};
 use iroha_data_model::{
     isi::{CustomInstruction, Instruction, InstructionBox},
@@ -217,3 +216,5 @@ impl TryFrom<&Json> for MultisigTransactionArgs {
         serde_json::from_str::<Self>(payload.as_ref())
     }
 }
+
+pub use constants::*;

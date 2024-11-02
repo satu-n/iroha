@@ -80,7 +80,7 @@ LIST=$(./iroha --config "client.5.toml" multisig list all)
 echo "$LIST" | grep $INSTRUCTIONS_HASH
 
 # approve the multisig transaction
-HASH_TO_12345=$(echo "$LIST" | grep -A1 "multisig_transactions" | sed 's/_/@/g' | grep -A1 $MSA_345 | tail -n 1 | tr -d '"')
+HASH_TO_12345=$(echo "$LIST" | grep -A1 $MSA_345 | tail -n 1 | tr -d '"')
 ./iroha --config "client.5.toml" multisig approve --account $MSA_345 --instructions-hash $HASH_TO_12345
 
 # SATO

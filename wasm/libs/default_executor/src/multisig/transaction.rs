@@ -11,19 +11,31 @@ use super::*;
 impl VisitExecute for MultisigPropose {
     fn visit(&self, executor: &mut Executor) {
         let host = executor.host();
+        let proposer = executor.context().authority.clone();
         let target_account = self.account.clone();
         let multisig_role = multisig_role_for(&target_account);
         let instructions_hash = HashOf::new(&self.instructions);
-
-        let Ok(_role_found) = host
-            .query(FindRolesByAccountId::new(
-                executor.context().authority.clone(),
+        let is_top_down_proposal = host
+            .query_single(FindAccountMetadata::new(
+                proposer.clone(),
+                SIGNATORIES.parse().unwrap(),
             ))
-            .filter_with(|role_id| role_id.eq(multisig_role))
-            .execute_single()
-        else {
-            deny!(executor, "not qualified to propose multisig");
-        };
+            .map_or(false, |proposer_signatories| {
+                proposer_signatories
+                    .try_into_any::<BTreeMap<AccountId, u8>>()
+                    .dbg_unwrap()
+                    .contains_key(&target_account)
+            });
+
+        if !is_top_down_proposal {
+            let Ok(_role_found) = host
+                .query(FindRolesByAccountId::new(proposer))
+                .filter_with(|role_id| role_id.eq(multisig_role))
+                .execute_single()
+            else {
+                deny!(executor, "not qualified to propose multisig");
+            };
+        }
 
         let Err(_proposal_not_found) = host.query_single(FindAccountMetadata::new(
             target_account.clone(),
@@ -110,14 +122,13 @@ impl VisitExecute for MultisigPropose {
 impl VisitExecute for MultisigApprove {
     fn visit(&self, executor: &mut Executor) {
         let host = executor.host();
+        let approver = executor.context().authority.clone();
         let target_account = self.account.clone();
         let multisig_role = multisig_role_for(&target_account);
         let instructions_hash = self.instructions_hash;
 
         let Ok(_role_found) = host
-            .query(FindRolesByAccountId::new(
-                executor.context().authority.clone(),
-            ))
+            .query(FindRolesByAccountId::new(approver))
             .filter_with(|role_id| role_id.eq(multisig_role))
             .execute_single()
         else {
@@ -140,7 +151,7 @@ impl VisitExecute for MultisigApprove {
         executor: &mut Executor,
         init_authority: &AccountId,
     ) -> Result<(), ValidationFail> {
-        let host = executor.host();
+        let host = executor.host().clone();
         let target_account = self.account;
         let instructions_hash = self.instructions_hash;
         let signatories: BTreeMap<AccountId, u8> = host
@@ -241,8 +252,13 @@ impl VisitExecute for MultisigApprove {
             if !is_expired {
                 // Execute instructions proposal which collected enough approvals
                 for isi in instructions {
-                    host.submit(&isi).dbg_unwrap();
+                    match isi {
+                        InstructionBox::Custom(instruction) => visit_custom(executor, &instruction),
+                        builtin => host.submit(&builtin).dbg_unwrap(),
+                    }
                 }
+            } else {
+                // SATO error: proposal expired
             }
         }
 

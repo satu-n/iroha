@@ -111,10 +111,11 @@ impl VisitExecute for MultisigRegister {
                 );
         }
 
-        host.submit(&Revoke::account_role(multisig_role, domain_owner))
-            .dbg_expect(
-                "domain owner should successfully revoke the multisig role from the domain owner",
-            );
+        // SATO restore
+        // host.submit(&Revoke::account_role(multisig_role, domain_owner))
+        //     .dbg_expect(
+        //         "domain owner should successfully revoke the multisig role from the domain owner",
+        //     );
 
         Ok(())
     }

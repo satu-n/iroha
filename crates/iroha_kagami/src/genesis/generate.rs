@@ -9,9 +9,7 @@ use iroha_data_model::{isi::InstructionBox, parameter::Parameters, prelude::*};
 use iroha_executor_data_model::permission::{
     domain::CanRegisterDomain, parameter::CanSetParameters,
 };
-use iroha_genesis::{
-    GenesisBuilder, RawGenesisTransaction, GENESIS_DOMAIN_ID,
-};
+use iroha_genesis::{GenesisBuilder, RawGenesisTransaction, GENESIS_DOMAIN_ID};
 use iroha_test_samples::{gen_account_in, ALICE_ID, BOB_ID, CARPENTER_ID};
 
 use crate::{Outcome, RunArgs};

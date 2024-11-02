@@ -1250,7 +1250,10 @@ pub mod role {
             {
                 is_multisig_role = true;
             } else {
-                deny!(executor, "role name conflicts with the reserved multisig role names")
+                deny!(
+                    executor,
+                    "role name conflicts with the reserved multisig role names"
+                )
             }
         }
 

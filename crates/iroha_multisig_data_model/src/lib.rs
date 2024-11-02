@@ -20,8 +20,6 @@ pub use constants::*;
 
 #[allow(missing_docs)]
 mod constants {
-    use alloc::string::ParseError;
-
     use super::*;
 
     pub const SIGNATORIES: &str = "signatories";

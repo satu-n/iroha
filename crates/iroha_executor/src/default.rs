@@ -1167,7 +1167,7 @@ pub mod parameter {
 }
 
 pub mod role {
-    use iroha_executor_data_model::permission::{role::CanManageRoles, trigger::CanExecuteTrigger};
+    use iroha_executor_data_model::permission::role::CanManageRoles;
     use iroha_smart_contract::{data_model::role::Role, Iroha};
     use iroha_multisig_data_model::multisig_account_from;
 

@@ -1,34 +1,48 @@
 // SATO doc
 //! Trigger given per multi-signature account to control multi-signature transactions
 
+use alloc::{
+    collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+    vec::Vec,
+};
+
+use super::*;
+
 impl VisitExecute for MultisigPropose {
     fn visit(&self, executor: &mut Executor) {
         let host = executor.host();
-        let target_account = self.account();
-        let multisig_role = multisig_signatory(&target_account);
-        let instructions_hash = HashOf::new(self.instructions);
+        let target_account = self.account.clone();
+        let multisig_role = multisig_role_for(&target_account);
+        let instructions_hash = HashOf::new(&self.instructions);
 
-        let _role_found = host
-            .query(FindRolesByAccountId::new(executor.context().authority))
-            .filter_with(|role| role.id.eq(multisig_role))
-            .unwrap_or_else(|err| deny!(executor, err));
+        let Ok(_role_found) = host
+            .query(FindRolesByAccountId::new(
+                executor.context().authority.clone(),
+            ))
+            .filter_with(|role_id| role_id.eq(multisig_role))
+            .execute_single()
+        else {
+            deny!(executor, "not qualified to propose multisig");
+        };
 
         let Err(_proposal_not_found) = host.query_single(FindAccountMetadata::new(
-            target_account,
+            target_account.clone(),
             approvals_key(&instructions_hash),
         )) else {
-            deny!(executor, "proposal duplicates")
+            deny!(executor, "multisig proposal duplicates")
         };
+
+        // Pass validation and elevate to the multisig account authority
+        executor.context_mut().authority = target_account;
     }
 
     fn execute(
         self,
-        executor: &Executor,
+        executor: &mut Executor,
         init_authority: &AccountId,
     ) -> Result<(), ValidationFail> {
-        let host = executor.host();
-        let target_account = self.account();
-        let multisig_role = multisig_signatory(&target_account);
+        let host = executor.host().clone();
+        let target_account = self.account;
         let instructions_hash = HashOf::new(&self.instructions);
         let signatories: BTreeMap<AccountId, u8> = host
             .query_single(FindAccountMetadata::new(
@@ -40,10 +54,10 @@ impl VisitExecute for MultisigPropose {
             .dbg_unwrap();
 
         // Recursively deploy multisig authentication down to the personal leaf signatories
-        for signatory in signatories.keys() {
+        for signatory in signatories.keys().cloned() {
             let is_multisig_again = host
                 .query(FindRoleIds)
-                .filter_with(|role_id| role_id.eq(multisig_signatory(&signatory)))
+                .filter_with(|role_id| role_id.eq(multisig_role_for(&signatory)))
                 .execute_single_opt()
                 .dbg_unwrap()
                 .is_some();
@@ -53,10 +67,9 @@ impl VisitExecute for MultisigPropose {
                     let approve_me =
                         MultisigApprove::new(target_account.clone(), instructions_hash.clone());
 
-                    MultisigPropose::new(signatory, [approve_me.into()].to_vec());
+                    MultisigPropose::new(signatory, [approve_me.into()].to_vec())
                 };
-                host.submit(&propose_to_approve_me)
-                    .dbg_expect("should successfully prompt signatory to approve");
+                propose_to_approve_me.visit_execute(executor);
             }
         }
 
@@ -64,6 +77,7 @@ impl VisitExecute for MultisigPropose {
             .context()
             .curr_block
             .creation_time()
+            .as_millis()
             .try_into()
             .dbg_unwrap();
         let approvals = BTreeSet::from([init_authority.clone()]);
@@ -88,39 +102,46 @@ impl VisitExecute for MultisigPropose {
             Json::new(&approvals),
         ))
         .dbg_unwrap();
+
+        Ok(())
     }
 }
 
 impl VisitExecute for MultisigApprove {
     fn visit(&self, executor: &mut Executor) {
         let host = executor.host();
-        let target_account = self.account();
-        let multisig_role = multisig_signatory(&target_account);
+        let target_account = self.account.clone();
+        let multisig_role = multisig_role_for(&target_account);
         let instructions_hash = self.instructions_hash;
 
-        let _role_found = host
-            .query(FindRolesByAccountId::new(executor.context().authority))
-            .filter_with(|role| role.id.eq(multisig_role))
-            .unwrap_or_else(|err| deny!(executor, err));
+        let Ok(_role_found) = host
+            .query(FindRolesByAccountId::new(
+                executor.context().authority.clone(),
+            ))
+            .filter_with(|role_id| role_id.eq(multisig_role))
+            .execute_single()
+        else {
+            deny!(executor, "not qualified to approve multisig");
+        };
 
         let Ok(_proposal_found) = host.query_single(FindAccountMetadata::new(
-            target_account,
+            target_account.clone(),
             approvals_key(&instructions_hash),
         )) else {
             deny!(executor, "no proposals to approve")
         };
 
         // Pass validation and elevate to the multisig account authority
-        *executor.context_mut().authority = target_account.clone();
+        executor.context_mut().authority = target_account;
     }
 
     fn execute(
         self,
-        executor: &Executor,
+        executor: &mut Executor,
         init_authority: &AccountId,
     ) -> Result<(), ValidationFail> {
         let host = executor.host();
-        let target_account = self.account();
+        let target_account = self.account;
         let instructions_hash = self.instructions_hash;
         let signatories: BTreeMap<AccountId, u8> = host
             .query_single(FindAccountMetadata::new(
@@ -131,7 +152,7 @@ impl VisitExecute for MultisigApprove {
             .try_into_any()
             .dbg_unwrap();
         let quorum: u16 = host
-            .query_single(FindaccountMetadata::new(
+            .query_single(FindAccountMetadata::new(
                 target_account.clone(),
                 QUORUM.parse().unwrap(),
             ))
@@ -139,7 +160,7 @@ impl VisitExecute for MultisigApprove {
             .try_into_any()
             .dbg_unwrap();
         let transaction_ttl_ms: u64 = host
-            .query_single(FindaccountMetadata::new(
+            .query_single(FindAccountMetadata::new(
                 target_account.clone(),
                 TRANSACTION_TTL_MS.parse().unwrap(),
             ))
@@ -147,7 +168,7 @@ impl VisitExecute for MultisigApprove {
             .try_into_any()
             .dbg_unwrap();
         let instructions: Vec<InstructionBox> = host
-            .query_single(FindaccountMetadata::new(
+            .query_single(FindAccountMetadata::new(
                 target_account.clone(),
                 instructions_key(&instructions_hash),
             ))
@@ -155,14 +176,13 @@ impl VisitExecute for MultisigApprove {
             .try_into_any()
             .dbg_unwrap();
         let proposed_at_ms: u64 = host
-            .query_single(FindaccountMetadata::new(
+            .query_single(FindAccountMetadata::new(
                 target_account.clone(),
                 proposed_at_ms_key(&instructions_hash),
             ))
             .dbg_unwrap()
             .try_into_any()
             .dbg_unwrap();
-
         let mut approvals: BTreeSet<AccountId> = host
             .query_single(FindAccountMetadata::new(
                 target_account.clone(),
@@ -185,8 +205,9 @@ impl VisitExecute for MultisigApprove {
             .context()
             .curr_block
             .creation_time()
+            .as_millis()
             .try_into()
-            .dbg_unwrap();
+            .dbg_expect("shouldn't overflow within 584942417 years");
 
         let is_authenticated = quorum
             <= signatories
@@ -204,11 +225,13 @@ impl VisitExecute for MultisigApprove {
                 approvals_key(&instructions_hash),
             ))
             .dbg_unwrap();
+
             host.submit(&RemoveKeyValue::account(
                 target_account.clone(),
                 proposed_at_ms_key(&instructions_hash),
             ))
             .dbg_unwrap();
+
             host.submit(&RemoveKeyValue::account(
                 target_account.clone(),
                 instructions_key(&instructions_hash),
@@ -222,5 +245,7 @@ impl VisitExecute for MultisigApprove {
                 }
             }
         }
+
+        Ok(())
     }
 }

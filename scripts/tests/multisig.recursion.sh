@@ -68,11 +68,12 @@ INSTRUCTIONS="../scripts/tests/instructions.json"
 propose_stdout=($(cat $INSTRUCTIONS | ./iroha --config "client.0.toml" multisig propose --account $MSA_012345))
 INSTRUCTIONS_HASH=${propose_stdout[0]}
 
+# SATO
 # ticks as many times as the multisig recursion
-TICK="../scripts/tests/tick.json"
-for i in $(seq 0 1); do
-    cat $TICK | ./iroha json transaction
-done
+# TICK="../scripts/tests/tick.json"
+# for i in $(seq 0 1); do
+#     cat $TICK | ./iroha json transaction
+# done
 
 # check that one of the leaf signatories is involved
 LIST=$(./iroha --config "client.5.toml" multisig list all)
@@ -82,10 +83,11 @@ echo "$LIST" | grep $INSTRUCTIONS_HASH
 HASH_TO_12345=$(echo "$LIST" | grep -A1 "multisig_transactions" | sed 's/_/@/g' | grep -A1 $MSA_345 | tail -n 1 | tr -d '"')
 ./iroha --config "client.5.toml" multisig approve --account $MSA_345 --instructions-hash $HASH_TO_12345
 
+# SATO
 # ticks as many times as the multisig recursion
-for i in $(seq 0 1); do
-    cat $TICK | ./iroha json transaction
-done
+# for i in $(seq 0 1); do
+#     cat $TICK | ./iroha json transaction
+# done
 
 # check that the multisig transaction is executed
 ./iroha account list all | grep "congratulations"

@@ -263,7 +263,7 @@ fn multisig_recursion() -> Result<()> {
     let approvals_at_12: BTreeSet<AccountId> = test_client
         .query_single(FindAccountMetadata::new(
             msa_12.clone(),
-                approvals_key(&approval_hash_to_12345)
+            approvals_key(&approval_hash_to_12345),
         ))
         .expect("leaf approvals should be initialized by the root proposal")
         .try_into_any()

@@ -6,7 +6,7 @@ use super::*;
 impl VisitExecute for MultisigRegister {
     fn visit(&self, executor: &mut Executor) {
         let host = executor.host();
-        let target_domain = self.account().domain();
+        let target_domain = self.account.domain();
 
         // Any account in a domain can register any multisig account in the domain
         // TODO Restrict access to the multisig signatories?
@@ -18,33 +18,43 @@ impl VisitExecute for MultisigRegister {
             )
         }
 
-        let domain_found = host
+        let Ok(domain_found) = host
             .query(FindDomains)
             .filter_with(|domain| domain.id.eq(target_domain.clone()))
             .execute_single()
-            .unwrap_or_else(|err| deny!(executor, err));
+        else {
+            deny!(
+                executor,
+                "domain must exist before registering multisig account"
+            );
+        };
 
         for signatory in self.signatories.keys() {
-            let _signatory_found = host
+            let Ok(_signatory_found) = host
                 .query(FindAccounts)
                 .filter_with(|account| account.id.eq(signatory.clone()))
                 .execute_single()
-                .unwrap_or_else(|err| deny!(executor, err));
+            else {
+                deny!(
+                    executor,
+                    "signatories must exist before registering multisig account"
+                );
+            };
         }
 
         // Pass validation and elevate to the domain owner authority
-        *executor.context_mut().authority = domain_found.owned_by().clone();
+        executor.context_mut().authority = domain_found.owned_by().clone();
     }
 
     fn execute(
         self,
-        executor: &Executor,
+        executor: &mut Executor,
         _init_authority: &AccountId,
     ) -> Result<(), ValidationFail> {
         let host = executor.host();
-        let domain_owner = executor.content().authority;
-        let multisig_account = self.account().clone();
-        let multisig_role = multisig_signatory(&multisig_account);
+        let domain_owner = executor.context().authority.clone();
+        let multisig_account = self.account;
+        let multisig_role = multisig_role_for(&multisig_account);
 
         host.submit(&Register::account(Account::new(multisig_account.clone())))
             .dbg_expect("domain owner should successfully register a multisig account");
@@ -80,7 +90,7 @@ impl VisitExecute for MultisigRegister {
             // SATO remove
             // let is_multisig_again = host
             //     .query(FindRoleIds)
-            //     .filter_with(|role_id| role_id.eq(multisig_signatory(&signatory)))
+            //     .filter_with(|role_id| role_id.eq(multisig_role_for(&signatory)))
             //     .execute_single_opt()
             //     .dbg_unwrap()
             //     .is_some();
@@ -105,5 +115,7 @@ impl VisitExecute for MultisigRegister {
             .dbg_expect(
                 "domain owner should successfully revoke the multisig role from the domain owner",
             );
+
+        Ok(())
     }
 }

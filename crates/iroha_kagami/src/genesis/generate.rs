@@ -151,24 +151,6 @@ pub fn generate_default(
         builder = builder.append_instruction(isi);
     }
 
-    // Manually register a multisig accounts registry for wonderland whose creation in genesis does not trigger the initializer
-    let multisig_accounts_registry_for_wonderland = {
-        let domain_owner = ALICE_ID.clone();
-        let registry_id = "multisig_accounts_wonderland".parse::<TriggerId>().unwrap();
-
-        GenesisWasmTrigger::new(
-            registry_id.clone(),
-            GenesisWasmAction::new(
-                "multisig_accounts.wasm",
-                Repeats::Indefinitely,
-                domain_owner,
-                ExecuteTriggerEventFilter::new().for_trigger(registry_id),
-            ),
-        )
-    };
-
-    builder = builder.append_wasm_trigger(multisig_accounts_registry_for_wonderland);
-
     Ok(builder.build_raw())
 }
 

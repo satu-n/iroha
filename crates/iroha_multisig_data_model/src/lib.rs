@@ -7,16 +7,14 @@ extern crate alloc;
 
 use alloc::{format, string::String, vec::Vec};
 
+pub use constants::*;
 use derive_more::{Constructor, From};
-use getset::Getters;
 use iroha_data_model::{
     isi::{CustomInstruction, Instruction, InstructionBox},
     prelude::Json,
 };
 use iroha_schema::IntoSchema;
 use serde::{Deserialize, Serialize};
-
-pub use constants::*;
 
 #[allow(missing_docs)]
 mod constants {
@@ -33,7 +31,9 @@ mod constants {
         format!("{PROPOSALS}/{hash}/instructions").parse().unwrap()
     }
     pub fn proposed_at_ms_key(hash: &HashOf<Vec<InstructionBox>>) -> Name {
-        format!("{PROPOSALS}/{hash}/proposed_at_ms").parse().unwrap()
+        format!("{PROPOSALS}/{hash}/proposed_at_ms")
+            .parse()
+            .unwrap()
     }
     pub fn approvals_key(hash: &HashOf<Vec<InstructionBox>>) -> Name {
         format!("{PROPOSALS}/{hash}/approvals").parse().unwrap()
@@ -48,13 +48,12 @@ mod constants {
         .unwrap()
     }
     pub fn multisig_account_from(role: &RoleId) -> Option<AccountId> {
-        role
-        .name()
-        .as_ref()
-        .strip_prefix(MULTISIG_SIGNATORY_)?
-        .replacen('_', "@", 1)
-        .parse()
-        .ok()
+        role.name()
+            .as_ref()
+            .strip_prefix(MULTISIG_SIGNATORY_)?
+            .replacen('_', "@", 1)
+            .parse()
+            .ok()
     }
 }
 
@@ -70,7 +69,7 @@ pub enum MultisigInstructionBox {
 }
 
 /// SATO doc
-#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
+#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor)]
 pub struct MultisigRegister {
     /// Multisig account to be registered
     /// <div class="warning">
@@ -80,26 +79,30 @@ pub struct MultisigRegister {
     /// </div>
     // FIXME #5022 prevent multisig monopoly
     // FIXME #5022 stop accepting user input: otherwise, after #4426 pre-registration account will be hijacked as a multisig account
-    account: AccountId,
+    pub account: AccountId,
     /// List of accounts and their relative weights of responsibility for the multisig
-    signatories: BTreeMap<AccountId, Weight>,
+    pub signatories: BTreeMap<AccountId, Weight>,
     /// Threshold of total weight at which the multisig is considered authenticated
-    quorum: u16,
+    pub quorum: u16,
     /// Multisig transaction time-to-live in milliseconds based on block timestamps. Defaults to [`DEFAULT_MULTISIG_TTL_MS`]
-    transaction_ttl_ms: u64,
+    pub transaction_ttl_ms: u64,
 }
 
 /// SATO doc
-#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
+#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor)]
 pub struct MultisigPropose {
-    account: AccountId,
-    instructions: Vec<InstructionBox>,
+    /// SATO doc
+    pub account: AccountId,
+    /// SATO doc
+    pub instructions: Vec<InstructionBox>,
 }
 /// SATO doc
-#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor, Getters)]
+#[derive(Debug, Clone, Deserialize, Serialize, IntoSchema, Constructor)]
 pub struct MultisigApprove {
-    account: AccountId,
-    instructions_hash: HashOf<Vec<InstructionBox>>,
+    /// SATO doc
+    pub account: AccountId,
+    /// SATO doc
+    pub instructions_hash: HashOf<Vec<InstructionBox>>,
 }
 
 macro_rules! impl_custom_instruction {

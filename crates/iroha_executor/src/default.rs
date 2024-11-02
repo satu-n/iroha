@@ -1250,7 +1250,7 @@ pub mod role {
             {
                 is_multisig_role = true;
             } else {
-                deny!(executor, "reserved role name for the domain owner")
+                deny!(executor, "role name conflicts with the reserved multisig role names")
             }
         }
 

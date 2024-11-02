@@ -7,7 +7,7 @@ use eyre::Result;
 use iroha::{
     client::Client,
     crypto::KeyPair,
-    data_model::{prelude::*, query::trigger::FindTriggers, Level},
+    data_model::{prelude::*, Level},
     multisig_data_model::*,
 };
 use iroha_multisig_data_model::approvals_key;

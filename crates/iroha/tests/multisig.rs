@@ -78,18 +78,33 @@ fn multisig_base(transaction_ttl_ms: Option<u64>) -> Result<()> {
     );
 
     // Any account in another domain cannot register a multisig account without special permission
-    // SATO
-    // let _err = alt_client(
-    //     (CARPENTER_ID.clone(), CARPENTER_KEYPAIR.clone()),
-    //     &test_client,
-    // )
-    // .submit_blocking(register_multisig_account.clone())
-    // .expect_err("multisig account should not be registered by account of another domain");
+    // SATO restore
+    let _err = alt_client(
+        (CARPENTER_ID.clone(), CARPENTER_KEYPAIR.clone()),
+        &test_client,
+    )
+    .submit_blocking(register_multisig_account.clone())
+    .expect_err("multisig account should not be registered by account of another domain");
+
+    // SATO debug
+    let registrant = not_signatory.clone();
 
     // Any account in the same domain can register a multisig account without special permission
     alt_client(not_signatory, &test_client)
         .submit_blocking(register_multisig_account)
         .expect("multisig account should be registered by account of the same domain");
+
+    let candidates = [
+        ("alice", ALICE_ID.clone()),
+        ("owner", BOB_ID.clone()),
+        ("mis-registrant", CARPENTER_ID.clone()),
+        ("registrant", registrant.0.clone()),
+    ];
+    eprintln!("multisig_account_id: {multisig_account_id}");
+    for candidate in candidates {
+        let roles = test_client.query(FindRolesByAccountId::new(candidate.1)).execute_all().unwrap();
+        eprintln!("{} roles: {roles:?}", candidate.0);
+    }
 
     // Check that the multisig account has been registered
     test_client

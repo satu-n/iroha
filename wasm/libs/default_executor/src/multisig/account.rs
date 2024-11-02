@@ -111,7 +111,7 @@ impl VisitExecute for MultisigRegister {
                 );
         }
 
-        // SATO restore
+        // FIXME no roles to revoke found, which should have been granted to the domain owner
         // host.submit(&Revoke::account_role(multisig_role, domain_owner))
         //     .dbg_expect(
         //         "domain owner should successfully revoke the multisig role from the domain owner",

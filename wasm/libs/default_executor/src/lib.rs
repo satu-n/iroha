@@ -57,8 +57,10 @@ trait VisitExecute: Instruction {
     fn visit_execute(self, executor: &mut Executor) {
         let init_authority = executor.context().authority.clone();
         self.visit(executor);
-        if let Err(err) = self.execute(executor, &init_authority) {
-            deny!(executor, err);
+        if executor.verdict().is_ok() {
+            if let Err(err) = self.execute(executor, &init_authority) {
+                executor.deny(err);
+            }
         }
         // reset authority per instruction
         // TODO seek a more proper way

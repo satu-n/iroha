@@ -414,6 +414,27 @@ fn multisig_recursion_base(suite: TestSuite) -> Result<()> {
     assert!(proposal_value_at_12.approvals.is_empty());
     assert_eq!(proposal_value_at_12.is_relayed, Some(false));
 
+    // All the rest signatories try to approve the multisig transaction
+    let mut approvals_iter = sigs_12
+        .into_iter()
+        .map(|sig| (sig, msa_12.clone()))
+        .chain(sigs_345.into_iter().map(|sig| (sig, msa_345.clone())))
+        .map(|(sig, msa)| (sig, MultisigApprove::new(msa, approval_hash_to_12345)));
+
+    // Approve once to see if the proposal expires
+    let (approver, approve) = approvals_iter.next().unwrap();
+    alt_client(approver, &test_client).submit_blocking(approve)?;
+
+    // Subsequent approvals should succeed unless the proposal is expired
+    for _ in 2..=4 {
+        let (approver, approve) = approvals_iter.next().unwrap();
+        let res = alt_client(approver, &test_client).submit_blocking(approve.clone());
+        match &transaction_ttl_ms_opt {
+            None => assert!(res.is_ok()),
+            _ => assert!(res.is_err()),
+        }
+    }
+
     // Check that the multisig transaction has not yet executed
     let _err = test_client
         .query_single(FindAccountMetadata::new(
@@ -422,15 +443,12 @@ fn multisig_recursion_base(suite: TestSuite) -> Result<()> {
         ))
         .expect_err("instructions shouldn't execute without enough approvals");
 
-    // All the rest signatories approve the multisig transaction
-    for (sigs, mst_hash, msa) in [
-        (sigs_12, approval_hash_to_12345, &msa_12),
-        (sigs_345, approval_hash_to_12345, &msa_345),
-    ] {
-        for approver in sigs {
-            let approve = MultisigApprove::new(msa.clone(), mst_hash);
-            let _res = alt_client(approver, &test_client).submit_blocking(approve);
-        }
+    // The last approve to proceed to validate and execute the instructions
+    let (approver, approve) = approvals_iter.next().unwrap();
+    let res = alt_client(approver, &test_client).submit_blocking(approve.clone());
+    match (&transaction_ttl_ms_opt, &unauthorized_target_opt) {
+        (None, None) => assert!(res.is_ok()),
+        _ => assert!(res.is_err()),
     }
 
     // Check if the multisig transaction has executed

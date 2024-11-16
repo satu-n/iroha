@@ -1,4 +1,5 @@
 use std::{
+    cell::RefCell,
     collections::BTreeMap,
     num::{NonZeroU16, NonZeroU64},
     time::Duration,
@@ -479,6 +480,115 @@ fn multisig_recursion_base(suite: TestSuite) -> Result<()> {
     Ok(())
 }
 
+/// # Scenario
+///
+/// What if the root proposal is executed or expired while some nodes have not executed their approvals?
+/// Check that an execution and an expiration effects on the entire trie to delete entries
+///
+/// ```
+///              01234567x
+///            /          \
+///        0123x           4567?
+///       /    \          /    \
+///     01x     23?     45?     67?
+///    /  \    /  \    /  \    /  \
+///   0    1  2    3  4    5  6    7
+/// ```
+#[expect(clippy::similar_names, clippy::too_many_lines)]
+fn multisig_recursion_no_orphans_base(suite: TestSuite) -> Result<()> {
+    let TestSuite {
+        domain: _,
+        multisig_account_id: _,
+        unauthorized_target_opt: _,
+        transaction_ttl_ms_opt,
+    } = suite;
+
+    let (network, _rt) = NetworkBuilder::new().start_blocking()?;
+    let test_client = network.client();
+
+    let wonderland = "wonderland";
+
+    let key: Name = "success_marker".parse().unwrap();
+    let instructions = |root: AccountId| {
+        vec![SetKeyValue::account(
+            root,
+            key.clone(),
+            "congratulations".parse::<Json>().unwrap(),
+        )
+        .into()]
+    };
+
+    #[rustfmt::skip]
+    let blueprint: Trie<WeightQuorum> = [
+        (1, [
+            (1, [
+                (1, [
+                    (1, []), // Only one approval to execute the root proposal
+                    (0, []),
+                ]),
+                (1, [
+                    (0, []),
+                    (0, []),
+                ]),
+            ]),
+            (3, [
+                (1, [
+                    (0, []),
+                    (0, []),
+                ]),
+                (1, [
+                    (0, []),
+                    (0, []),
+                ]),
+            ]),
+        ])
+    ].into();
+
+    let root = register_propose(blueprint, instructions, &client);
+
+    // Allow time to elapse to test the expiration
+    if let Some(ms) = transaction_ttl_ms_opt {
+        std::thread::sleep(Duration::from_millis(ms))
+    };
+    test_client.submit_blocking(Log::new(Level::DEBUG, "Just ticking time".to_string()))?;
+
+    // Check that the multisig transaction has not yet executed
+    let _err = test_client
+        .query_single(FindAccountMetadata::new(root.account, key.clone()))
+        .expect_err("instructions shouldn't execute without enough approvals");
+
+    // The first and last approval to execute the multisig transaction
+    let approver = (root[0][0][0].account, root[0][0][0].key_pair.unwrap());
+    let approve = MultisigApprove::new(root[0][0].account, root[0][0].proposal_key.unwrap());
+    let _res = alt_client(approver, &test_client).submit_blocking(approve);
+
+    // Check if the multisig transaction has executed
+    let res = test_client.query_single(FindAccountMetadata::new(root.account, key.clone()));
+    match &transaction_ttl_ms_opt {
+        None => assert!(res.is_ok()),
+        _ => assert!(res.is_err()),
+    }
+
+    // Check if the transaction entries are deleted
+    let mut stack: Vec<Rc<RefCell<Node>>> = vec![Rc::new(RefCell::new(root))];
+    while let Some(node) = stack.pop() {
+        stack.append(node.next);
+        let Some(proposal_key) = node.proposal_key else {
+            continue;
+        };
+        let _err = test_client
+            .query_single(FindAccountMetadata::new(
+                node.account,
+                format!("multisig/proposals/{}", node.proposal_key)
+                    .parse()
+                    .unwrap(),
+            ))
+            .expect_err("entry should not be found");
+    }
+
+    Ok(())
+}
+
 #[test]
 fn reserved_roles() {
     let (network, _rt) = NetworkBuilder::new().start_blocking().unwrap();
@@ -507,6 +617,40 @@ fn alt_client(signatory: (AccountId, KeyPair), base_client: &Client) -> Client {
         key_pair: signatory.1,
         ..base_client.clone()
     }
+}
+
+#[derive(Debug, Clone, Index, Deref)]
+struct Node<T> {
+    #[deref]
+    value: T,
+    #[index]
+    next: Vec<Rc<RefCell<Node<T>>>>,
+}
+
+#[derive(Debug, Clone, Index, From, Into)]
+struct Trie<T>(Vec<(T, Trie<T>)>);
+
+impl From<Trie<T>> for Node<T> {
+    fn from(value: Trie<T>) -> Self {
+        todo!()
+    }
+}
+
+type WeightQuorum = u8;
+
+struct Value {
+    account: AccountId,
+    proposal_key: Option<HashOf<Vec<InstructionBox>>>,
+    spec: Option<MultisigSpec>,
+    key_pair: Option<KeyPair>,
+}
+
+fn register_propose(
+    blueprint: Trie<WeightQuorum>,
+    instructions: impl Fn(AccountId) -> Vec<InstructionBox>,
+    client: &Client,
+) -> Node<Value> {
+    todo!()
 }
 
 #[expect(dead_code)]

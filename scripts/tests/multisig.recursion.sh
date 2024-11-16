@@ -88,8 +88,12 @@ ACCOUNT_BEFORE=$(get_target_account)
 LEAF_INSTRUCTIONS_HASH=$(echo "$LIST_BEFORE" | jq -r 'keys[0]')
 ./iroha --config "client.5.toml" multisig approve --account $MSA_345 --instructions-hash $LEAF_INSTRUCTIONS_HASH
 
-# check that the transaction entry is deleted
+# check that the transaction entry is deleted when seen from the last approver
 LIST_AFTER=$(get_list_as_signatory 5)
+! echo "$LIST_AFTER" | jq -e '.[].instructions' || false
+
+# check that the transaction entry is deleted when seen from another signatory
+LIST_AFTER=$(get_list_as_signatory 2)
 ! echo "$LIST_AFTER" | jq -e '.[].instructions' || false
 
 # check that the multisig transaction has executed

@@ -15,11 +15,11 @@ use crate::{
 /// (https://github.com/hyperledger/iroha/issues/3716#issuecomment-2348417005).
 /// So this cache is used to share `Store` and `Instance` for different transaction validation.
 #[derive(Default)]
-pub struct WasmCache<'world, 'block, 'state> {
-    cache: Option<RuntimeFull<ExecuteTransaction<'world, 'block, 'state>>>,
+pub struct WasmCache<'txn, 'block, 'state> {
+    cache: Option<RuntimeFull<ExecuteTransaction<'txn, 'block, 'state>>>,
 }
 
-impl<'world, 'block, 'state> WasmCache<'world, 'block, 'state> {
+impl<'txn, 'block, 'state> WasmCache<'txn, 'block, 'state> {
     /// Constructor
     pub fn new() -> Self {
         Self { cache: None }
@@ -44,7 +44,7 @@ impl<'world, 'block, 'state> WasmCache<'world, 'block, 'state> {
         &mut self,
         state_transaction: &StateTransaction<'_, '_>,
         module: &Module,
-    ) -> Result<RuntimeFull<ExecuteTransaction<'world, 'block, 'state>>, wasm::Error> {
+    ) -> Result<RuntimeFull<ExecuteTransaction<'txn, 'block, 'state>>, wasm::Error> {
         let parameters = state_transaction.world.parameters().executor;
         if let Some(cached_runtime) = self.cache.take() {
             if cached_runtime.runtime.config == parameters {
@@ -59,7 +59,7 @@ impl<'world, 'block, 'state> WasmCache<'world, 'block, 'state> {
         engine: Engine,
         module: &'_ Module,
         parameters: SmartContractParameters,
-    ) -> Result<RuntimeFull<ExecuteTransaction<'world, 'block, 'state>>, wasm::Error> {
+    ) -> Result<RuntimeFull<ExecuteTransaction<'txn, 'block, 'state>>, wasm::Error> {
         let runtime = wasm::RuntimeBuilder::<ExecuteTransaction>::new()
             .with_engine(engine)
             .with_config(parameters)
@@ -77,7 +77,7 @@ impl<'world, 'block, 'state> WasmCache<'world, 'block, 'state> {
     /// Saves runtime to be reused later.
     pub fn put_cached_runtime(
         &mut self,
-        runtime: RuntimeFull<ExecuteTransaction<'world, 'block, 'state>>,
+        runtime: RuntimeFull<ExecuteTransaction<'txn, 'block, 'state>>,
     ) {
         assert!(runtime.store.data().is_none());
         self.cache = Some(runtime);

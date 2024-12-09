@@ -3,8 +3,60 @@ use iroha::{client, data_model::prelude::*};
 use iroha_test_network::*;
 use iroha_test_samples::{gen_account_in, ALICE_ID};
 
+/// # Scenario
+///
+/// 0. transaction: register carol
+/// 0. account created (carol) -> mint a rose for carol
+/// 0. transaction: transfer the rose from carol ... depends on the last trigger execution
+/// 0. block commit
 #[test]
-fn must_execute_both_triggers() -> Result<()> {
+fn executes_on_every_transaction() -> Result<()> {
+    todo!()
+}
+
+mod matches_a_batch_of_events {
+    use super::*;
+
+    /// # Scenario
+    ///
+    /// 0. instruction: mint a rose
+    /// 0. instruction: mint a rose
+    /// 0. asset created (2 roses) -> transfer the 2 roses
+    #[test]
+    fn accumulation() -> Result<()> {
+        todo!()
+    }
+
+    /// # Scenario
+    ///
+    /// 0. instruction: register carol
+    /// 0. instruction: register dave
+    /// 0. account created (carol | dave) -> mint a rose for carol and dave
+    #[test]
+    fn enumeration() -> Result<()> {
+        todo!()
+    }
+
+    /// # Scenario
+    ///
+    /// 0. instruction: register carol
+    /// 0. instruction: unregister carol
+    /// 0. instruction: register carol
+    /// 0. account created (carol) -> mint a rose for carol
+    #[test]
+    fn cancellation() -> Result<()> {
+        todo!()
+    }
+}
+
+/// # Scenario
+///
+/// 0. register trigger_1 with filter_1
+/// 0. register trigger_2 with filter_2
+/// 0. emit an event that matches both filter_1 and filter_2
+/// 0. both trigger_1 and trigger_2 execute
+#[test]
+fn subscribe_events() -> Result<()> {
     let (network, _rt) = NetworkBuilder::new().start_blocking()?;
     let test_client = network.client();
 

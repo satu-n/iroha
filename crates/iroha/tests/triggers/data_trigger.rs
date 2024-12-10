@@ -1,51 +1,115 @@
 use eyre::Result;
 use iroha::{client, data_model::prelude::*};
+use iroha_data_model::parameter::SumeragiParameter;
 use iroha_test_network::*;
 use iroha_test_samples::{gen_account_in, ALICE_ID};
 
+use crate::triggers::get_asset_value;
+
 /// # Scenario
 ///
-/// 0. transaction: register carol
-/// 0. account created (carol) -> mint a rose for carol
-/// 0. transaction: transfer the rose from carol ... depends on the last trigger execution
+/// 0. transaction: [register carol]
+/// 0. trigger execution: account created (carol) -> mint roses for carol
+/// 0. transaction: [burn a rose of carol] ... depends on the last trigger execution
 /// 0. block commit
 #[test]
 fn executes_on_every_transaction() -> Result<()> {
-    todo!()
+    let carol = gen_account_in("wonderland");
+    let rose_carol: AssetId = format!("rose##{}", carol.0).parse().unwrap();
+    let mint_roses_on_carol_creation = Trigger::new(
+        "mint_roses_on_carol_creation".parse().unwrap(),
+        Action::new(
+            vec![Mint::asset_numeric(2_u32, rose_carol.clone())],
+            Repeats::Indefinitely,
+            ALICE_ID.clone(),
+            AccountEventFilter::new()
+                .for_account(carol.0.clone())
+                .for_events(AccountEventSet::Created),
+        ),
+    );
+    let (network, _rt) = NetworkBuilder::new()
+        .with_genesis_instruction(SetParameter::new(Parameter::Sumeragi(
+            // This reset to the default matters for some reason
+            SumeragiParameter::BlockTimeMs(2_000),
+        )))
+        .with_genesis_instruction(Register::trigger(mint_roses_on_carol_creation))
+        .start_blocking()?;
+    let test_client = network.client();
+
+    test_client.submit(Register::account(Account::new(carol.0.clone())))?;
+    test_client.submit_blocking(Burn::asset_numeric(1_u32, rose_carol.clone()))?;
+    assert_eq!(2, test_client.get_status().unwrap().blocks);
+    assert_eq!(numeric!(1), get_asset_value(&test_client, rose_carol));
+
+    Ok(())
 }
 
 mod matches_a_batch_of_events {
+    use std::collections::BTreeMap;
+
+    use iroha_data_model::isi::Instruction;
+    use iroha_test_samples::load_sample_wasm;
+
     use super::*;
 
     /// # Scenario
     ///
-    /// 0. instruction: mint a rose
-    /// 0. instruction: mint a rose
-    /// 0. asset created (2 roses) -> transfer the 2 roses
+    /// 0. transaction: [mint a rose, mint a rose]
+    /// 0. trigger execution: asset created (2 roses) -> burn the 2 roses
     #[test]
     fn accumulation() -> Result<()> {
-        todo!()
+        let carol = gen_account_in("wonderland");
+        let mint_a_rose = Mint::asset_numeric(1_u32, format!("rose##{}", carol.0).parse().unwrap());
+
+        test((0..2).map(|_| mint_a_rose.clone()), |roses| false)
     }
 
     /// # Scenario
     ///
-    /// 0. instruction: register carol
-    /// 0. instruction: register dave
-    /// 0. account created (carol | dave) -> mint a rose for carol and dave
+    /// 0. transaction: [register carol, register dave]
+    /// 0. trigger execution: account created (carol | dave) -> mint a rose for carol and dave
     #[test]
-    fn enumeration() -> Result<()> {
+    fn union() -> Result<()> {
         todo!()
     }
 
     /// # Scenario
     ///
-    /// 0. instruction: register carol
-    /// 0. instruction: unregister carol
-    /// 0. instruction: register carol
-    /// 0. account created (carol) -> mint a rose for carol
+    /// 0. transaction: [register carol, unregister carol, register carol]
+    /// 0. trigger execution: account created (carol) -> mint a rose for carol
     #[test]
     fn cancellation() -> Result<()> {
         todo!()
+    }
+
+    fn test(
+        when: impl Iterator<Item = impl Instruction>,
+        predicate: impl Fn(BTreeMap<AssetId, AssetValue>) -> bool,
+    ) -> Result<()> {
+        let matches_a_batch_of_events = Trigger::new(
+            "matches_a_batch_of_events".parse().unwrap(),
+            Action::new(
+                load_sample_wasm("matches_a_batch_of_events"),
+                Repeats::Indefinitely,
+                ALICE_ID.clone(),
+                DomainEventFilter::new().for_domain("wonderland".parse().unwrap()),
+            ),
+        );
+        let (network, _rt) = NetworkBuilder::new()
+            .with_genesis_instruction(Register::trigger(matches_a_batch_of_events))
+            .start_blocking()?;
+        let test_client = network.client();
+
+        test_client.submit_all_blocking(when)?;
+        let roses = test_client
+            .query(FindAssets)
+            .filter_with(|asset| asset.id.definition.eq("rose#wonderland".parse().unwrap()))
+            .select_with(|asset| (asset.id, asset.value))
+            .execute()?
+            .collect::<Result<BTreeMap<_, _>, _>>()?;
+        assert!(predicate(roses));
+
+        Ok(())
     }
 }
 

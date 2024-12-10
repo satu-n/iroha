@@ -24,3 +24,9 @@ fn get_asset_value(client: &Client, asset_id: AssetId) -> Numeric {
 
     assert_matches!(*asset.value(), AssetValue::Numeric(val) => val)
 }
+
+/// # Scenario
+#[test]
+fn not_registered_when_potential_event_loops_detected() -> Result<()> {
+    todo!()
+}

@@ -2915,6 +2915,7 @@ dependencies = [
  "attohttpc",
  "base64 0.22.1",
  "color-eyre",
+ "criterion",
  "derive_more",
  "displaydoc",
  "error-stack",

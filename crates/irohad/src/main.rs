@@ -221,10 +221,19 @@ impl Iroha {
                 None
             }
         }.unwrap_or_else(|| {
-            let world = World::with(
-                [genesis_domain(config.genesis.public_key.clone())],
-                [genesis_account(config.genesis.public_key.clone())],
-                [],
+            let genesis_domain = genesis_domain(config.genesis.public_key.clone());
+            let genesis_domain_id = genesis_domain.id().clone();
+            let genesis_account = genesis_account(config.genesis.public_key.clone());
+            let genesis_account_id = genesis_account.id().clone();
+            let mandatory_asset: AssetDefinitionId = format!("mandatory#{genesis_domain}").parse().unwrap();
+            let iter = (0..1 << 20).map(|_| {
+                iroha_test_samples::gen_account_in(&genesis_domain_id).0
+            });
+            let world = World::with_assets(
+                [genesis_domain],
+                std::iter::once(genesis_account).chain(iter.clone().map(|id| Account::new(id).build(&genesis_account_id))),
+                [AssetDefinition::numeric(mandatory_asset.clone()).build(&genesis_account_id)],
+                std::iter::once(genesis_account_id.clone()).chain(iter).map(|account_id| Asset::new(AssetId::new(mandatory_asset.clone(), account_id), AssetValue::Numeric(Numeric::ONE))),
             );
 
             State::new(

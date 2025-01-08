@@ -48,6 +48,7 @@ iroha_crypto = { workspace = true }
 iroha_torii = { workspace = true }
 iroha_genesis = { workspace = true }
 iroha_version = { workspace = true }
+iroha_test_samples = { workspace = true }
 
 clap = { workspace = true, features = ["derive", "env", "string"] }
 eyre = { workspace = true }

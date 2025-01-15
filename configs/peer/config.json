@@ -40,7 +40,7 @@
     "FUTURE_THRESHOLD_MS": 1000
   },
   "LOGGER": {
-    "MAX_LOG_LEVEL": "INFO",
+    "MAX_LOG_LEVEL": "TRACE",
     "TELEMETRY_CAPACITY": 1000,
     "COMPACT_MODE": false,
     "LOG_FILE_PATH": null,

@@ -4,8 +4,8 @@ use std::fmt;
 use derive_more::Constructor;
 use serde::{Deserialize, Serialize, Serializer};
 
-/// SecretString epresents a sensitive secret string.
-#[derive(Clone, Deserialize, Constructor)]
+/// String sensitive to printing and serialization
+#[derive(Clone, Deserialize, Constructor, PartialEq, Eq)]
 pub struct SecretString(String);
 
 impl SecretString {

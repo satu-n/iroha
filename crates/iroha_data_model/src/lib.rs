@@ -222,6 +222,14 @@ mod model {
         }
     }
 
+    impl core::str::FromStr for ChainId {
+        type Err = ParseError;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            Ok(s.into())
+        }
+    }
+
     /// Sized container for all possible identifications.
     #[derive(
         Debug,

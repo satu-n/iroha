@@ -6,7 +6,7 @@ name: I2::Doc::Links
 
 on:
   pull_request:
-    branches: [main, stable, lts]
+    branches: [testnet/2.0.0-rc.1]
     paths:
       - '**/*.md'
       - '**/*.txt'

@@ -2,9 +2,7 @@ name: I2::CI::check_for_incorrect_images
 
 on:
   push:
-    branches:
-      - main
-      - stable
+    branches: [testnet/2.0.0-rc.1]
 
 jobs:
   check:
@@ -17,9 +15,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         run: pip install -r .github/scripts/ci_test/requirements.txt --no-input
-      - name: Check containers on iroha2 stable branch
-        if: github.base_ref == 'stable'
-        run: python .github/scripts/ci_test/ci_image_scan.py --allow iroha2:stable -- docker-compose*.yml
-      - name: Check containers on iroha2 main branch
-        if: github.base_ref == 'main'
-        run: python .github/scripts/ci_test/ci_image_scan.py --allow iroha2:dev -- docker-compose*.yml
+      - name: Check containers
+        run: python .github/scripts/ci_test/ci_image_scan.py --allow iroha:testnet-2.0.0-rc.1 -- docker-compose*.yml

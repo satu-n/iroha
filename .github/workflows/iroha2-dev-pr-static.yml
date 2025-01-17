@@ -2,7 +2,7 @@ name: I2::Dev::Static
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [testnet/2.0.0-rc.1]
     paths:
       - '**.rs'
       - '**.json'

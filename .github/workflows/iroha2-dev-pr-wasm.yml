@@ -2,7 +2,7 @@ name: I2::Dev::Wasm
 
 on:
   pull_request:
-    branches: [main]
+    branches: [testnet/2.0.0-rc.1]
     paths:
       - '.github/workflows/iroha2-dev-pr-wasm.yaml'
 
